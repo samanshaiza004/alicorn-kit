@@ -77,9 +77,11 @@ application so it can apply its own mutation and error policy. For pointer
 outside-dismissal, forward application pointer events to
 `command_palette.pointer`. The example shows the complete wiring.
 
-Alicorn's host handles IME composition before dispatching application keys.
-The palette only consumes Up, Down, Return, Escape, and the palette toggle when
-it is open; unrelated keys continue through the host application's policy.
+The palette declines Up, Down, and Return while Alicorn reports active IME
+composition in its query field, allowing the native text host to handle those
+keys. When composition is inactive, the palette consumes Up, Down, Return,
+Escape, and its toggle key while open; unrelated keys continue through the
+host application's policy.
 The modal overlay retains Alicorn's normal focus scope, semantics, hit testing,
 and accessibility behavior.
 

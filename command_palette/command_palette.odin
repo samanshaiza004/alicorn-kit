@@ -157,6 +157,11 @@ text_change :: proc(state: ^State, rt: ^alicorn.Runtime, change: alicorn.Text_Ch
 // input turns. It consumes only palette navigation, activation, and dismissal.
 handle_key :: proc(state: ^State, rt: ^alicorn.Runtime, items: []Item, key: host.Application_Key) -> (handled: bool, event: Event) {
 	if state == nil || rt == nil || !state.open { return }
+	if key == .Up || key == .Down || key == .Return {
+		if interaction, found := alicorn.text_field_interaction(rt, state.query_node); found && interaction.composition_active {
+			return false, {}
+		}
+	}
 	#partial switch key {
 	case .Escape, .Open_Command_Palette:
 		close_palette(state, rt, true)
