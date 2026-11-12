@@ -12,12 +12,27 @@ an index into a temporary filtered list. `title`, `description`, and
 `keywords` are borrowed only during `build` or `handle_key`; the application
 can rebuild its item slice between turns.
 
-The application supplies items in its preferred order. The model filters that
-order and does not impose application-specific recency, category, or scoring
-policy. Every whitespace-separated query token must occur as a contiguous
-substring in a title, description, or keyword. ASCII letters compare without
-case; non-ASCII UTF-8 bytes compare exactly. Locale-aware matching and Unicode
-case folding are outside this first version's contract.
+The default `Search_Mode.Substring` filters in caller order and does not impose
+application-specific recency, category, or scoring policy. Every
+whitespace-separated query token must occur as a contiguous substring in a
+title, description, or keyword. ASCII letters compare without case; non-ASCII
+UTF-8 bytes compare exactly. Locale-aware matching and Unicode case folding are
+outside this first version's built-in matcher.
+
+To preserve an application's existing fuzzy search or ranking, open the palette
+with `Search_Mode.Caller_Filtered`. In that mode AliKit treats the supplied item
+slice as the already-filtered result set and preserves its order. Use
+`command_palette.query_text(&palette)` to obtain the current query when building
+that set. Supply a fresh result slice to both `build` and `handle_key`; item IDs
+must remain stable and unique across those calls.
+
+```odin
+_ = command_palette.open_palette(
+    &app.palette,
+    rt,
+    command_palette.Search_Mode.Caller_Filtered,
+)
+```
 
 Disabled items remain visible but cannot be selected or activated. Selection
 is retained by item ID while that item remains visible and enabled. If it
@@ -38,7 +53,15 @@ defer command_palette.destroy(&palette)
 ```
 
 Call `open_palette` from the application command that opens the palette. It
-captures the current focused node, clears the query, and requests a redraw.
+clears the query before changing open/focus state, captures the current focused
+node, and requests a redraw. If clearing fails, the palette remains closed and
+`state.last_status` reports `Query_Reset_Failed`.
+
+When result-buffer growth fails, the old buffer remains owned and valid, the
+current result count is cleared, and `state.last_status` reports
+`Match_Buffer_Allocation_Failed`. The modal displays the configurable
+`Options.allocation_error_message` and retries on a later description. Query
+update failures are also available through `last_status`.
 
 ## Native host integration
 
@@ -65,9 +88,11 @@ on_text_change :: proc(data: rawptr, rt: ^alicorn.Runtime, change: alicorn.Text_
 }
 ```
 
-Pass a fresh item slice to `handle_key`. It filters against the current query
-and current application data, so a fast key event cannot activate an action
-from a stale item snapshot. The text-change callback's `change.text` is borrowed
+Pass a fresh item slice to `handle_key`. In substring mode, AliKit filters it
+against its current query. In caller-filtered mode, the application must filter
+and rank it against `command_palette.query_text(&app.palette)` before passing
+it. This ensures activation is checked against current application data rather
+than a stale item snapshot. The text-change callback's `change.text` is borrowed
 for the callback only; AliKit copies it into its owned controlled-text buffer.
 
 Describe the ordinary root first. Then call `command_palette.build` while the
@@ -77,11 +102,14 @@ application so it can apply its own mutation and error policy. For pointer
 outside-dismissal, forward application pointer events to
 `command_palette.pointer`. The example shows the complete wiring.
 
-The palette declines Up, Down, and Return while Alicorn reports active IME
-composition in its query field, allowing the native text host to handle those
-keys. When composition is inactive, the palette consumes Up, Down, Return,
-Escape, and its toggle key while open; unrelated keys continue through the
-host application's policy.
+The palette declines Up, Down, and Return while Alicorn's public query-field
+snapshot reports active composition, allowing the native text host to handle
+those keys. Alicorn routes Escape through its native composition handling
+before application dismissal. Validate native IME candidate navigation and
+commit behavior in the actual host; the headless/runtime snapshot cannot model
+the operating system's candidate window. When composition is inactive, the
+palette consumes Up, Down, Return, Escape, and its toggle key while open;
+unrelated keys continue through the host application's policy.
 The modal overlay retains Alicorn's normal focus scope, semantics, hit testing,
 and accessibility behavior.
 
@@ -89,7 +117,8 @@ and accessibility behavior.
 
 The model package can be used independently to filter and navigate a command
 list. Allocate an output buffer with capacity for the complete item slice,
-call `palette_model.filter`, then pass its initialized prefix to `reconcile`,
+call `palette_model.filter` for built-in matching or `palette_model.index_all`
+for caller-filtered results, then pass the initialized prefix to `reconcile`,
 `move`, or `activate`. The model borrows item strings and stores only indexes
 and stable IDs.
 

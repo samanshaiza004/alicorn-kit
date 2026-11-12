@@ -7,19 +7,22 @@ UI tree, state store, or application lifecycle.
 
 The first component is an application-facing command palette. The application
 owns command discovery, ranking, and dispatch; AliKit owns query filtering,
-selection behavior, modal presentation, and keyboard navigation.
+selection behavior, modal presentation, and keyboard navigation. Applications
+can select AliKit's built-in substring matching or supply already-filtered,
+ranked results from their own matcher.
 
 ## Current status
 
 AliKit is an early, source-level companion package. Its first component targets
 Alicorn v0.2.1 APIs. The API may evolve with Alicorn; pin both projects when
-consuming it. The palette currently supports ASCII case-insensitive substring
-matching, caller-ordered results, stable numeric item IDs, disabled actions,
-virtualized result rows, focus restoration, and native host key routing.
+consuming it. Built-in matching is ASCII case-insensitive substring search.
+The caller-filtered mode preserves an application's own matching and ranking.
+Both modes support stable numeric item IDs, disabled actions, virtualized result
+rows, focus restoration, and native host key routing.
 
-It does not promise Unicode case folding, fuzzy ranking, command registration,
-application dispatch, or native OS command services. An application can
-pre-rank its items before passing them to the component.
+AliKit does not promise Unicode case folding or fuzzy ranking itself, and it does
+not provide command registration, application dispatch, or native OS command
+services.
 
 ## Repository layout
 

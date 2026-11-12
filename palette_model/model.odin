@@ -100,6 +100,16 @@ filter :: proc(items: []Item, query: string, output: []Match) -> (count: int, st
 	return count, .Ok
 }
 
+// index_all records every item in caller order without applying a query. Use
+// this when the application has already filtered and ranked its own results.
+index_all :: proc(items: []Item, output: []Match) -> (count: int, status: Filter_Status) {
+	if len(output) < len(items) { return 0, .Output_Too_Small }
+	for _, index in items {
+		output[index] = Match{item_index=index}
+	}
+	return len(items), .Ok
+}
+
 // reconcile keeps selection by stable ID while it remains visible and
 // enabled. Otherwise it selects the first enabled visible item, or clears it.
 reconcile :: proc(selection: ^Selection, items: []Item, visible: []Match) -> bool {

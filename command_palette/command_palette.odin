@@ -12,6 +12,18 @@ Item_ID :: palette.Item_ID
 Item :: palette.Item
 Event_Kind :: enum {None, Activated}
 
+Search_Mode :: enum {
+	Substring,
+	Caller_Filtered,
+}
+
+Status :: enum {
+	Ready,
+	Query_Reset_Failed,
+	Query_Update_Failed,
+	Match_Buffer_Allocation_Failed,
+}
+
 Event :: struct {
 	kind: Event_Kind,
 	item_id: Item_ID,
@@ -24,6 +36,8 @@ State :: struct {
 	matches_capacity: int,
 	match_count:    int,
 	selection:      palette.Selection,
+	search_mode:    Search_Mode,
+	last_status:    Status,
 	query_node:     alicorn.Node_ID,
 	overlay_node:   alicorn.Node_ID,
 	panel_node:     alicorn.Node_ID,
@@ -39,6 +53,7 @@ Options :: struct {
 	title:                 string,
 	query_accessible_name: string,
 	empty_message:         string,
+	allocation_error_message: string,
 	panel_max_width:       f32,
 	list_max_height:       f32,
 	row_height:            f32,
@@ -48,6 +63,7 @@ DEFAULT_OPTIONS :: Options{
 	title="Commands",
 	query_accessible_name="Search commands",
 	empty_message="No matching commands",
+	allocation_error_message="Results temporarily unavailable",
 	panel_max_width=720,
 	list_max_height=360,
 	row_height=38,
@@ -59,6 +75,7 @@ options_resolve :: proc(options: Options) -> Options {
 	if result.title == "" { result.title = DEFAULT_OPTIONS.title }
 	if result.query_accessible_name == "" { result.query_accessible_name = DEFAULT_OPTIONS.query_accessible_name }
 	if result.empty_message == "" { result.empty_message = DEFAULT_OPTIONS.empty_message }
+	if result.allocation_error_message == "" { result.allocation_error_message = DEFAULT_OPTIONS.allocation_error_message }
 	if result.panel_max_width <= 0 || math.is_nan(result.panel_max_width) || math.is_inf(result.panel_max_width) {
 		result.panel_max_width = DEFAULT_OPTIONS.panel_max_width
 	}
@@ -90,14 +107,27 @@ destroy :: proc(state: ^State) {
 
 set_query :: proc(state: ^State, rt: ^alicorn.Runtime, value: string) -> bool {
 	if state == nil || !state.initialized { return false }
-	if !ui.text_buffer_set(&state.query, value) { return false }
+	if !ui.text_buffer_set(&state.query, value) {
+		state.last_status = .Query_Update_Failed
+		return false
+	}
+	state.last_status = .Ready
 	if rt != nil { alicorn.invalidate_root(rt, "AliKit command palette query changed") }
 	return true
 }
 
-open_palette :: proc(state: ^State, rt: ^alicorn.Runtime) -> bool {
+open_palette :: proc(
+	state: ^State,
+	rt: ^alicorn.Runtime,
+	search_mode := Search_Mode.Substring,
+) -> bool {
 	if state == nil || rt == nil || !state.initialized { return false }
 	if state.open { return true }
+	if !ui.text_buffer_set(&state.query, "") {
+		state.last_status = .Query_Reset_Failed
+		return false
+	}
+	state.last_status = .Ready
 	state.previous_focus = alicorn.focused_node(rt)
 	state.open = true
 	state.focus_pending = true
@@ -107,7 +137,7 @@ open_palette :: proc(state: ^State, rt: ^alicorn.Runtime) -> bool {
 	state.panel_node = 0
 	state.results_node = 0
 	state.selection = {}
-	_ = ui.text_buffer_set(&state.query, "")
+	state.search_mode = search_mode
 	alicorn.invalidate_root(rt, "AliKit command palette opened")
 	return true
 }
@@ -126,28 +156,54 @@ close_palette :: proc(state: ^State, rt: ^alicorn.Runtime, restore_focus := true
 @(private)
 refresh_matches :: proc(state: ^State, items: []Item) -> bool {
 	if state == nil || !state.initialized { return false }
+	state.last_status = .Ready
 	if state.matches_capacity < len(items) {
-		if len(state.matches) > 0 { delete(state.matches, state.allocator) }
-		state.matches = make([]palette.Match, len(items), allocator=state.allocator)
-		state.matches_capacity = len(items)
+		new_matches, err := make([]palette.Match, len(items), state.allocator)
+		if err != nil {
+			state.match_count = 0
+			state.selection = {}
+			state.last_status = .Match_Buffer_Allocation_Failed
+			return false
+		}
+		old_matches := state.matches
+		state.matches = new_matches
+		state.matches_capacity = len(new_matches)
+		if len(old_matches) > 0 { delete(old_matches, state.allocator) }
 	}
-	if len(items) == 0 {
+	count: int
+	status: palette.Filter_Status
+	if state.search_mode == .Caller_Filtered {
+		count, status = palette.index_all(items, state.matches)
+	} else {
+		count, status = palette.filter(items, state.query.text, state.matches)
+	}
+	if status != .Ok {
 		state.match_count = 0
-		_ = palette.reconcile(&state.selection, items, state.matches[:0])
-		return true
+		state.selection = {}
+		return false
 	}
-	count, status := palette.filter(items, state.query.text, state.matches)
-	if status != .Ok { return false }
 	state.match_count = count
 	_ = palette.reconcile(&state.selection, items, state.matches[:count])
 	return true
+}
+
+// query_text returns the current borrowed query. The view remains valid until
+// the next query edit, set_query call, or destroy; clone it if it must outlive
+// that interval.
+query_text :: proc(state: ^State) -> string {
+	if state == nil || !state.initialized { return "" }
+	return state.query.text
 }
 
 // text_change adopts committed query edits from Alicorn's native host. The
 // host owns and releases change.text after this callback returns.
 text_change :: proc(state: ^State, rt: ^alicorn.Runtime, change: alicorn.Text_Change) -> bool {
 	if state == nil || rt == nil || !state.open || !change.changed || change.node != state.query_node { return false }
-	if !ui.text_buffer_set(&state.query, change.text) { return false }
+	if !ui.text_buffer_set(&state.query, change.text) {
+		state.last_status = .Query_Update_Failed
+		return false
+	}
+	state.last_status = .Ready
 	alicorn.invalidate_root(rt, "AliKit command palette query changed")
 	return true
 }
@@ -247,7 +303,7 @@ build :: proc(
 ) -> (event: Event) {
 	if ctx == nil || ctx.runtime == nil || state == nil || !state.initialized || !state.open { return }
 	if !ui.key_scope(ctx, key) { return }
-	if !refresh_matches(state, items) { return }
+	_ = refresh_matches(state, items)
 	resolved_options := options_resolve(options)
 
 	state.overlay_node = alicorn.modal_overlay_begin(
@@ -278,7 +334,9 @@ build :: proc(
 		state.query_node = query.node
 		if query.node != 0 { _ = alicorn.semantic_text_field_label(ctx, resolved_options.query_accessible_name) }
 
-		if state.match_count == 0 {
+		if state.last_status == .Match_Buffer_Allocation_Failed {
+			_ = ui.text(ctx, resolved_options.allocation_error_message, key=alicorn.key_string("alikit-command-palette-allocation-error"))
+		} else if state.match_count == 0 {
 			_ = ui.text(ctx, resolved_options.empty_message, key=alicorn.key_string("alikit-command-palette-empty"))
 		} else {
 			list := alicorn.virtual_list_begin(
