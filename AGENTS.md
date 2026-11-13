@@ -12,6 +12,9 @@ storage.
   which layer owns each responsibility.
 - Read the component's API guide and follow the complete native integration in
   [`examples/command_palette`](examples/command_palette/main.odin).
+- For tree integrations, follow [`docs/tree-view.md`](docs/tree-view.md) and
+  [`examples/tree_view`](examples/tree_view/main.odin); keep the visible-row
+  projection, expansion/loading policy, and item actions in the application.
 - Preserve caller-owned state and stable item identities. Check the API guide
   for borrowed-value lifetimes before retaining data.
 - Keep Alicorn and AccessKit at the exact revisions in

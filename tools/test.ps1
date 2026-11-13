@@ -46,6 +46,9 @@ try {
     & $OdinPath test palette_model '-define:ODIN_TEST_THREADS=1' "-out:$(Join-Path $OutputRoot 'palette_model_tests.exe')"
     if ($LASTEXITCODE -ne 0) { throw 'AliKit palette model tests failed.' }
 
+    & $OdinPath test tree_model '-define:ODIN_TEST_THREADS=1' "-out:$(Join-Path $OutputRoot 'tree_model_tests.exe')"
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit tree model tests failed.' }
+
     $PaletteTestArgs = @(
         'test', 'command_palette',
         '-define:ODIN_TEST_THREADS=1',
@@ -56,6 +59,16 @@ try {
     & $OdinPath @PaletteTestArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit retained command palette tests failed.' }
 
+    $TreeTestArgs = @(
+        'test', 'tree_view',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'tree_view_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @TreeTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit retained Tree View tests failed.' }
+
     $ExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\command_palette'),
         $AlicornCollection,
@@ -64,6 +77,15 @@ try {
     ) + $CompilerArguments
     & $OdinPath @ExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native example failed to compile.' }
+
+    $TreeExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\tree_view'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'tree_view_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @TreeExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native Tree View example failed to compile.' }
 } finally {
     Pop-Location
 }
