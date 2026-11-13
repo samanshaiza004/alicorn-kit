@@ -1,0 +1,44 @@
+name: AliKit CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Odin
+        uses: laytan/setup-odin@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release: dev-2026-11
+
+      - name: Check out pinned Alicorn
+        uses: actions/checkout@v4
+        with:
+          repository: samanshaiza004/alicorn
+          ref: 0beff9d29f6a1f8b32e0cde895fe4f9ce9f8238c
+          path: alicorn
+
+      - name: Check out pinned AccessKit binding
+        uses: actions/checkout@v4
+        with:
+          repository: samanshaiza004/odin-accesskit
+          ref: e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b
+          path: alicorn/.deps/odin-accesskit
+
+      - name: Cache AccessKit C SDK
+        uses: actions/cache@v4
+        with:
+          path: alicorn/.deps/accesskit
+          key: accesskit-c-0.23.1-windows-x64
+
+      - name: Test model, retained UI, and native consumer
+        shell: pwsh
+        run: ./tools/test.ps1 -Odin odin
