@@ -13,6 +13,7 @@ Event :: model.Event
 Event_Kind :: model.Event_Kind
 Label_Color_Proc :: proc(data: rawptr, ctx: ^ui.UI, item: Item) -> alicorn.Color
 Row_Hook_Proc :: proc(data: rawptr, ctx: ^ui.UI, item: Item, semantic: alicorn.Semantic_ID)
+Label_Paint_Proc :: proc(data: rawptr, ctx: ^ui.UI, item: Item, label_node: alicorn.Node_ID)
 
 State :: struct {
 	model:              model.State,
@@ -37,6 +38,7 @@ Options :: struct {
 	icon_proc:          proc(data: rawptr, item: Item) -> alicorn.Icon_ID,
 	label_color_proc:   Label_Color_Proc,
 	row_hook_proc:      Row_Hook_Proc,
+	label_paint_proc:   Label_Paint_Proc,
 	callback_data:      rawptr,
 	hide_disclosure:    bool,
 	selection_enabled:  bool,
@@ -128,6 +130,12 @@ build :: proc(ctx: ^ui.UI, state: ^State, window: Window, key: ui.UI_Key, option
 	if state.semantic_namespace == 0 {
 		state.semantic_namespace = u64(state.tree_node) ~ 0x414C494B49545245
 		if state.semantic_namespace == 0 { state.semantic_namespace = 1 }
+	}
+	if state.model.focused_id == 0 {
+		semantic_focus := alicorn.semantic_focus_state(ctx.runtime)
+		if semantic_focus.id.namespace == state.semantic_namespace {
+			_ = model.focus_item(&state.model, window, Item_ID(semantic_focus.id.value), select=resolved.select_on_focus)
+		}
 	}
 	_ = alicorn.semantic_description(ctx, .Tree, resolved.accessible_label)
 	if window.total_count == 0 {
@@ -233,12 +241,15 @@ row_build :: proc(ctx: ^ui.UI, state: ^State, item: Item, index: int, options: O
 	}
 	label_color := alicorn.style_color(ctx, .Text)
 	if options.label_color_proc != nil { label_color = options.label_color_proc(options.callback_data, ctx, item) }
-	_ = ui.text(ctx, item.label,
+	label_node := ui.text(ctx, item.label,
 		key=alicorn.key_string("tree-label"),
 		style=ui.layout_style(.Row, grow=1),
 		text_style=alicorn.Text_Style{overflow=.Ellipsis},
 		color=label_color,
 	)
+	if options.label_paint_proc != nil && label_node != 0 {
+		options.label_paint_proc(options.callback_data, ctx, item, label_node)
+	}
 	alicorn.button_end(ctx)
 	if pressed {
 		return model.press(&state.model, Window{total_count=index+1, offset=index, revision=state.model.revision, items=[]Item{item}}, item.id, select=options.selection_enabled)

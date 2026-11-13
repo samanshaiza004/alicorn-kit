@@ -26,9 +26,10 @@ The component owns fixed-row virtualization, indentation, keyboard traversal,
 Tree/Tree_Item semantics, retained focus, visible-row reveal, and optional
 single selection. An `icon_proc` may return an Alicorn icon for a row, a
 `label_color_proc` receives the current UI context and may provide an
-application-specific label color; `row_hook_proc` may attach Alicorn drag/drop behavior to the row. Those callbacks
-run synchronously during `build`; they must not retain the borrowed item or UI
-context. Set `hide_disclosure` when the application uses its own folder icons
+application-specific label color; `row_hook_proc` may attach Alicorn drag/drop behavior to the row, and
+`label_paint_proc` receives the realized label node for decorations such as an
+active-file underline. Callbacks run synchronously during `build`; they must not
+retain the borrowed item, node, or UI context. Set `hide_disclosure` when the application uses its own folder icons
 to communicate expanded state. Set `semantic_namespace` to preserve an
 application's existing stable semantic identities during migration; otherwise
 AliKit derives a namespace from the retained tree root.
