@@ -11,7 +11,7 @@ Window :: model.Window
 State_Model :: model.State
 Event :: model.Event
 Event_Kind :: model.Event_Kind
-Label_Color_Proc :: proc(data: rawptr, item: Item) -> alicorn.Color
+Label_Color_Proc :: proc(data: rawptr, ctx: ^ui.UI, item: Item) -> alicorn.Color
 Row_Hook_Proc :: proc(data: rawptr, ctx: ^ui.UI, item: Item, semantic: alicorn.Semantic_ID)
 
 State :: struct {
@@ -232,7 +232,7 @@ row_build :: proc(ctx: ^ui.UI, state: ^State, item: Item, index: int, options: O
 		options.row_hook_proc(options.callback_data, ctx, item, semantic_id(state, item.id))
 	}
 	label_color := alicorn.style_color(ctx, .Text)
-	if options.label_color_proc != nil { label_color = options.label_color_proc(options.callback_data, item) }
+	if options.label_color_proc != nil { label_color = options.label_color_proc(options.callback_data, ctx, item) }
 	_ = ui.text(ctx, item.label,
 		key=alicorn.key_string("tree-label"),
 		style=ui.layout_style(.Row, grow=1),
