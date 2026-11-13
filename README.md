@@ -22,7 +22,9 @@ application's own matching and ranking. Both modes support stable numeric item
 IDs, disabled actions, virtualized result rows, focus restoration, and native
 host key routing. The palette also accepts optional surface and query
 presentation settings so an application can preserve its existing theme and
-backdrop treatment.
+backdrop treatment. Tree View supports nested visible projections and bounded
+loaded windows, along with stable row semantics, keyboard navigation, and
+application hooks for row icons, label colors, drag/drop, and context menus.
 
 AliKit does not promise Unicode case folding or fuzzy ranking itself, and it does
 not provide command registration, application dispatch, or native OS command

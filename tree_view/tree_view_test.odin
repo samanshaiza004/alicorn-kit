@@ -13,7 +13,7 @@ tree_view_test_items :: [3]Item{
 }
 
 @(private)
-tree_view_test_describe :: proc(rt: ^alicorn.Runtime, state: ^State, items: []Item) {
+tree_view_test_describe :: proc(rt: ^alicorn.Runtime, state: ^State, items: []Item, options: Options = Options{selection_enabled=true}) {
 	alicorn.invalidate_root(rt, "AliKit tree view test description")
 	ctx, should_build := alicorn.begin_frame(rt)
 	if !should_build { return }
@@ -21,9 +21,22 @@ tree_view_test_describe :: proc(rt: ^alicorn.Runtime, state: ^State, items: []It
 		key=alicorn.key_string("alikit-tree-test-root"),
 		style=alicorn.layout_style(.Column, width=420, height=280, padding=12))
 	window := Window{total_count=len(items), revision=1, items=items}
-	_ = build(&ctx, state, window, alicorn.key_string("alikit-tree-test"), Options{selection_enabled=true})
+	_ = build(&ctx, state, window, alicorn.key_string("alikit-tree-test"), options)
 	alicorn.container_end(&ctx)
 	alicorn.end_frame(&ctx)
+}
+
+@(test)
+test_tree_view_accepts_application_semantic_namespace :: proc(t: ^testing.T) {
+	rt := alicorn.new_runtime(alicorn.Rect{0, 0, 480, 320})
+	defer alicorn.destroy_runtime(&rt)
+	state: State
+	items := tree_view_test_items
+	tree_view_test_describe(&rt, &state, items[:], Options{semantic_namespace=0x5452454556494557})
+	item, found := alicorn.semantic_node_lookup(&rt,
+		alicorn.Semantic_ID{namespace=0x5452454556494557, value=u64(Item_ID(101))})
+	testing.expect(t, state.semantic_namespace == 0x5452454556494557 && found && item.role == .Tree_Item,
+		"applications should be able to preserve stable semantic identities while adopting the generic tree view")
 }
 
 @(test)

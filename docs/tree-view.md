@@ -24,8 +24,14 @@ next description. No placeholder is treated as an item or receives an ID.
 
 The component owns fixed-row virtualization, indentation, keyboard traversal,
 Tree/Tree_Item semantics, retained focus, visible-row reveal, and optional
-single selection. An `icon_proc` may return an Alicorn icon for a row; it is
-called during the current description and must not retain borrowed item data.
+single selection. An `icon_proc` may return an Alicorn icon for a row, a
+`label_color_proc` may provide an application-specific label color, and a
+`row_hook_proc` may attach Alicorn drag/drop behavior to the row. Those callbacks
+run synchronously during `build`; they must not retain the borrowed item or UI
+context. Set `hide_disclosure` when the application uses its own folder icons
+to communicate expanded state. Set `semantic_namespace` to preserve an
+application's existing stable semantic identities during migration; otherwise
+AliKit derives a namespace from the retained tree root.
 
 ## Application-owned behavior
 

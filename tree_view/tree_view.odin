@@ -11,6 +11,8 @@ Window :: model.Window
 State_Model :: model.State
 Event :: model.Event
 Event_Kind :: model.Event_Kind
+Label_Color_Proc :: proc(data: rawptr, item: Item) -> alicorn.Color
+Row_Hook_Proc :: proc(data: rawptr, ctx: ^ui.UI, item: Item, semantic: alicorn.Semantic_ID)
 
 State :: struct {
 	model:              model.State,
@@ -31,8 +33,12 @@ Options :: struct {
 	indent_width:       f32,
 	chevron_size:       f32,
 	icon_size:          f32,
+	semantic_namespace: u64,
 	icon_proc:          proc(data: rawptr, item: Item) -> alicorn.Icon_ID,
-	icon_data:          rawptr,
+	label_color_proc:   Label_Color_Proc,
+	row_hook_proc:      Row_Hook_Proc,
+	callback_data:      rawptr,
+	hide_disclosure:    bool,
 	selection_enabled:  bool,
 	select_on_focus:    bool,
 	context_menu_enabled: bool,
@@ -118,8 +124,11 @@ build :: proc(ctx: ^ui.UI, state: ^State, window: Window, key: ui.UI_Key, option
 		style=ui.layout_style(.Column, grow=1, clip=true),
 	)
 	if state.tree_node == 0 { return {} }
-	state.semantic_namespace = u64(state.tree_node) ~ 0x414C494B49545245
-	if state.semantic_namespace == 0 { state.semantic_namespace = 1 }
+	state.semantic_namespace = resolved.semantic_namespace
+	if state.semantic_namespace == 0 {
+		state.semantic_namespace = u64(state.tree_node) ~ 0x414C494B49545245
+		if state.semantic_namespace == 0 { state.semantic_namespace = 1 }
+	}
 	_ = alicorn.semantic_description(ctx, .Tree, resolved.accessible_label)
 	if window.total_count == 0 {
 		_ = ui.text(ctx, resolved.empty_label, key=alicorn.key_string("tree-empty"))
@@ -205,22 +214,30 @@ row_build :: proc(ctx: ^ui.UI, state: ^State, item: Item, index: int, options: O
 	if item.depth > 0 {
 		if ui.column(ctx, key=alicorn.key_string("tree-indent"), width=f32(item.depth)*options.indent_width, height=1, label="tree-indent") {}
 	}
-	if item.expandable {
-		icon := alicorn.Icon_ID.Chevron_Right
-		if item.expanded { icon = .Chevron_Down }
-		_ = ui.icon(ctx, icon, key=alicorn.key_string("tree-disclosure"), size=options.chevron_size)
-	} else {
-		if ui.column(ctx, key=alicorn.key_string("tree-disclosure-space"), width=options.chevron_size, height=options.chevron_size, label="tree-disclosure-space") {}
+	if !options.hide_disclosure {
+		if item.expandable {
+			icon := alicorn.Icon_ID.Chevron_Right
+			if item.expanded { icon = .Chevron_Down }
+			_ = ui.icon(ctx, icon, key=alicorn.key_string("tree-disclosure"), size=options.chevron_size)
+		} else {
+			if ui.column(ctx, key=alicorn.key_string("tree-disclosure-space"), width=options.chevron_size, height=options.chevron_size, label="tree-disclosure-space") {}
+		}
 	}
 	if options.icon_proc != nil {
-		if icon := options.icon_proc(options.icon_data, item); icon != .None {
+		if icon := options.icon_proc(options.callback_data, item); icon != .None {
 			_ = ui.icon(ctx, icon, key=alicorn.key_string("tree-item-icon"), size=options.icon_size)
 		}
 	}
+	if options.row_hook_proc != nil {
+		options.row_hook_proc(options.callback_data, ctx, item, semantic_id(state, item.id))
+	}
+	label_color := alicorn.style_color(ctx, .Text)
+	if options.label_color_proc != nil { label_color = options.label_color_proc(options.callback_data, item) }
 	_ = ui.text(ctx, item.label,
 		key=alicorn.key_string("tree-label"),
 		style=ui.layout_style(.Row, grow=1),
 		text_style=alicorn.Text_Style{overflow=.Ellipsis},
+		color=label_color,
 	)
 	alicorn.button_end(ctx)
 	if pressed {
