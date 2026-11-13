@@ -14,11 +14,14 @@ ranked results from their own matcher.
 ## Current status
 
 AliKit is an early, source-level companion package. Its first component targets
-Alicorn v0.2.1 APIs. The API may evolve with Alicorn; pin both projects when
-consuming it. Built-in matching is ASCII case-insensitive substring search.
-The caller-filtered mode preserves an application's own matching and ranking.
-Both modes support stable numeric item IDs, disabled actions, virtualized result
-rows, focus restoration, and native host key routing.
+the Alicorn revision recorded in `dependencies.lock.json`. The API may evolve
+with Alicorn; pin both projects when consuming it. Built-in matching is ASCII
+case-insensitive substring search. The caller-filtered mode preserves an
+application's own matching and ranking. Both modes support stable numeric item
+IDs, disabled actions, virtualized result rows, focus restoration, and native
+host key routing. The palette also accepts optional surface and query
+presentation settings so an application can preserve its existing theme and
+backdrop treatment.
 
 AliKit does not promise Unicode case folding or fuzzy ranking itself, and it does
 not provide command registration, application dispatch, or native OS command
@@ -34,3 +37,14 @@ services.
 See the guide before adopting the component in an application. A native Alicorn
 consumer needs the same Odin, SDL, and AccessKit setup as other Alicorn desktop
 applications.
+
+## Validation
+
+The Windows CI workflow checks the UI-independent model, retained-runtime
+interaction tests, and the native example against the exact Alicorn and
+AccessKit binding commits in `dependencies.lock.json`. To run the same checks
+locally, place the pinned Alicorn checkout at `./alicorn` and run:
+
+```powershell
+./tools/test.ps1 -Odin odin
+```
