@@ -67,6 +67,104 @@ test_tree_view_publishes_tree_semantics_and_routes_keyboard_focus :: proc(t: ^te
 }
 
 @(test)
+test_tree_view_syncs_programmatic_semantic_focus_before_navigation_and_build :: proc(t: ^testing.T) {
+	rt := alicorn.new_runtime(alicorn.Rect{0, 0, 480, 320})
+	defer alicorn.destroy_runtime(&rt)
+	state: State
+	items := tree_view_test_items
+	window := Window{total_count=len(items), revision=1, items=items[:]}
+	options := Options{selection_enabled=true, select_on_focus=true}
+	_ = tree_view_test_describe(&rt, &state, items[:], options)
+
+	// Simulate an application restoring focus to item 102 after the component
+	// already retained a different focus in its keyboard-navigation model.
+	_ = model.focus_item(&state.model, window, Item_ID(101), select=true)
+	_ = alicorn.focus(&rt, state.scroll_node)
+	_ = alicorn.semantic_focus_set(
+		&rt,
+		alicorn.Semantic_ID{namespace=state.semantic_namespace, value=u64(Item_ID(102))},
+		state.scroll_node,
+	)
+
+	handled, event := handle_key(&state, &rt, window, .Left, options)
+	testing.expect(t, handled && event.kind == .Focus_Changed && event.id == Item_ID(101),
+		"keyboard navigation should begin from the application's current semantic focus")
+
+	_ = alicorn.semantic_focus_set(
+		&rt,
+		alicorn.Semantic_ID{namespace=state.semantic_namespace, value=u64(Item_ID(102))},
+		state.scroll_node,
+	)
+	_ = tree_view_test_describe(&rt, &state, items[:], options)
+	item, found := alicorn.semantic_node_lookup(
+		&rt,
+		alicorn.Semantic_ID{namespace=state.semantic_namespace, value=u64(Item_ID(102))},
+	)
+	semantic_focus := alicorn.semantic_focus_state(&rt)
+	testing.expect(t, found && state.model.focused_id == Item_ID(102) &&
+		state.model.selected_id == Item_ID(102) && semantic_focus.id.value == u64(Item_ID(102)) &&
+		alicorn.semantic_states_has(item.states, .Current),
+		"a new description should synchronize its row presentation to programmatic semantic focus")
+}
+
+@(test)
+test_tree_view_pointer_selection_updates_after_the_complete_description :: proc(t: ^testing.T) {
+	rt := alicorn.new_runtime(alicorn.Rect{0, 0, 480, 320})
+	defer alicorn.destroy_runtime(&rt)
+	state: State
+	items := tree_view_test_items
+	window := Window{total_count=len(items), revision=1, items=items[:]}
+	options := Options{selection_enabled=true, select_on_focus=true}
+	_ = tree_view_test_describe(&rt, &state, items[:], options)
+	_ = model.focus_item(&state.model, window, Item_ID(102), select=true)
+	focus_runtime(&state, &rt, Item_ID(102), 1)
+	_ = tree_view_test_describe(&rt, &state, items[:], options)
+
+	target, target_found := alicorn.semantic_node_lookup(
+		&rt,
+		alicorn.Semantic_ID{namespace=state.semantic_namespace, value=u64(Item_ID(101))},
+	)
+	testing.expect(t, target_found && target.has_bounds,
+		"the first row should be realized before the pointer interaction")
+	if !target_found || !target.has_bounds { return }
+	x, y := target.bounds.x+target.bounds.w/2, target.bounds.y+target.bounds.h/2
+	_ = alicorn.process_pointer(&rt, alicorn.Pointer_Event{kind=.Down, x=x, y=y, button=1})
+	_ = tree_view_test_describe(&rt, &state, items[:], options)
+	_ = alicorn.process_pointer(&rt, alicorn.Pointer_Event{kind=.Up, x=x, y=y, button=1})
+	event := tree_view_test_describe(&rt, &state, items[:], options)
+
+	old_row, old_found := alicorn.semantic_node_lookup(
+		&rt,
+		alicorn.Semantic_ID{namespace=state.semantic_namespace, value=u64(Item_ID(102))},
+	)
+	new_row, new_found := alicorn.semantic_node_lookup(
+		&rt,
+		alicorn.Semantic_ID{namespace=state.semantic_namespace, value=u64(Item_ID(101))},
+	)
+	testing.expect(t, event.kind == .Pressed && event.id == Item_ID(101) &&
+		state.model.selected_id == Item_ID(101),
+		"pointer activation should return and retain the selected stable item ID")
+	testing.expect(t, old_found && new_found &&
+		alicorn.semantic_states_has(old_row.states, .Selected) &&
+		!alicorn.semantic_states_has(new_row.states, .Selected),
+		"all rows in the click description should keep the previous selection until the next description")
+
+	_ = tree_view_test_describe(&rt, &state, items[:], options)
+	old_row, old_found = alicorn.semantic_node_lookup(
+		&rt,
+		alicorn.Semantic_ID{namespace=state.semantic_namespace, value=u64(Item_ID(102))},
+	)
+	new_row, new_found = alicorn.semantic_node_lookup(
+		&rt,
+		alicorn.Semantic_ID{namespace=state.semantic_namespace, value=u64(Item_ID(101))},
+	)
+	testing.expect(t, old_found && new_found &&
+		!alicorn.semantic_states_has(old_row.states, .Selected) &&
+		alicorn.semantic_states_has(new_row.states, .Selected),
+		"the follow-up description should publish the new selection consistently")
+}
+
+@(test)
 test_tree_view_context_menu_targets_stable_item_and_anchors_to_row :: proc(t: ^testing.T) {
 	rt := alicorn.new_runtime(alicorn.Rect{0, 0, 480, 320})
 	defer alicorn.destroy_runtime(&rt)
