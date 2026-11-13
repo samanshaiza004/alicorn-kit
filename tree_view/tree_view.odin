@@ -34,7 +34,8 @@ Options :: struct {
 	indent_width:       f32,
 	chevron_size:       f32,
 	icon_size:          f32,
-	semantic_namespace: u64,
+	semantic_namespace:     u64,
+	scroll_restore:       alicorn.Scroll_Restore_Request,
 	icon_proc:          proc(data: rawptr, item: Item) -> alicorn.Icon_ID,
 	label_color_proc:   Label_Color_Proc,
 	row_hook_proc:      Row_Hook_Proc,
@@ -151,6 +152,7 @@ build :: proc(ctx: ^ui.UI, state: ^State, window: Window, key: ui.UI_Key, option
 		style=ui.layout_style(.Column, grow=1, clip=true),
 		label=resolved.accessible_label,
 		focusable=true,
+		restore=resolved.scroll_restore,
 	)
 	state.scroll_node = list.scroll.id
 	event: Event

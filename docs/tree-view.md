@@ -44,6 +44,9 @@ collapsed item or focuses its first enabled visible child; Left collapses an
 expanded item or focuses its visible parent. Up/Down, Home/End, and Page Up/Down
 navigate the visible projection while skipping disabled rows.
 
+Pass an Alicorn `Scroll_Restore_Request` in `Options.scroll_restore` when the
+application needs to restore a persisted viewport position.
+
 Set `Options.selection_enabled` to select on pointer press. Set
 `select_on_focus` when keyboard navigation should also change selection. Focus
 is always tracked separately from selection. When a focused item disappears,
