@@ -54,9 +54,30 @@ Options :: struct {
 	query_accessible_name: string,
 	empty_message:         string,
 	allocation_error_message: string,
+	footer_label:          string,
+	query_prefix:          string,
+	hide_title:            bool,
 	panel_max_width:       f32,
 	list_max_height:       f32,
 	row_height:            f32,
+	query_height:          f32,
+	query_text_style:      alicorn.Text_Style,
+	appearance:            Appearance,
+}
+
+// Appearance is an optional set of surface-level overrides. Components that
+// leave it disabled use Alicorn's ordinary theme defaults.
+Appearance :: struct {
+	enabled:          bool,
+	overlay_padding:  f32,
+	panel_padding:    f32,
+	panel_gap:        f32,
+	backdrop_color:   alicorn.Color,
+	panel_shape:      alicorn.Surface_Shape,
+	panel_material:   alicorn.Material_ID,
+	physical_height:  f32,
+	panel_fill:       alicorn.Color,
+	backdrop_effect:  alicorn.Backdrop_Effect,
 }
 
 DEFAULT_OPTIONS :: Options{
@@ -64,9 +85,11 @@ DEFAULT_OPTIONS :: Options{
 	query_accessible_name="Search commands",
 	empty_message="No matching commands",
 	allocation_error_message="Results temporarily unavailable",
+	footer_label="actions  ·  ↑/↓ navigate  ·  Enter run  ·  Esc close",
 	panel_max_width=720,
 	list_max_height=360,
 	row_height=38,
+	query_height=42,
 }
 
 @(private)
@@ -76,6 +99,7 @@ options_resolve :: proc(options: Options) -> Options {
 	if result.query_accessible_name == "" { result.query_accessible_name = DEFAULT_OPTIONS.query_accessible_name }
 	if result.empty_message == "" { result.empty_message = DEFAULT_OPTIONS.empty_message }
 	if result.allocation_error_message == "" { result.allocation_error_message = DEFAULT_OPTIONS.allocation_error_message }
+	if result.footer_label == "" { result.footer_label = DEFAULT_OPTIONS.footer_label }
 	if result.panel_max_width <= 0 || math.is_nan(result.panel_max_width) || math.is_inf(result.panel_max_width) {
 		result.panel_max_width = DEFAULT_OPTIONS.panel_max_width
 	}
@@ -84,6 +108,20 @@ options_resolve :: proc(options: Options) -> Options {
 	}
 	if result.row_height <= 0 || math.is_nan(result.row_height) || math.is_inf(result.row_height) {
 		result.row_height = DEFAULT_OPTIONS.row_height
+	}
+	if result.query_height <= 0 || math.is_nan(result.query_height) || math.is_inf(result.query_height) {
+		result.query_height = DEFAULT_OPTIONS.query_height
+	}
+	if result.appearance.enabled {
+		if result.appearance.overlay_padding < 0 || math.is_nan(result.appearance.overlay_padding) || math.is_inf(result.appearance.overlay_padding) {
+			result.appearance.overlay_padding = 32
+		}
+		if result.appearance.panel_padding < 0 || math.is_nan(result.appearance.panel_padding) || math.is_inf(result.appearance.panel_padding) {
+			result.appearance.panel_padding = 14
+		}
+		if result.appearance.panel_gap < 0 || math.is_nan(result.appearance.panel_gap) || math.is_inf(result.appearance.panel_gap) {
+			result.appearance.panel_gap = 8
+		}
 	}
 	return result
 }
@@ -305,12 +343,34 @@ build :: proc(
 	if !ui.key_scope(ctx, key) { return }
 	_ = refresh_matches(state, items)
 	resolved_options := options_resolve(options)
+	appearance := resolved_options.appearance
+	default_shape := alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=8}
+	backdrop_color := alicorn.Color{0.02, 0.025, 0.04, 0.58}
+	panel_shape := default_shape
+	panel_material := alicorn.MATERIAL_FLAT
+	panel_fill := alicorn.NO_BACKGROUND_COLOR
+	backdrop_effect := alicorn.BACKDROP_NONE
+	panel_height: f32 = 0
+	overlay_padding: f32 = 32
+	panel_padding: f32 = 14
+	panel_gap: f32 = 8
+	if appearance.enabled {
+		backdrop_color = appearance.backdrop_color
+		panel_shape = appearance.panel_shape
+		panel_material = appearance.panel_material
+		panel_fill = appearance.panel_fill
+		backdrop_effect = appearance.backdrop_effect
+		panel_height = appearance.physical_height
+		overlay_padding = appearance.overlay_padding
+		panel_padding = appearance.panel_padding
+		panel_gap = appearance.panel_gap
+	}
 
 	state.overlay_node = alicorn.modal_overlay_begin(
 		ctx,
 		alicorn.key_string("alikit-command-palette-overlay"),
-		style=ui.layout_style(.Column, grow=1, padding=32, align=.Center, justify=.Center, clip=true),
-		backdrop_color=alicorn.Color{0.02, 0.025, 0.04, 0.58},
+		style=ui.layout_style(.Column, grow=1, padding=overlay_padding, align=.Center, justify=.Center, clip=true),
+		backdrop_color=backdrop_color,
 	)
 	if state.overlay_node == 0 { return }
 	state.panel_node = alicorn.surface_begin(
@@ -319,20 +379,35 @@ build :: proc(
 		key=alicorn.key_string("alikit-command-palette-panel"),
 		style=ui.layout_style(.Column, width=-1, height=alicorn.LAYOUT_SIZE_FIT_CONTENT,
 			max_width=resolved_options.panel_max_width, max_height=resolved_options.list_max_height+150,
-			padding=14, gap=8, clip=true),
-		shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=8},
+			padding=panel_padding, gap=panel_gap, clip=true),
+		shape=panel_shape,
+		material=panel_material,
+		physical_height=panel_height,
+		fill=panel_fill,
+		backdrop_effect=backdrop_effect,
 		label="alikit-command-palette-panel",
 	)
 	if state.panel_node != 0 {
-		_ = ui.text(ctx, resolved_options.title, key=alicorn.key_string("alikit-command-palette-title"), size=20)
-		query := alicorn.text_field_controlled(
-			ctx,
-			&state.query,
-			key=alicorn.key_string("alikit-command-palette-query"),
-			style=ui.layout_style(.Row, height=42),
-		)
-		state.query_node = query.node
-		if query.node != 0 { _ = alicorn.semantic_text_field_label(ctx, resolved_options.query_accessible_name) }
+		if !resolved_options.hide_title {
+			_ = ui.text(ctx, resolved_options.title, key=alicorn.key_string("alikit-command-palette-title"), size=20)
+		}
+		if ui.row(ctx, key=alicorn.key_string("alikit-command-palette-query-row"), height=resolved_options.query_height, gap=4, align=.Center) {
+			if resolved_options.query_prefix != "" {
+				_ = ui.text(ctx, resolved_options.query_prefix,
+					key=alicorn.key_string("alikit-command-palette-prefix"),
+					style=ui.layout_style(.Row, width=16, height=resolved_options.query_height-4),
+					text_style=alicorn.Text_Style{font_weight=alicorn.FONT_WEIGHT_SEMIBOLD})
+			}
+			query := alicorn.text_field_controlled(
+				ctx,
+				&state.query,
+				key=alicorn.key_string("alikit-command-palette-query"),
+				style=ui.layout_style(.Row, grow=1, height=resolved_options.query_height-4),
+				text_style=resolved_options.query_text_style,
+			)
+			state.query_node = query.node
+			if query.node != 0 { _ = alicorn.semantic_text_field_label(ctx, resolved_options.query_accessible_name) }
+		}
 
 		if state.last_status == .Match_Buffer_Allocation_Failed {
 			_ = ui.text(ctx, resolved_options.allocation_error_message, key=alicorn.key_string("alikit-command-palette-allocation-error"))
@@ -380,7 +455,7 @@ build :: proc(
 				alicorn.virtual_list_end(ctx, list)
 			}
 		}
-		_ = ui.text(ctx, fmt.tprintf("%d actions  ·  ↑/↓ navigate  ·  Enter run  ·  Esc close", state.match_count),
+		_ = ui.text(ctx, fmt.tprintf("%d %s", state.match_count, resolved_options.footer_label),
 			key=alicorn.key_string("alikit-command-palette-help"), size=13)
 		alicorn.surface_end(ctx)
 	}
