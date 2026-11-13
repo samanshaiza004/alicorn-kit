@@ -35,7 +35,7 @@ palette_test_allocator :: proc(
 }
 
 @(private)
-palette_test_describe :: proc(rt: ^alicorn.Runtime, state: ^State, items: []Item) -> alicorn.Node_ID {
+palette_test_describe :: proc(rt: ^alicorn.Runtime, state: ^State, items: []Item, result: ^Event = nil) -> alicorn.Node_ID {
 	ctx, should_build := alicorn.begin_frame(rt)
 	if !should_build { return 0 }
 	root := alicorn.container_begin(&ctx, .Root,
@@ -48,10 +48,10 @@ palette_test_describe :: proc(rt: ^alicorn.Runtime, state: ^State, items: []Item
 	editor := alicorn.text_field(&ctx, "editor", key=alicorn.key_string("alikit-palette-test-editor"))
 	alicorn.container_end(&ctx)
 	if state.open {
-		_ = build(&ctx, state, items, alicorn.key_string("alikit-palette-test-overlay"))
+		built_event := build(&ctx, state, items, alicorn.key_string("alikit-palette-test-overlay"))
+		if result != nil { result^ = built_event }
 	}
 	alicorn.end_frame(&ctx)
-	after_frame(state, rt)
 	return editor
 }
 
@@ -75,15 +75,55 @@ test_keyboard_activation_and_focus_restore_use_retained_runtime :: proc(t: ^test
 	_ = palette_test_describe(&rt, &state, items[:])
 	testing.expect(t, alicorn.focused_node(&rt) == state.query_node,
 		"opening should move focus into the palette query after reconciliation")
-	handled, event := handle_key(&state, &rt, items[:], host.Application_Key.Down)
-	testing.expect(t, handled && event.kind == .None && state.selection.id == Item_ID(22),
-		"Down should move selection to the next enabled stable item")
-	handled, event = handle_key(&state, &rt, items[:], host.Application_Key.Return)
+	handled := alicorn.application_dispatch_key(&rt, nil, nil, .Down, text_input_focused=true)
+	testing.expect(t, handled, "Alicorn should route Down to the focused palette scope")
+	_ = palette_test_describe(&rt, &state, items[:])
+	testing.expect(t, state.selection.id == Item_ID(22),
+		"the palette should process its queued key against the next description's current item slice")
+	handled = alicorn.application_dispatch_key(&rt, nil, nil, .Return, text_input_focused=true)
+	event: Event
+	_ = palette_test_describe(&rt, &state, items[:], &event)
 	testing.expect(t, handled && event.kind == .Activated && event.item_id == Item_ID(22) && !state.open,
 		"Return should activate the selected stable ID and close the palette")
-	_ = palette_test_describe(&rt, &state, items[:])
 	testing.expect(t, alicorn.focused_node(&rt) == editor,
 		"closing should restore the focus owner captured before the modal opened")
+}
+
+@(test)
+test_pointer_activation_restores_focus_after_modal_tree_retires :: proc(t: ^testing.T) {
+	rt := alicorn.new_runtime(alicorn.Rect{0, 0, 480, 320})
+	defer alicorn.destroy_runtime(&rt)
+	state: State
+	if !init(&state, context.allocator) {
+		testing.expect(t, false, "palette state should initialize")
+		return
+	}
+	defer destroy(&state)
+	items := palette_test_items
+	root := palette_test_describe(&rt, &state, items[:])
+	editor, editor_found := alicorn.node_by_key(&rt, alicorn.key_string("alikit-palette-test-editor"), .Text_Field)
+	testing.expect(t, root != 0 && editor_found && alicorn.focus(&rt, editor), "the editor should be the focus owner before opening")
+	if !open_palette(&state, &rt) { return }
+	_ = palette_test_describe(&rt, &state, items[:])
+	button_key := alicorn.key_pair(0xA11C_0001, u64(items[0].id))
+	button, button_found := alicorn.node_by_key(&rt, button_key, .Button)
+	button_info, info_found := alicorn.node_info(&rt, button)
+	if !button_found || !info_found {
+		testing.expect(t, false, "the first result should have a realized button and bounds")
+		return
+	}
+	x := button_info.bounds.x + button_info.bounds.w*0.5
+	y := button_info.bounds.y + button_info.bounds.h*0.5
+	_ = alicorn.process_pointer(&rt, alicorn.Pointer_Event{kind=.Down, x=x, y=y, button=alicorn.POINTER_BUTTON_PRIMARY})
+	_ = palette_test_describe(&rt, &state, items[:])
+	_ = alicorn.process_pointer(&rt, alicorn.Pointer_Event{kind=.Up, x=x, y=y, button=alicorn.POINTER_BUTTON_PRIMARY})
+	event: Event
+	_ = palette_test_describe(&rt, &state, items[:], &event)
+	testing.expect(t, event.kind == .Activated && event.item_id == items[0].id && !state.open,
+		"a result row should activate through ordinary retained pointer input")
+	_ = palette_test_describe(&rt, &state, items[:])
+	testing.expect(t, alicorn.focused_node(&rt) == editor,
+		"focus restoration should wait for the corrective description to retire the already-described modal tree")
 }
 
 @(test)
@@ -130,14 +170,35 @@ test_navigation_and_activation_yield_during_runtime_ime_composition :: proc(t: ^
 		testing.expect(t, false, "query should accept runtime preedit composition")
 		return
 	}
-	for key in ([2]host.Application_Key{.Down, .Return}) {
-		handled, event := handle_key(&state, &rt, items[:], key)
-		testing.expect(t, !handled && event.kind == .None && state.open,
-			"palette navigation and activation should yield while the focused query is composing")
+	for key in ([2]alicorn.Application_Key{.Down, .Return}) {
+		handled := alicorn.application_dispatch_key(&rt, nil, nil, key, text_input_focused=true, composition_active=true)
+		testing.expect(t, !handled && state.open,
+			"scoped navigation and activation should yield while the focused query is composing")
 	}
 	interaction, found := alicorn.text_field_interaction(&rt, state.query_node)
 	testing.expect(t, found && interaction.composition_active,
 		"the fixture should retain the active composition state after the keys are yielded")
+}
+
+@(test)
+test_modal_pointer_scope_dismisses_outside_without_host_callback :: proc(t: ^testing.T) {
+	rt := alicorn.new_runtime(alicorn.Rect{0, 0, 480, 320})
+	defer alicorn.destroy_runtime(&rt)
+	state: State
+	if !init(&state, context.allocator) {
+		testing.expect(t, false, "palette state should initialize")
+		return
+	}
+	defer destroy(&state)
+	items := palette_test_items
+	_ = palette_test_describe(&rt, &state, items[:])
+	_ = open_palette(&state, &rt)
+	_ = palette_test_describe(&rt, &state, items[:])
+	outside := alicorn.Pointer_Event{kind=.Down, x=0, y=0, button=alicorn.POINTER_BUTTON_PRIMARY}
+	testing.expect(t, alicorn.application_dispatch_pointer(&rt, nil, nil, outside, state.overlay_node),
+		"the modal scope should claim primary pointer input without an application pointer callback")
+	_ = palette_test_describe(&rt, &state, items[:])
+	testing.expect(t, !state.open, "the palette should close after its next description processes outside-click input")
 }
 
 @(test)

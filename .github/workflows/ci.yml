@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: samanshaiza004/alicorn
-          ref: 0beff9d29f6a1f8b32e0cde895fe4f9ce9f8238c
+          ref: 54ba6d2be71d6c8f742605fcea82c7ce00731e4b
           path: alicorn
 
       - name: Check out pinned AccessKit binding

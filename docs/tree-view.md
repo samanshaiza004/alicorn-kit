@@ -24,7 +24,10 @@ next description. No placeholder is treated as an item or receives an ID.
 
 The component owns fixed-row virtualization, indentation, keyboard traversal,
 Tree/Tree_Item semantics, retained focus, visible-row reveal, and optional
-single selection. An `icon_proc` may return an Alicorn icon for a row, a
+single selection. With `ui.run`, the tree registers a scoped input owner during
+`build`; Alicorn routes navigation keys and enabled context-menu input to the
+next description. The component processes them against the fresh visible-row
+window and returns the resulting typed event. An `icon_proc` may return an Alicorn icon for a row, a
 `label_color_proc` receives the current UI context and may provide an
 application-specific label color; `row_hook_proc` may attach Alicorn drag/drop behavior to the row, and
 `label_paint_proc` receives the realized label node for decorations such as an
@@ -55,13 +58,13 @@ position where the complete projection is available.
 
 ## Context menus
 
-Set `context_menu_enabled` and forward secondary pointer input plus Alicorn's
-hit-tested target to `tree_view.pointer`. For keyboard invocation, route the
-`.Context_Menu` key through `handle_key`. AliKit anchors Alicorn's menu to the
+Set `context_menu_enabled` to receive secondary-click and keyboard context-menu
+events through the same scoped route. AliKit anchors Alicorn's menu to the
 realized row and records its stable target ID; the application supplies menu
 content and dispatch. Revalidate that ID and its current availability when the
 user invokes a destructive action because the row may have changed while the
-menu was open.
+menu was open. Lower-level hosts can route input manually with `pointer` and
+`handle_key`.
 
 ## Minimal integration
 
@@ -83,10 +86,10 @@ if event.kind == .Expand_Requested {
 }
 ```
 
-Keep the `tree_view.State` with the consuming view instance. Route host key
-input to `tree_view.handle_key` only while this tree's logical list owns focus.
-Apply the returned event in the application; rebuilding the description with
-the updated projection completes expansion and collapse.
+Keep the `tree_view.State` with the consuming view instance. `ui.run` routes
+tree input automatically; apply returned events in the application. Rebuilding
+the description with the updated projection completes expansion and collapse.
+Manual hosts can call `handle_key` and `pointer` with their host callbacks.
 
 The compiling native example in [`examples/tree_view`](../examples/tree_view/main.odin)
 shows app-owned hierarchy, expansion state, icon selection, callbacks, and the

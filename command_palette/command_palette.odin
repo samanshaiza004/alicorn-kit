@@ -4,7 +4,6 @@ import "core:fmt"
 import "core:math"
 import "core:mem"
 import alicorn "alicorn:runtime"
-import host "alicorn:native/sdl_gpu"
 import ui "alicorn:ui"
 import palette "alikit:palette_model"
 
@@ -46,6 +45,7 @@ State :: struct {
 	open:           bool,
 	focus_pending:  bool,
 	restore_focus:  bool,
+	after_frame_registered: bool,
 	initialized:    bool,
 }
 
@@ -176,6 +176,7 @@ open_palette :: proc(
 	state.results_node = 0
 	state.selection = {}
 	state.search_mode = search_mode
+	palette_schedule_after_frame(state, rt)
 	alicorn.invalidate_root(rt, "AliKit command palette opened")
 	return true
 }
@@ -188,7 +189,30 @@ close_palette :: proc(state: ^State, rt: ^alicorn.Runtime, restore_focus := true
 	state.query_node = 0
 	state.panel_node = 0
 	state.results_node = 0
-	if rt != nil { alicorn.invalidate_root(rt, "AliKit command palette closed") }
+	if rt != nil {
+		if restore_focus { palette_schedule_after_frame(state, rt) }
+		alicorn.invalidate_root(rt, "AliKit command palette closed")
+	}
+}
+
+@(private)
+palette_schedule_after_frame :: proc(state: ^State, rt: ^alicorn.Runtime) {
+	if state == nil || rt == nil || state.after_frame_registered { return }
+	if alicorn.interaction_after_frame_register(rt, rawptr(state), palette_after_frame_callback) {
+		state.after_frame_registered = true
+	}
+}
+
+@(private)
+palette_after_frame_callback :: proc(data: rawptr, rt: ^alicorn.Runtime) {
+	state := cast(^State)data
+	if state != nil { state.after_frame_registered = false }
+	after_frame(state, rt)
+}
+
+@(private)
+palette_text_change_callback :: proc(data: rawptr, rt: ^alicorn.Runtime, change: alicorn.Text_Change) -> bool {
+	return text_change(cast(^State)data, rt, change)
 }
 
 @(private)
@@ -249,7 +273,7 @@ text_change :: proc(state: ^State, rt: ^alicorn.Runtime, change: alicorn.Text_Ch
 // handle_key is intended to be called from Application.on_key. It receives a
 // fresh item slice because applications may rebuild or reorder actions between
 // input turns. It consumes only palette navigation, activation, and dismissal.
-handle_key :: proc(state: ^State, rt: ^alicorn.Runtime, items: []Item, key: host.Application_Key) -> (handled: bool, event: Event) {
+handle_key :: proc(state: ^State, rt: ^alicorn.Runtime, items: []Item, key: alicorn.Application_Key) -> (handled: bool, event: Event) {
 	if state == nil || rt == nil || !state.open { return }
 	if key == .Up || key == .Down || key == .Return {
 		if interaction, found := alicorn.text_field_interaction(rt, state.query_node); found && interaction.composition_active {
@@ -306,7 +330,14 @@ after_frame :: proc(state: ^State, rt: ^alicorn.Runtime) {
 	// so its overlay can remain in that submitted tree for one more frame. Wait
 	// until it is retired before restoring focus behind the modal boundary.
 	if state.overlay_node != 0 {
-		if _, found := alicorn.node_info(rt, state.overlay_node); found { return }
+		if _, found := alicorn.node_info(rt, state.overlay_node); found {
+			// A row can activate after its overlay has already been described in
+			// this frame. Keep checking after the corrective description retires
+			// that overlay, then restore focus behind the modal boundary.
+			palette_schedule_after_frame(state, rt)
+			alicorn.invalidate_root(rt, "AliKit command palette waiting for modal retirement")
+			return
+		}
 	}
 	state.restore_focus = false
 	focus := state.previous_focus
@@ -341,6 +372,20 @@ build :: proc(
 ) -> (event: Event) {
 	if ctx == nil || ctx.runtime == nil || state == nil || !state.initialized || !state.open { return }
 	if !ui.key_scope(ctx, key) { return }
+	if state.overlay_node != 0 {
+		if queued, found := alicorn.interaction_event_next(ctx.runtime, state.overlay_node); found {
+			switch queued.kind {
+			case .Key:
+				_, event = handle_key(state, ctx.runtime, items, queued.key)
+			case .Pointer:
+				_ = pointer(state, ctx.runtime, queued.pointer, queued.target)
+			}
+			if !state.open { return }
+		}
+	}
+	if state.focus_pending || state.restore_focus {
+		palette_schedule_after_frame(state, ctx.runtime)
+	}
 	_ = refresh_matches(state, items)
 	resolved_options := options_resolve(options)
 	appearance := resolved_options.appearance
@@ -373,6 +418,13 @@ build :: proc(
 		backdrop_color=backdrop_color,
 	)
 	if state.overlay_node == 0 { return }
+	_ = ui.interaction_scope(ctx, state.overlay_node, rawptr(state), alicorn.Interaction_Scope_Options{
+		keys={.Escape, .Open_Command_Palette, .Up, .Down, .Return},
+		composition_yield_keys={.Up, .Down, .Return},
+		pointers={.Primary_Down},
+		modal=true,
+		on_text_change=palette_text_change_callback,
+	})
 	state.panel_node = alicorn.surface_begin(
 		ctx,
 		alicorn.surface_core_color_role(.Surface),
@@ -441,6 +493,7 @@ build :: proc(
 						content_style=alicorn.button_content_style(horizontal=.Start, vertical=.Center, padding_x=10, padding_y=4),
 						variant=.Quiet,
 					) {
+						palette_schedule_after_frame(state, ctx.runtime)
 						state.selection.id = item.id
 						state.open = false
 						state.focus_pending = false

@@ -2,7 +2,6 @@ package main
 
 import "core:fmt"
 import alicorn "alicorn:runtime"
-import host "alicorn:native/sdl_gpu"
 import ui "alicorn:ui"
 import tree_view "alikit:tree_view"
 import model "alikit:tree_model"
@@ -75,24 +74,14 @@ apply_event :: proc(app: ^App, event: tree_view.Event) {
 	}
 }
 
-build :: proc(data: rawptr, rt: ^alicorn.Runtime, _width, _height: int, _scale: f32) -> alicorn.Node_ID {
-	app := cast(^App)data
-	ctx, should_build := alicorn.begin_frame(rt)
-	if !should_build { return 0 }
-	root := alicorn.container_begin(&ctx, .Root,
-		key=alicorn.key_string("tree-example-root"),
-		style=ui.layout_style(.Column, grow=1, padding=24, gap=12))
-	if root == 0 {
-		alicorn.end_frame(&ctx)
-		return 0
-	}
-	_ = ui.text(&ctx, "AliKit · Tree View", size=24)
-	_ = ui.text(&ctx, "Use Up/Down to move, Left/Right to collapse or expand, and Enter to activate.")
+render :: proc(app: ^App, ctx: ^ui.UI) {
+	_ = ui.text(ctx, "AliKit · Tree View", size=24)
+	_ = ui.text(ctx, "Use Up/Down to move, Left/Right to collapse or expand, and Enter to activate.")
 	if app.last_item != 0 {
-		_ = ui.text(&ctx, fmt.tprintf("Focused item ID: %d", u64(app.last_item)))
+		_ = ui.text(ctx, fmt.tprintf("Focused item ID: %d", u64(app.last_item)))
 	}
 	window := tree_view.Window{total_count=app.row_count, revision=app.revision, items=app.rows[:app.row_count]}
-	event := tree_view.build(&ctx, &app.view, window, alicorn.key_string("example-tree"),
+	event := tree_view.build(ctx, &app.view, window, alicorn.key_string("example-tree"),
 		tree_view.Options{
 			accessible_label="Project files",
 			selection_enabled=true,
@@ -100,29 +89,10 @@ build :: proc(data: rawptr, rt: ^alicorn.Runtime, _width, _height: int, _scale: 
 			icon_proc=row_icon,
 		})
 	apply_event(app, event)
-	alicorn.container_end(&ctx)
-	alicorn.end_frame(&ctx)
-	return root
-}
-
-on_key :: proc(data: rawptr, rt: ^alicorn.Runtime, key: host.Application_Key) -> bool {
-	app := cast(^App)data
-	window := tree_view.Window{total_count=app.row_count, revision=app.revision, items=app.rows[:app.row_count]}
-	handled, event := tree_view.handle_key(&app.view, rt, window, key,
-		tree_view.Options{selection_enabled=true, select_on_focus=true, icon_proc=row_icon})
-	apply_event(app, event)
-	return handled
 }
 
 main :: proc() {
 	app := App{expanded={true, true, false, false, false}, revision=1}
 	rebuild_rows(&app)
-	host.Run(host.Application{
-		state=rawptr(&app),
-		title="AliKit Tree View",
-		width=760,
-		height=520,
-		build=build,
-		on_key=on_key,
-	})
+	ui.run(&app, render, title="AliKit Tree View", width=760, height=520)
 }

@@ -63,12 +63,22 @@ current result count is cleared, and `state.last_status` reports
 `Options.allocation_error_message` and retries on a later description. Query
 update failures are also available through `last_status`.
 
-## Native host integration
+## Input and lifecycle
 
-The palette uses Alicorn's public `Application` callbacks because the simple
-`ui.run` helper does not expose application-level key and text callbacks. The
-application keeps its existing callback policy and calls the component helpers
-from those callbacks:
+When used with `ui.run`, the palette registers its modal input scope during
+`build`. Alicorn routes navigation, dismissal, outside clicks, and query text
+changes to the palette automatically; the application only handles its
+application-specific command for opening the palette and dispatches the
+returned activation event. The canonical example uses this path.
+
+The current item slice is supplied to `build` on each description, so queued
+input is applied against fresh application data. In caller-filtered mode, build
+the ranked slice using `query_text` before calling the component.
+
+Applications using the lower-level `host.Run` loop can continue to use
+`handle_key`, `text_change`, `pointer`, and `after_frame` directly. This escape
+hatch is useful for hosts with custom event policy; it is not required by a
+normal `ui.run` application:
 
 ```odin
 on_key :: proc(data: rawptr, rt: ^alicorn.Runtime, key: host.Application_Key) -> bool {
@@ -88,19 +98,14 @@ on_text_change :: proc(data: rawptr, rt: ^alicorn.Runtime, change: alicorn.Text_
 }
 ```
 
-Pass a fresh item slice to `handle_key`. In substring mode, AliKit filters it
-against its current query. In caller-filtered mode, the application must filter
-and rank it against `command_palette.query_text(&app.palette)` before passing
-it. This ensures activation is checked against current application data rather
-than a stale item snapshot. The text-change callback's `change.text` is borrowed
-for the callback only; AliKit copies it into its owned controlled-text buffer.
-
-Describe the ordinary root first. Then call `command_palette.build` while the
-frame is open, and call `command_palette.after_frame` after `alicorn.end_frame`.
+For the manual path, pass a fresh item slice to `handle_key`. In substring mode,
+AliKit filters it against its current query. In caller-filtered mode, the
+application must filter and rank it against `query_text`. The text-change
+callback's `change.text` is borrowed for that callback only; AliKit copies it
+into its owned controlled-text buffer. Describe the ordinary root first, then
+call `build` while the frame is open and `after_frame` after `alicorn.end_frame`.
 The returned activation event contains a stable ID. Keep dispatch in the
-application so it can apply its own mutation and error policy. For pointer
-outside-dismissal, forward application pointer events to
-`command_palette.pointer`. The example shows the complete wiring.
+application so it can apply its own mutation and error policy.
 
 The palette declines Up, Down, and Return while Alicorn's public query-field
 snapshot reports active composition, allowing the native text host to handle
@@ -139,8 +144,8 @@ and stable IDs.
 
 ## Compatibility and dependencies
 
-The package is source-level Odin and imports Alicorn's `runtime`, `ui`, and
-`native/sdl_gpu` collections. The palette does not access Alicorn private
-runtime storage. The host adapter is intentionally native because it uses
-Alicorn's cross-platform `Application_Key` vocabulary and native application
-callbacks. Other AliKit packages can remain independent of the native host.
+The component is source-level Odin and imports Alicorn's `runtime` and `ui`
+collections; the native example uses `ui.run`. The component does not access
+private runtime storage. Lower-level consumers may import `native/sdl_gpu` for
+the `Application` callback types. Other AliKit packages remain independent of
+the native host.

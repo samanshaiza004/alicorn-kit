@@ -10,8 +10,9 @@ storage.
 
 - Check [the component catalog](docs/components.md) to confirm what exists and
   which layer owns each responsibility.
-- Read the component's API guide and follow the complete native integration in
-  [`examples/command_palette`](examples/command_palette/main.odin).
+- Read the component's API guide and follow the `ui.run` integration in
+  [`examples/command_palette`](examples/command_palette/main.odin). Use the
+  lower-level host callbacks only when the application needs custom dispatch.
 - For tree integrations, follow [`docs/tree-view.md`](docs/tree-view.md) and
   [`examples/tree_view`](examples/tree_view/main.odin); keep the visible-row
   projection, expansion/loading policy, and item actions in the application.

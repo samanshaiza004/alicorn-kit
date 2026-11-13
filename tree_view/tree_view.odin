@@ -120,6 +120,7 @@ build :: proc(ctx: ^ui.UI, state: ^State, window: Window, key: ui.UI_Key, option
 		_ = ui.text(ctx, "Tree data unavailable", key=alicorn.key_string("tree-data-error"))
 		return {}
 	}
+	previous_scroll_node := state.scroll_node
 	model.reconcile(&state.model, window)
 	state.tree_node = alicorn.container_begin(ctx, .Container,
 		label=resolved.accessible_label,
@@ -127,6 +128,17 @@ build :: proc(ctx: ^ui.UI, state: ^State, window: Window, key: ui.UI_Key, option
 		style=ui.layout_style(.Column, grow=1, clip=true),
 	)
 	if state.tree_node == 0 { return {} }
+	queued_event: Event
+	if previous_scroll_node != 0 {
+		if input, found := alicorn.interaction_event_next(ctx.runtime, previous_scroll_node); found {
+			switch input.kind {
+			case .Key:
+				_, queued_event = handle_key(state, ctx.runtime, window, input.key, resolved)
+			case .Pointer:
+				_, queued_event = pointer(state, ctx.runtime, window, input.pointer, input.target, resolved)
+			}
+		}
+	}
 	state.semantic_namespace = resolved.semantic_namespace
 	if state.semantic_namespace == 0 {
 		state.semantic_namespace = u64(state.tree_node) ~ 0x414C494B49545245
@@ -139,10 +151,15 @@ build :: proc(ctx: ^ui.UI, state: ^State, window: Window, key: ui.UI_Key, option
 		}
 	}
 	_ = alicorn.semantic_description(ctx, .Tree, resolved.accessible_label)
+	keys := alicorn.Interaction_Key_Set{.Up, .Down, .Home, .End, .Page_Up, .Page_Down, .Left, .Right, .Return}
+	if resolved.context_menu_enabled { keys += {.Context_Menu} }
+	pointers := alicorn.Interaction_Pointer_Set{}
+	if resolved.context_menu_enabled { pointers += {.Secondary_Down} }
 	if window.total_count == 0 {
+		state.scroll_node = 0
 		_ = ui.text(ctx, resolved.empty_label, key=alicorn.key_string("tree-empty"))
 		alicorn.container_end(ctx)
-		return {}
+		return queued_event
 	}
 	list := alicorn.virtual_list_begin(
 		ctx,
@@ -155,6 +172,12 @@ build :: proc(ctx: ^ui.UI, state: ^State, window: Window, key: ui.UI_Key, option
 		restore=resolved.scroll_restore,
 	)
 	state.scroll_node = list.scroll.id
+	if state.scroll_node != 0 {
+		_ = ui.interaction_scope(ctx, state.scroll_node, rawptr(state), alicorn.Interaction_Scope_Options{
+			keys=keys,
+			pointers=pointers,
+		})
+	}
 	event: Event
 	if list.scroll.id != 0 {
 		for absolute_index := list.first; absolute_index < list.last; absolute_index += 1 {
@@ -180,6 +203,9 @@ build :: proc(ctx: ^ui.UI, state: ^State, window: Window, key: ui.UI_Key, option
 		_ = alicorn.virtual_list_ensure_visible(ctx.runtime, state.scroll_node, event.index, "AliKit tree pending focus")
 	}
 	alicorn.container_end(ctx)
+	if queued_event.kind != .None && (event.kind == .None || event.kind == .Range_Requested) {
+		event = queued_event
+	}
 	if event.kind == .Pressed {
 		focus_runtime(state, ctx.runtime, event.id, event.index)
 		alicorn.invalidate_root(ctx.runtime, "AliKit tree row pressed")
