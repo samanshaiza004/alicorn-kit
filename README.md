@@ -27,16 +27,29 @@ AliKit does not promise Unicode case folding or fuzzy ranking itself, and it doe
 not provide command registration, application dispatch, or native OS command
 services.
 
+## Start here
+
+- [Component catalog](docs/components.md) — current packages and when to use
+  them.
+- [Command Palette guide](docs/command-palette.md) — API, ownership, input,
+  appearance, and native integration.
+- [Canonical native example](examples/command_palette/main.odin) — a complete
+  consumer with app-owned actions and lifecycle.
+- [Agent guidance](AGENTS.md) — project boundaries and validation steps.
+
+The example is intentionally small enough to copy as a starter and is compiled
+by the same validation script as the component tests.
+
 ## Repository layout
 
 - `palette_model/` — UI-independent filtering and selection behavior.
 - `command_palette/` — Alicorn presentation and native input adapter.
-- `examples/command_palette/` — small native consumer showing callback wiring.
+- `examples/command_palette/` — canonical small native consumer and starter.
+- `docs/components.md` — package catalog and responsibility boundaries.
 - `docs/command-palette.md` — API, ownership, and integration guide.
 
-See the guide before adopting the component in an application. A native Alicorn
-consumer needs the same Odin, SDL, and AccessKit setup as other Alicorn desktop
-applications.
+A native Alicorn consumer needs the same Odin, SDL, and AccessKit setup as
+other Alicorn desktop applications.
 
 ## Validation
 

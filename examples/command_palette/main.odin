@@ -14,6 +14,21 @@ SAMPLE_ITEMS :: [4]model.Item{
 	{ id=model.Item_ID(4), title="Publish Release", description="Unavailable in this example", keywords="ship", disabled=true },
 }
 
+// Example application-owned appearance values. A real application can build
+// this from its own theme or leave Appearance disabled to use Alicorn defaults.
+EXAMPLE_PALETTE_APPEARANCE :: palette.Appearance{
+	enabled=true,
+	overlay_padding=40,
+	panel_padding=16,
+	panel_gap=10,
+	backdrop_color=alicorn.Color{0.025, 0.035, 0.055, 0.68},
+	panel_shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=10},
+	panel_material=alicorn.MATERIAL_FLAT,
+	physical_height=0,
+	panel_fill=alicorn.Color{0.12, 0.14, 0.18, 1},
+	backdrop_effect=alicorn.BACKDROP_NONE,
+}
+
 App :: struct {
 	palette:    palette.State,
 	items:      [4]model.Item,
@@ -41,7 +56,11 @@ build :: proc(data: rawptr, rt: ^alicorn.Runtime, _width, _height: int, _scale: 
 	if app.palette.open {
 		event := palette.build(&ctx, &app.palette, app.items[:],
 			alicorn.key_string("alikit-example-palette"),
-			palette.Options{title="Example Actions"})
+			palette.Options{
+				title="Example Actions",
+				query_accessible_name="Search example actions",
+				appearance=EXAMPLE_PALETTE_APPEARANCE,
+			})
 		if event.kind == .Activated { app.last_action = event.item_id }
 	}
 	alicorn.end_frame(&ctx)
