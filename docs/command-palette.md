@@ -113,6 +113,21 @@ unrelated keys continue through the host application's policy.
 The modal overlay retains Alicorn's normal focus scope, semantics, hit testing,
 and accessibility behavior.
 
+## Presentation options
+
+The default appearance uses Alicorn's ordinary Surface theme role and a neutral
+modal backdrop. Applications can provide `Options.appearance` to keep a palette
+visually integrated with their own surface treatment. It accepts Alicorn's
+surface shape, material, physical height, panel fill, backdrop color, and
+backdrop effect, along with overlay/panel spacing. These are borrowed values
+for the current build; the component does not register or retain theme
+resources.
+
+`Options.hide_title`, `query_prefix`, `query_height`, and `query_text_style`
+allow an application to match an existing palette header without replacing the
+component's focusable controlled query field. The default options remain
+appropriate for consumers that want a conventional titled palette.
+
 ## UI-independent model
 
 The model package can be used independently to filter and navigate a command
