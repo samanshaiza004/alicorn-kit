@@ -2,8 +2,8 @@
   "schema": 1,
   "alicorn": {
     "repository": "https://github.com/samanshaiza004/alicorn.git",
-    "ref": "master",
-    "revision": "a19d2c89138bcf1f19b00ed6ece58b70ede0508a"
+    "ref": "codex/issue-226-key-preemption",
+    "revision": "700f2c58c3fe18541634ffeb441f0365066ba820"
   },
   "accesskit_binding": {
     "repository": "https://github.com/samanshaiza004/odin-accesskit.git",

@@ -37,12 +37,13 @@ builds every package with:
 ```
 
 plus the AccessKit C SDK collection and linker flags returned by
-`alicorn/.deps/odin-accesskit/tools/bootstrap.ps1`. The local recipe was
-established with a directory junction `alicorn -> <pinned checkout>` and
-`dependencies.lock.json` updated to `a19d2c8...`. Baseline before changes:
+`alicorn/.deps/odin-accesskit/tools/bootstrap.ps1`. The local recipe uses a
+directory junction or checkout at `./alicorn`; `dependencies.lock.json` now
+pins `700f2c5...` (`codex/issue-226-key-preemption`) so the icon picker can
+adopt Alicorn's scope-owned `text_preempt_keys` policy. Baseline before changes:
 `palette_model` 4, `tree_model` 8, `command_palette` 6, `tree_view` 6 tests, both
 native examples building. The same suite is green after the changes, and now
-also runs `palette_parts` (8 tests), `icon_picker` (10 tests), the native icon
+also runs `palette_parts` (8 tests), `icon_picker` (11 tests), the native icon
 picker example, and a copied-source build.
 
 The CI workflow pin matches the same revision.
@@ -200,6 +201,7 @@ consumer is `examples/icon_picker/main.odin`.
 | Focus vs selection | `test_icon_picker_focus_and_selection_are_separate` | `Current` and `Selected` are distinct |
 | Removal/reorder | `..._skips_disabled_and_reconciles_removal` | active identity moves by key, selection stays caller-owned |
 | IME yield | `test_icon_picker_search_filters_and_ime_yields_navigation` | preedit owns Up/Down; committed query filters |
+| Search-focus key yield | `test_icon_picker_search_focus_yields_navigation_and_space` | arrows move the grid, Space activates, characters/Backspace edit, composition stays with text |
 | Escape/outside click | `test_icon_picker_modal_escape_outside_click_and_nested_overlay` | dialog closes, focus returns to opener |
 | Nested modal over picker | same test | nested dialog owns input; Escape closes only the top layer |
 | Virtualized/recycled items | `test_icon_picker_virtualizes_large_grid_and_reveals_identity` | 200 choices, bounded realization, logical count 200, last identity revealed |
@@ -216,7 +218,7 @@ explicit drive assertions. That absence is recorded as a core candidate.
 | Artifact | LOC | Notes |
 |---|---:|---|
 | `icon_picker` complete package | 840 | 12 public procs, two appearances, label/detail variants |
-| `icon_picker` tests | 672 | 10 tests, including pattern check and 200-item virtualization |
+| `icon_picker` tests | 724 | 11 tests, including pattern check, search-focus key yield, and 200-item virtualization |
 | Example consumer | 260 | modal host, Escape/outside/nested, Ctrl+F, appearance toggle |
 | `palette_parts` package | 402 | result list only |
 | `palette_parts` tests + pilot | 753 | 8 tests plus measurement fixture |
@@ -240,7 +242,7 @@ dissimilar consumers need the same generic contract.
 | Keep stock entry points | `command_palette`, `tree_view` | **GO** | Unchanged and green. |
 | Generic behavior framework | — | **NO-GO** | The composite is ordinary state/procedures; a framework would add a second abstraction without a demonstrated consumer. |
 
-## Core requirements proposed to Alicorn (not implemented here)
+## Core requirements proposed to Alicorn
 
 1. **Key preemption for a generic text owner that is not an editor.** A focused
    `text_input_target` makes Alicorn suppress `Left`/`Right`/`Home`/`End`
@@ -250,6 +252,11 @@ dissimilar consumers need the same generic contract.
    preemption for its declared keys, or add a "text capture without editing"
    owner mode. Consumers: `icon_picker` (Space + arrows) and any palette list
    that wants Space activation while roving.
+   **Resolved** by Alicorn #226 (`text_preempt_keys`); `icon_picker` now declares
+   the policy on its single root scope and supports Space plus arrows while the
+   search field keeps focus. The scope must own the text target (be an ancestor),
+   so the picker's keyboard scope moved from the grid's scroll region to the
+   composite root.
 2. **Roving semantic focus for non-Tab-stop rows.** Rows are intentionally
    `focusable=false` so the collection is one Tab stop, so a semantic `Focus`
    action on a `List_Box_Option` is rejected by
@@ -281,9 +288,9 @@ dissimilar consumers need the same generic contract.
 - The comparison is one scripted palette path with one fixture. The work
   counters are deterministic; wall-clock latency and allocation bytes vary by a
   few percent per run.
-- `icon_picker` does not support Space activation because of core gap 1; use
-  Return, pointer, or semantic activation. This is a documented limit, not a
-  silently missing behavior.
+- `icon_picker` Space activation depends on Alicorn #226 `text_preempt_keys`
+  (pinned here at `700f2c5...`). A consumer still on an older Alicorn revision
+  falls back to Return, pointer, or semantic activation.
 
 ## Reproduction
 

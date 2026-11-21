@@ -531,6 +531,50 @@ test_icon_picker_search_filters_and_ime_yields_navigation :: proc(t: ^testing.T)
 }
 
 @(test)
+test_icon_picker_search_focus_yields_navigation_and_space :: proc(t: ^testing.T) {
+	app := Test_App{choices=fixture_choices(), appearance=.Grid, inline=true, focus_target=.Search}
+	handle, ok := test_open(&app, t)
+	if !ok { return }
+	defer test_close(&app, &handle)
+
+	focused := alicorn.focused_node(handle.runtime)
+	info, found := alicorn.node_info(handle.runtime, focused)
+	testing.expect(t, found && info.kind == .Text_Field,
+		"the search field should own focus before the grid keys are exercised")
+
+	// text_preempt_keys returns arrows and Space to the picker while the search
+	// field keeps focus; this is configuration, not a component key fork.
+	active_before := active_key(&app.picker)
+	testing.expect(t, testui.step(&handle, testui.Input{kind=.Key, key=.Right}) == .Ok &&
+		active_key(&app.picker) != active_before && query_text(&app.picker) == "",
+		"Right should navigate the grid while the search field keeps focus")
+	testing.expect(t, testui.step(&handle, testui.Input{kind=.Key, key=.Space}) == .Ok &&
+		app.activations == 1 && app.selected_key == active_key(&app.picker),
+		"Space should activate the active choice while the search field keeps focus")
+
+	testing.expect(t, testui.step(&handle, testui.Input{kind=.Text_Commit, text="term"}) == .Ok &&
+		query_text(&app.picker) == "term" && match_count(&app.picker) == 1,
+		"characters should still edit the focused search field")
+	testing.expect(t, testui.step(&handle, testui.Input{kind=.Key, key=.Left}) == .Ok &&
+		active_key(&app.picker) == 7 && query_text(&app.picker) == "term",
+		"yielded navigation should keep the single-match active identity")
+	testing.expect(t, testui.step(&handle, testui.Input{kind=.Key, key=.Backspace}) == .Ok &&
+		query_text(&app.picker) == "ter",
+		"Backspace should still reach the focused search field")
+
+	// Active composition owns the whole navigation set.
+	active_after := active_key(&app.picker)
+	_ = testui.step(&handle, testui.Input{kind=.Text_Preedit, text="mi", composition_start_char=0, composition_length_char=2})
+	testing.expect(t, testui.step(&handle, testui.Input{kind=.Key, key=.Left}) == .Ok &&
+		active_key(&app.picker) == active_after && query_text(&app.picker) == "ter",
+		"IME composition should keep Left with the search field")
+	_ = testui.step(&handle, testui.Input{kind=.Text_Cancel})
+	testing.expect(t, testui.step(&handle, testui.Input{kind=.Key, key=.Right}) == .Ok &&
+		query_text(&app.picker) == "ter" && match_count(&app.picker) == 1,
+		"after composition the search field should yield navigation again")
+}
+
+@(test)
 test_icon_picker_virtualizes_large_grid_and_reveals_identity :: proc(t: ^testing.T) {
 	app := Test_App{appearance=.Grid, inline=true, focus_target=.Grid}
 	test_build_large_choices(&app)

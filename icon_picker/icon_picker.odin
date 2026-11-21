@@ -401,7 +401,7 @@ apply_navigation :: proc(choices: []Choice, state: ^State, options: Options, key
 	if state == nil || state.match_count == 0 { return false }
 	previous := state.active_index
 	#partial switch key {
-	case .Return:
+	case .Return, .Toggle:
 		if choice, found := choice_at_match(choices, state, state.active_index); found && !choice.disabled {
 			state.proposed = true
 			state.proposed_key = choice.key
@@ -432,7 +432,7 @@ apply_navigation :: proc(choices: []Choice, state: ^State, options: Options, key
 	case:
 		return false
 	}
-	return state.active_index != previous || key == .Return
+	return state.active_index != previous || key == .Return || key == .Toggle
 }
 
 @(private)
@@ -673,6 +673,15 @@ picker :: proc(
 		style=ui.layout_style(.Column, width=-1, height=alicorn.LAYOUT_SIZE_FIT_CONTENT, gap=8),
 	)
 	if state.root_node == 0 { return }
+	// One keyboard scope owns the whole composite, so the search field and the
+	// grid share grid navigation. text_preempt_keys is the only configuration
+	// needed for the focused search target to yield arrows and Space; characters,
+	// deletion, and IME composition still belong to the field.
+	_ = ui.interaction_scope(ctx, state.root_node, rawptr(state), alicorn.Interaction_Scope_Options{
+		keys=NAVIGATION_KEYS,
+		composition_yield_keys=NAVIGATION_KEYS,
+		text_preempt_keys=SEARCH_YIELD_KEYS,
+	})
 	if !resolved.hide_search {
 		field := alicorn.text_field_controlled(
 			ctx,
@@ -694,10 +703,11 @@ picker :: proc(
 	state.columns = resolved.columns
 
 	// Process retained scoped input from the previous description. This is
-	// where ordinary arrow/Home/End/Return grid navigation runs.
-	if state.collection_node != 0 {
+	// where ordinary arrow/Home/End/Return grid navigation runs, including keys
+	// yielded by the focused search field.
+	if state.root_node != 0 {
 		for {
-			queued, found := alicorn.interaction_event_next(ctx.runtime, state.collection_node)
+			queued, found := alicorn.interaction_event_next(ctx.runtime, state.root_node)
 			if !found { break }
 			if queued.kind == .Key {
 				if apply_navigation(choices, state, resolved, queued.key) {
@@ -752,9 +762,6 @@ picker :: proc(
 		)
 		state.collection_node = list.scroll.id
 		if list.scroll.id != 0 {
-			_ = ui.interaction_scope(ctx, list.scroll.id, rawptr(state), alicorn.Interaction_Scope_Options{
-				keys=NAVIGATION_KEYS,
-			})
 			realized_first := min(list.first*resolved.columns, state.match_count)
 			realized_last := min(list.last*resolved.columns, state.match_count)
 			collection := alicorn.semantic_collection_begin(
@@ -802,9 +809,6 @@ picker :: proc(
 		)
 		state.collection_node = list.scroll.id
 		if list.scroll.id != 0 {
-			_ = ui.interaction_scope(ctx, list.scroll.id, rawptr(state), alicorn.Interaction_Scope_Options{
-				keys=NAVIGATION_KEYS,
-			})
 			collection := alicorn.semantic_collection_begin(
 				ctx,
 				list.scroll.id,
@@ -836,5 +840,13 @@ picker :: proc(
 
 @(private)
 NAVIGATION_KEYS :: alicorn.Interaction_Key_Set{
-	.Up, .Down, .Left, .Right, .Home, .End, .Page_Up, .Page_Down, .Return,
+	.Up, .Down, .Left, .Right, .Home, .End, .Page_Up, .Page_Down, .Return, .Toggle,
+}
+
+// SEARCH_YIELD_KEYS are the keys a focused search field gives back to the
+// picker. Characters, Backspace/Delete, and IME composition stay with the text
+// field: composition_yield_keys already keeps the whole navigation set with
+// the field while a preedit is active.
+SEARCH_YIELD_KEYS :: alicorn.Interaction_Key_Set{
+	.Up, .Down, .Left, .Right, .Home, .End, .Page_Up, .Page_Down, .Toggle,
 }

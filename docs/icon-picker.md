@@ -99,12 +99,19 @@ survive.
 | `Home`/`End` | first/last enabled cell of the active row (list: first/last) |
 | `Page_Up`/`Page_Down` | one page of rows/cells |
 | `Return` | proposes the active enabled choice |
+| `Space` | proposes the active enabled choice |
 | pointer click | proposes the clicked enabled choice |
 | semantic `Select`/`Press` | proposes the same choice through `button_begin` activation |
 | query edit | refilters; the active key stays when it remains visible, otherwise the nearest enabled row is chosen |
 | choice removal | the active key moves to a remaining enabled choice; `selected_key` stays application-controlled |
 | reorder | active and selected identity stay attached to keys, not positions |
 | virtualization | only realized rows publish; the retained virtual list reveals the active row |
+
+While the search field is focused, `Up`/`Down`/`Left`/`Right`, `Home`/`End`,
+`Page_Up`/`Page_Down`, and `Space` drive the grid. Characters, Backspace,
+Delete, and IME composition stay with the field. This is Alicorn's
+scope-owned `text_preempt_keys` policy on the picker's single root scope; there
+is no per-component key routing.
 
 The collection publishes `List_Box` + `List_Box_Option` semantics with logical
 count, realized range, `Selected`, `Current`, `Disabled`, and `Select`/`Focus`
@@ -142,21 +149,15 @@ traversal wrap, containment, Escape, and focus restoration against pinned
 ## Tests and limits
 
 `odin test icon_picker -collection:alicorn=/path/to/alicorn -collection:alikit=.`
-runs 10 external-package tests: token matching, identity, keyboard/pointer/
+runs 11 external-package tests: token matching, identity, keyboard/pointer/
 semantic activation parity, focus versus selection, disabled skipping, removal
 and reorder reconciliation, appearance identity, filtering and IME yield,
-200-choice virtualization and reveal, the `.Modal_Dialog` pattern check, Escape/
-outside-click/nested overlay dismissal, teardown idle, and an application
-Ctrl+F focus interaction.
+search-focus key yield (arrows and Space), 200-choice virtualization and
+reveal, the `.Modal_Dialog` pattern check, Escape/outside-click/nested overlay
+dismissal, teardown idle, and an application Ctrl+F focus interaction.
 
 Known limits:
 
-- **No Space activation on the collection.** The collection is a scroll region
-  with a retained interaction scope, not a text owner. Marking it as a generic
-  `text_input_target` would receive committed Space, but Alicorn's text-field
-  preemption then suppresses `Left`/`Right`/`Home`/`End` application keys, which
-  breaks grid navigation. The pilot records this as a concrete core candidate;
-  use `Return`, pointer, or semantic activation.
 - The grid has no dedicated ARIA/`.Grid` semantic role; it publishes a
   `List_Box` with positions. The logical order is the filtered order.
 - `Home`/`End` are row bounds in the grid. There is no `Ctrl+Home`/`Ctrl+End`

@@ -22,8 +22,8 @@ jobs:
       - name: Check out pinned Alicorn
         uses: actions/checkout@v4
         with:
-          repository: samanshaiza004/alicorn
-          ref: a19d2c89138bcf1f19b00ed6ece58b70ede0508a
+          repository: Carnival-Science/Alicorn
+          ref: 700f2c58c3fe18541634ffeb441f0365066ba820
           path: alicorn
 
       - name: Check out pinned AccessKit binding
