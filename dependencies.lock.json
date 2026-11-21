@@ -3,7 +3,7 @@
   "alicorn": {
     "repository": "https://github.com/samanshaiza004/alicorn.git",
     "ref": "master",
-    "revision": "54ba6d2be71d6c8f742605fcea82c7ce00731e4b"
+    "revision": "a19d2c89138bcf1f19b00ed6ece58b70ede0508a"
   },
   "accesskit_binding": {
     "repository": "https://github.com/samanshaiza004/odin-accesskit.git",
