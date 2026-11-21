@@ -12,6 +12,8 @@ store. This catalog describes the packages that exist today.
 | `alikit:command_palette` | An accessible modal palette with a controlled query, selection, keyboard navigation, virtualized results, and focus restoration | The application owns command discovery and dispatch. AliKit owns palette interaction and presentation. |
 | `alikit:tree_model` | UI-independent tree-row validation, keyboard navigation, stable focus/selection, and paged-window reconciliation | The application owns the hierarchy, visible projection, loaded data, and commands. |
 | `alikit:tree_view` | Accessible virtualized tree rows, indentation, focus reveal, keyboard navigation, and optional row-anchored context menus | The application owns expansion/loading policy, mutation, activation, selection policy, and context-menu actions. |
+| `alikit:palette_parts` | A copyable, parts-based palette result list: retained virtual rows, published `List_Box` semantics, enabled-row navigation, reveal, and one activation event | The application owns the query, matching/ranking, commands, modal shell, dismissal, and focus restoration. |
+| `alikit:icon_picker` | A complete copyable custom composite: icon search, virtualized grid or list, roving focus, selection proposal, two appearances, and one application-authored focus interaction | The application owns choices, accepted selection, commands, and any surrounding dialog. |
 
 The command-palette example is the canonical starting point for a small
 Alicorn application using AliKit. It shows application-owned actions, optional
@@ -40,6 +42,13 @@ See [the Tree View guide](tree-view.md) for stable row identity, full and paged
 visible-row windows, keyboard behavior, context-menu targeting, and the
 application-owned data contract.
 
+See [the icon picker guide](icon-picker.md) for a complete copyable custom
+composite with two appearances and named parts, and
+[the palette-parts guide](palette-parts.md) for the parts-based result-list
+variant and its ownership boundary. The measured stock-vs-parts comparison,
+contract coverage, and core-requirement list live in
+[the issue 3 research record](research/issue-003-parts-pilot.md).
+
 ## Not in AliKit yet
 
 Calendars, color pickers, split panes, terminals, and rich editors are not
@@ -47,6 +56,12 @@ available AliKit components. Add a component when a real application need
 demonstrates reusable behavior; keep application-specific data and policy in
 the application, and keep independent domain engines outside the UI runtime
 where practical.
+
+Copyable source components are intentionally small enough to copy and change:
+start from `icon_picker/icon_picker.odin` and its example, or from the
+`palette_parts` result list. A copy is application code; it may edit drawing,
+omit optional parts, and add bespoke interactions with ordinary state and
+scoped input. Do not copy a second runtime, state store, or modal policy.
 
 ## Authoring conventions
 
