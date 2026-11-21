@@ -298,16 +298,41 @@ enabled_at :: proc(choices: []Choice, state: ^State, match_index: int) -> bool {
 }
 
 @(private)
-first_enabled_from :: proc(choices: []Choice, state: ^State, start, step: int) -> int {
-	for index := start; index >= 0 && index < state.match_count; index += step {
-		if enabled_at(choices, state, index) { return index }
-	}
-	return -1
+Picker_Roving :: struct {
+	choices: []Choice,
+	state:   ^State,
 }
 
 @(private)
-first_enabled :: proc(choices: []Choice, state: ^State) -> int {
-	return first_enabled_from(choices, state, 0, 1)
+picker_roving_enabled :: proc(data: rawptr, index: int) -> bool {
+	ctx := cast(^Picker_Roving)data
+	return enabled_at(ctx.choices, ctx.state, index)
+}
+
+// picker_roving_view projects the filtered match order onto the runtime's pure
+// roving model. The picker keeps its own active key, reveal request, focus, and
+// activation proposal; the model only proposes the next enabled index.
+@(private)
+picker_roving_view :: proc(
+	ctx: ^Picker_Roving,
+	choices: []Choice,
+	state: ^State,
+	options: Options,
+) -> alicorn.Roving_View {
+	ctx.choices = choices
+	ctx.state = state
+	grid := options.appearance == .Grid
+	visible := max(options.max_visible_rows-1, 1)
+	return alicorn.Roving_View{
+		count=state.match_count,
+		columns=options.columns if grid else 0,
+		enabled=picker_roving_enabled,
+		data=rawptr(ctx),
+		page=max(options.columns*visible, 1) if grid else visible,
+		// The shipped grid moves linearly at row edges, stops at the filtered
+		// boundary, and scopes Home/End to the active row.
+		home_end=.Row if grid else .All,
+	}
 }
 
 @(private)
@@ -347,10 +372,12 @@ reconcile_active :: proc(choices: []Choice, state: ^State) {
 			}
 		}
 	}
+	ctx: Picker_Roving
+	view := picker_roving_view(&ctx, choices, state, Options{})
 	start := clamp(state.active_index, 0, state.match_count-1)
-	index := first_enabled_from(choices, state, start, 1)
-	if index < 0 { index = first_enabled_from(choices, state, start, -1) }
-	if index < 0 { index = first_enabled(choices, state) }
+	index := alicorn.roving_first_enabled_from(view, start, 1)
+	if index < 0 { index = alicorn.roving_first_enabled_from(view, start, -1) }
+	if index < 0 { index = alicorn.roving_first_enabled(view) }
 	if index < 0 {
 		state.active_index = -1
 		state.active_key = 0
@@ -361,78 +388,25 @@ reconcile_active :: proc(choices: []Choice, state: ^State) {
 }
 
 @(private)
-grid_move :: proc(choices: []Choice, state: ^State, delta: int) {
-	if state == nil || state.match_count == 0 { return }
-	start := state.active_index
-	if start < 0 { start = 0 }
-	// A grid move is linear over the filtered order. Up/Down use a column
-	// stride; Left/Right use one cell. Disabled cells are skipped in the same
-	// direction, and the move stops at the filtered boundary rather than
-	// wrapping.
-	index := start+delta
-	if index < 0 || index >= state.match_count { return }
-	step := 1 if delta > 0 else -1
-	for index >= 0 && index < state.match_count {
-		if enabled_at(choices, state, index) {
-			set_active(choices, state, index)
-			return
-		}
-		index += step
-	}
-}
-
-@(private)
-row_bounds :: proc(state: ^State, options: Options) -> (first, last: int) {
-	if options.appearance == .List { return 0, state.match_count-1 }
-	row := max(state.active_index, 0)/options.columns
-	first = row*options.columns
-	last = min(first+options.columns, state.match_count)-1
-	return
-}
-
-@(private)
-page_stride :: proc(options: Options) -> int {
-	if options.appearance == .Grid { return max(options.columns*max(options.max_visible_rows-1, 1), 1) }
-	return max(options.max_visible_rows-1, 1)
-}
-
-@(private)
 apply_navigation :: proc(choices: []Choice, state: ^State, options: Options, key: alicorn.Application_Key) -> bool {
 	if state == nil || state.match_count == 0 { return false }
 	previous := state.active_index
-	#partial switch key {
-	case .Return, .Toggle:
+	if key == .Return || key == .Toggle {
 		if choice, found := choice_at_match(choices, state, state.active_index); found && !choice.disabled {
 			state.proposed = true
 			state.proposed_key = choice.key
 		}
 		return true
-	case .Home:
-		first, _ := row_bounds(state, options)
-		index := first_enabled_from(choices, state, max(first, 0), 1)
-		if index < 0 { index = first_enabled_from(choices, state, max(first, 0), -1) }
-		if index >= 0 { set_active(choices, state, index) }
-	case .End:
-		_, last := row_bounds(state, options)
-		index := first_enabled_from(choices, state, last, -1)
-		if index < 0 { index = first_enabled_from(choices, state, last, 1) }
-		if index >= 0 { set_active(choices, state, index) }
-	case .Page_Up:
-		grid_move(choices, state, -page_stride(options))
-	case .Page_Down:
-		grid_move(choices, state, page_stride(options))
-	case .Up:
-		grid_move(choices, state, -options.columns if options.appearance == .Grid else -1)
-	case .Down:
-		grid_move(choices, state, options.columns if options.appearance == .Grid else 1)
-	case .Left:
-		if options.appearance == .Grid { grid_move(choices, state, -1) }
-	case .Right:
-		if options.appearance == .Grid { grid_move(choices, state, 1) }
-	case:
-		return false
 	}
-	return state.active_index != previous || key == .Return || key == .Toggle
+	move, mapped := alicorn.roving_move_for_key(key)
+	if !mapped { return false }
+	if options.appearance != .Grid && (move == .Left || move == .Right) { return false }
+	ctx: Picker_Roving
+	view := picker_roving_view(&ctx, choices, state, options)
+	if index := alicorn.roving_propose(view, state.active_index, move); index >= 0 {
+		set_active(choices, state, index)
+	}
+	return state.active_index != previous
 }
 
 @(private)

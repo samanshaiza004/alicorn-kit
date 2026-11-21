@@ -714,3 +714,31 @@ test_icon_picker_ctrl_f_focus_is_application_authored :: proc(t: ^testing.T) {
 	testing.expect(t, found && info.kind == .Text_Field,
 		"the application-authored Ctrl+F interaction should focus the picker search field")
 }
+
+@(test)
+test_icon_picker_roving_grid_pattern_conformance :: proc(t: ^testing.T) {
+	app := Test_App{choices=fixture_choices(), appearance=.Grid, inline=true, focus_target=.Grid}
+	handle, ok := test_open(&app, t)
+	if !ok { return }
+	defer test_close(&app, &handle)
+
+	parts := []testui.Pattern_Part{
+		{id=.Container, query=testui.Query{role=.List_Box, name="Icon choices", match_role=true, match_name=true}},
+		{id=.Target_Option, query=testui.Query{role=.List_Box_Option, name="Chevron", match_role=true, match_name=true}},
+		{id=.Disabled_Option, query=testui.Query{role=.List_Box_Option, name="Locked", match_role=true, match_name=true}},
+	}
+	report := testui.pattern_check(&handle, testui.Pattern_Config{
+		kind=.Roving_Grid,
+		parts=parts,
+		roving=testui.Pattern_Roving_Config{
+			focus=.Container,
+			columns=6,
+			home_end_row=true,
+			expect_reveal=true,
+			expect_selection=true,
+		},
+	})
+	testing.expectf(t, report.ok, "roving grid pattern should conform: %s",
+		testui.pattern_failure_diagnostic(&report.failure))
+	testing.expect_value(t, app.selected_key, u64(12))
+}

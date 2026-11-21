@@ -2,8 +2,8 @@
   "schema": 1,
   "alicorn": {
     "repository": "https://github.com/samanshaiza004/alicorn.git",
-    "ref": "codex/issue-226-key-preemption",
-    "revision": "700f2c58c3fe18541634ffeb441f0365066ba820"
+    "ref": "codex/issue-225-roving-focus",
+    "revision": "5f6fe8ec7bd4bf5e87a2a27cdf71980b03b48b9c"
   },
   "accesskit_binding": {
     "repository": "https://github.com/samanshaiza004/odin-accesskit.git",

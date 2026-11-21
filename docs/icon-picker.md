@@ -113,6 +113,14 @@ Delete, and IME composition stay with the field. This is Alicorn's
 scope-owned `text_preempt_keys` policy on the picker's single root scope; there
 is no per-component key routing.
 
+The navigation index math comes from `alicorn:runtime`'s pure `Roving_View`
+model. The picker projects its filtered match order, columns, page size, and
+row-scoped Home/End into a value view, then applies the proposed index to its
+own active key. Disabled skipping, grid stride, boundary stops, and row bounds
+are shared with other roving consumers instead of maintained here. The picker
+still owns filtering, active identity, reveal, activation, and selection; the
+model carries no state and does not publish semantics.
+
 The collection publishes `List_Box` + `List_Box_Option` semantics with logical
 count, realized range, `Selected`, `Current`, `Disabled`, and `Select`/`Focus`
 actions. Registry keys follow `Choice.key`, never row position.
