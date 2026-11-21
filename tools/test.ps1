@@ -69,6 +69,26 @@ try {
     & $OdinPath @TreeTestArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit retained Tree View tests failed.' }
 
+    $PartsTestArgs = @(
+        'test', 'palette_parts',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'palette_parts_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @PartsTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit parts-based palette tests failed.' }
+
+    $IconPickerTestArgs = @(
+        'test', 'icon_picker',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'icon_picker_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @IconPickerTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit icon picker tests failed.' }
+
     $ExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\command_palette'),
         $AlicornCollection,
@@ -86,6 +106,56 @@ try {
     ) + $CompilerArguments
     & $OdinPath @TreeExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native Tree View example failed to compile.' }
+
+    $IconPickerExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\icon_picker'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'icon_picker_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @IconPickerExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native icon picker example failed to compile.' }
+
+    # Prove the composite is copyable source: copy the package beside a tiny
+    # consumer and compile with only the Alicorn collection (no `alikit`
+    # collection or repository-relative package topology).
+    $CopyableRoot = Join-Path $OutputRoot 'copyable'
+    if (Test-Path -LiteralPath $CopyableRoot) { Remove-Item -LiteralPath $CopyableRoot -Recurse -Force }
+    New-Item -ItemType Directory -Force -Path $CopyableRoot | Out-Null
+    Copy-Item -LiteralPath (Join-Path $RepoRoot 'icon_picker') -Destination (Join-Path $CopyableRoot 'icon_picker') -Recurse
+    $CopyableConsumer = @'
+package main
+
+import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
+import picker "./icon_picker"
+
+App :: struct {
+	state: picker.State,
+	choices: [2]picker.Choice,
+}
+
+render :: proc(app: ^App, ctx: ^ui.UI) {
+	event := picker.picker(ctx, &app.state, app.choices[:],
+		picker.Options{accessible_label="Copied icons"}, key=alicorn.key_string("copied-picker"), instance_id=1)
+	if event.kind == .Activated { app.state.selected_key = event.key }
+}
+
+main :: proc() {
+	app := App{choices={picker.Choice{key=1, label="One", icon=.Search}, picker.Choice{key=2, label="Two", icon=.File}}}
+	if !picker.init(&app.state) { return }
+	defer picker.destroy(&app.state)
+	ui.run(&app, render, title="copyable icon picker", smoke=true)
+}
+'@
+    Set-Content -LiteralPath (Join-Path $CopyableRoot 'main.odin') -Value $CopyableConsumer -NoNewline
+    $CopyableArgs = @(
+        'build', $CopyableRoot,
+        $AlicornCollection,
+        "-out:$(Join-Path $OutputRoot 'icon_picker_copyable.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @CopyableArgs
+    if ($LASTEXITCODE -ne 0) { throw 'The copied icon picker source failed to build without the AliKit collection.' }
 } finally {
     Pop-Location
 }
