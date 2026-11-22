@@ -99,6 +99,16 @@ try {
     & $OdinPath @SidebarTestArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit sidebar tests failed.' }
 
+    $TableTestArgs = @(
+        'test', 'table',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'table_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @TableTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit table tests failed.' }
+
     $PaletteTestArgs = @(
         'test', 'command_palette',
         '-define:ODIN_TEST_THREADS=1',
@@ -192,6 +202,15 @@ try {
     ) + $CompilerArguments
     & $OdinPath @SidebarExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native sidebar example failed to compile.' }
+
+    $TableExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\table'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'table_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @TableExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native table example failed to compile.' }
 
     $IconPickerExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\icon_picker'),

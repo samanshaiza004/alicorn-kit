@@ -128,7 +128,28 @@ collapse identity, reorder identity, and the theme contract.
 
 ## Table
 
-(To be filled by the table slice.)
+Package: `table`. The v1 shape is a virtualized, non-spanned table. Columns map
+to shared Grid tracks (fixed or equal fraction, max 64); each body row is a
+nested `Table_Row` collection with `Table_Cell` or `Table_Row_Header` items at
+column coordinates. The table itself is a `Table` collection with a sticky
+`Table_Column_Header` row at logical position 0 and body rows after it.
+
+Navigation is row-level roving focus with a column coordinate: Up/Down move a
+row and skip disabled rows while preserving the column, Left/Right move the
+column within the row, Home/End target the row's first/last column, and
+Page Up/Down move by visible rows and clamp at the ends. Return/Space and
+pointer activation share one `{row_key, column_key}` proposal. The application
+owns selection.
+
+Large datasets use `virtual_list` for body rows and publish off-window rows with
+`semantic_collection_virtual_item` as `Table_Row` items. The test drives 200
+rows, verifies the logical count, proves the last row starts virtual, pages to
+it, and observes it realized after the after-frame reveal.
+
+There is no table pattern in `testui`; the roving kinds require `List_Box`. A
+table pattern (nested rows/cells, header roles, coordinates, virtual reveal) is
+recorded as a core candidate. Row and column spans are deferred by decision:
+v1 emits one cell per column and documents that limit.
 
 ## Core gaps proposed to Alicorn
 

@@ -18,6 +18,7 @@ store. This catalog describes the packages that exist today.
 | `alikit:progress` | Determinate and indeterminate progress with `Progress` semantics, numeric range, track/fill/label parts, and optional caller-driven pulse | The application owns the value/range and indeterminate phase. The component owns presentation and semantic range projection. |
 | `alikit:notices` | Runtime toast helpers plus copyable card/stack parts for inline banners and application-hosted snackbars, with reveal/retire motion | Alicorn owns the notice queue, deadlines, actions, and built-in toast overlay. The application owns card items and resolution policy. |
 | `alikit:sidebar` | A flat navigation rail with expanded/collapsed presentations, `List_Box`/`List_Box_Option` semantics, roving focus, and one proposed route | The application owns accepted routes, content, router/history, badges, and disabled policy. |
+| `alikit:table` | A virtualized, non-spanned table with shared Grid column tracks, nested table/row/cell collections, header roles, roving cell coordinates, and one activation proposal | The application owns columns, rows, stable keys, sorting, filtering, selection, formatting, and data lifetime. |
 | `alikit:theme_contract` | Bounded setup-time validation for namespaced component theme roles | Components own their role names and core fallbacks; applications register and validate a theme once. |
 
 The command-palette example is the canonical starting point for a small
@@ -54,8 +55,9 @@ variant and its ownership boundary, [the radio group guide](radio-group.md)
 for a small controlled compound control with explicit radio semantics,
 [the progress guide](progress.md) for determinate and indeterminate progress
 with a published numeric range, [the notices guide](notices.md) for runtime
-toast helpers and copyable inline card parts, and [the sidebar guide](sidebar.md)
-for the flat navigation rail and its collapsed presentation. The measured stock-vs-parts comparison,
+toast helpers and copyable inline card parts, [the sidebar guide](sidebar.md)
+for the flat navigation rail and its collapsed presentation, and
+[the table guide](table.md) for the virtualized non-spanned table contract. The measured stock-vs-parts comparison,
 contract coverage, and core-requirement list live in
 [the issue 3 research record](research/issue-003-parts-pilot.md).
 
