@@ -1,0 +1,144 @@
+---
+title: AliKit
+description: Reusable, source-level Odin components for Alicorn, with native previews and explicit ownership, keyboard, accessibility, and test contracts.
+template: splash
+hero:
+  tagline: Bring the parts that fit. Keep your application's commands, data, ranking, and routing.
+  actions:
+    - text: Browse components
+      link: components/
+      icon: right-arrow
+    - text: Component registry
+      link: manifest/
+      variant: minimal
+---
+
+import CatalogCard from '../../components/CatalogCard.astro';
+import Capture from '../../components/Capture.astro';
+
+<div class="lede">
+AliKit is an optional companion library for <a href="https://github.com/Carnival-Science/Alicorn">Alicorn</a>,
+the native GUI runtime for Odin. Every component is ordinary Odin source over Alicorn's public
+UI, semantics, layout, and input APIs. There is no second UI tree, state store, theme engine, or
+component lifecycle.
+</div>
+
+## Native previews, not recreations
+
+These are genuine SDL_GPU windows captured from the examples in this repository. The site does
+not reimplement a component in HTML or JavaScript. Interactive WebGPU previews are a later
+catalog step; the capture and the copyable source are the v1 contract.
+
+<Capture src="captures/command-palette.png" alt="Native AliKit command palette window with a filtered result list" caption="Command Palette — the modal opens over the application-owned root; this capture is the built-in example at the pinned Alicorn revision." />
+
+## The catalog
+
+<div class="catalog-grid">
+  <CatalogCard
+    href="components/command-palette/"
+    title="Command Palette"
+    packageName="alikit:command_palette"
+    purpose="Modal action search with caller-owned items, stable IDs, and focus restoration."
+    capture="captures/command-palette.png"
+    badges={['component', 'native preview']}
+  />
+  <CatalogCard
+    href="components/tree-view/"
+    title="Tree View"
+    packageName="alikit:tree_view"
+    purpose="Virtualized visible-row tree with stable identity and keyboard traversal."
+    capture="captures/tree-view.png"
+    badges={['component', 'virtualized']}
+  />
+  <CatalogCard
+    href="components/icon-picker/"
+    title="Icon Picker"
+    packageName="alikit:icon_picker"
+    purpose="Complete copyable icon chooser with search, grid/list, and roving focus."
+    capture="captures/icon-picker.png"
+    badges={['copyable composite']}
+  />
+  <CatalogCard
+    href="components/palette-parts/"
+    title="Palette Parts"
+    packageName="alikit:palette_parts"
+    purpose="A copyable parts-based result list when the application owns the palette shell."
+    capture="captures/palette-parts.png"
+    badges={['parts pilot']}
+  />
+  <CatalogCard
+    href="components/radio-group/"
+    title="Radio Group"
+    packageName="alikit:radio_group"
+    purpose="Controlled radio group with one Tab stop, roving arrows, and activation parity."
+    capture="captures/radio-group.png"
+    badges={['component', 'semantics']}
+  />
+  <CatalogCard
+    href="components/progress/"
+    title="Progress"
+    packageName="alikit:progress"
+    purpose="Determinate and indeterminate progress with a published numeric range."
+    capture="captures/progress.png"
+    badges={['component', 'non-interactive']}
+  />
+  <CatalogCard
+    href="components/notices/"
+    title="Notices"
+    packageName="alikit:notices"
+    purpose="Runtime toasts plus copyable card and stack parts for inline banners."
+    capture="captures/notices.png"
+    badges={['component', 'toast + parts']}
+  />
+  <CatalogCard
+    href="components/sidebar/"
+    title="Sidebar"
+    packageName="alikit:sidebar"
+    purpose="Flat navigation rail with expanded and collapsed presentations."
+    capture="captures/sidebar.png"
+    badges={['component', 'navigation']}
+  />
+  <CatalogCard
+    href="components/table/"
+    title="Table"
+    packageName="alikit:table"
+    purpose="Virtualized, non-spanned table with nested table semantics and roving cells."
+    capture="captures/table.png"
+    badges={['component', 'virtualized']}
+  />
+</div>
+
+## How to read a component page
+
+Every page follows the same order so the five-point Alicorn authoring standard stays inspectable:
+
+| Five-point standard | Where it appears |
+| --- | --- |
+| Complete, copyable implementation | **Copyable implementation** |
+| Individually composable parts | **Parts and identities** |
+| Custom styling and motion | **Styling, motion, and theme** |
+| Keyboard and accessibility contracts | **Keyboard and accessibility contract** |
+| `testui` conformance examples | **Conformance tests** |
+
+Each page also lists the public API, known limits, the exact Alicorn pin used for the capture,
+and a source map back to the package, tests, example, and theme data. The
+[Alicorn component-authoring standard](https://github.com/Carnival-Science/Alicorn/blob/master/docs/component-authoring.md)
+is the upstream reference for the split between Alicorn, AliKit, and the application.
+
+## Pin the pair together
+
+<div class="pin-note">
+<strong>Source-level and early.</strong> AliKit imports Alicorn's public packages and may evolve
+with them. Consume the exact Alicorn revision recorded in
+<a href="https://github.com/samanshaiza004/alicorn-kit/blob/main/dependencies.lock.json"><code>dependencies.lock.json</code></a>
+(<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code> at the time of this catalog). The
+<a href="compatibility/">compatibility page</a> and the
+<a href="manifest/">machine-readable registry</a> record the same pin.
+</div>
+
+## Not in AliKit yet
+
+Calendars, color pickers, split panes, terminals, and rich editors are not components here. The
+P0 table is non-spanned. Built-in sorting, filtering, and editing are application policy. A
+nested tree sidebar is a later Sidebar variant. Add a component only when a real application
+need demonstrates reusable behavior.

@@ -1,0 +1,203 @@
+---
+title: Command Palette
+description: A native modal command palette with caller-owned items, stable IDs, virtualized results, and focus restoration.
+---
+
+import Capture from '../../../components/Capture.astro';
+
+<div class="lede">
+<code>alikit:command_palette</code> provides a themed modal palette for searching and activating a
+caller-owned action list. The application owns command discovery, stable IDs, ranking policy, and
+dispatch; AliKit owns the palette interaction, presentation, and focus restoration.
+</div>
+
+## Preview
+
+<Capture src="captures/command-palette.png" alt="Native command palette window showing the Example Actions modal, a query field, and four results" caption="Native SDL_GPU capture of examples/command_palette at Alicorn 47c9d4a. The host command-palette shortcut or the example button opens the modal." />
+
+<div class="preview-note">Interactive WebGPU preview is a later catalog step. This page ships the
+genuine native capture and the copyable source; it does not recreate the component in JavaScript.</div>
+
+## Responsibility split
+
+| Layer | Responsibility |
+| --- | --- |
+| **Alicorn** | Modal overlay, focus scope, input routing, text field, virtual list, semantics, layout, and rendering. |
+| **`command_palette`** | Controlled query, cached match buffer, selection by stable ID, keyboard/pointer routing, panel appearance, and focus restoration. |
+| **Application** | Items and stable `Item_ID` values, matching/ranking policy in caller-filtered mode, open shortcut, and activation dispatch. |
+
+Use the palette for command access. Do not use it as a general dialog, a file picker, or a router:
+those are application or other-component concerns.
+
+## Copyable implementation
+
+Files: `command_palette/command_palette.odin`,
+`command_palette/command_palette_test.odin`, `examples/command_palette/main.odin`.
+
+```odin
+import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
+import palette "alikit:command_palette"
+import model "alikit:palette_model"
+
+SAMPLE_ITEMS := [2]model.Item{
+	{id=model.Item_ID(1), title="Open File", description="Browse the workspace"},
+	{id=model.Item_ID(2), title="Build Project", keywords="compile"},
+}
+
+App :: struct {
+	palette: palette.State,
+	items:   [2]model.Item,
+}
+
+render :: proc(app: ^App, ctx: ^ui.UI) {
+	_ = ui.text(ctx, "AliKit · Command Palette", size=24)
+}
+
+// Overlays describe after the ordinary root closes.
+render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
+	if !app.palette.open { return }
+	event := palette.build(ctx, &app.palette, app.items[:],
+		alicorn.key_string("app-palette"),
+		palette.Options{title="Example Actions"})
+	if event.kind == .Activated {
+		// Dispatch the stable ID in application code.
+	}
+}
+
+on_key :: proc(app: ^App, rt: ^alicorn.Runtime, key: alicorn.Application_Key) -> bool {
+	if !app.palette.open && key == .Open_Command_Palette {
+		return palette.open_palette(&app.palette, rt)
+	}
+	return false
+}
+
+main :: proc() {
+	app := App{items=SAMPLE_ITEMS}
+	if !palette.init(&app.palette) { return }
+	defer palette.destroy(&app.palette)
+	ui.run(&app, render, title="AliKit Command Palette", width=760, height=520,
+		on_key=on_key, render_overlays=render_overlays)
+}
+```
+
+`init` takes the allocator that owns the query and match buffer; `destroy` releases them.
+`open_palette` clears the query, captures the current focus, and requests a redraw. If the reset
+fails, the palette stays closed and `state.last_status` reports the reason. If the match buffer
+cannot grow, the old buffer remains valid and the modal shows
+`Options.allocation_error_message`.
+
+## Parts and identities
+
+| Part | Identity | What can be replaced |
+| --- | --- | --- |
+| Modal overlay | `State.overlay_node` | Backdrop color, padding, and panel appearance through `Options.appearance`. |
+| Panel | `State.panel_node` | Shape, material, physical height, fill, and gap. |
+| Title and query | stable child keys | Title visibility, prefix, height, and text style. |
+| Result list | stable list key | Virtual row height and maximum height. |
+| Result row | stable `Item_ID` | Row visuals are component-owned; the stable ID survives filtering and reorder. |
+| Footer | stable footer key | Footer label text. |
+
+Selection is retained by `Item_ID`, not row index. If the selected item disappears, becomes
+disabled, or stops matching, selection moves to the first enabled result. Disabled items stay
+visible but cannot be selected or activated.
+
+## Styling, motion, and theme
+
+The default appearance uses Alicorn's `Surface` role and a neutral backdrop. Applications may
+enable `Options.appearance`:
+
+| `Appearance` field | Effect |
+| --- | --- |
+| `overlay_padding`, `panel_padding`, `panel_gap` | Space around and inside the modal. |
+| `backdrop_color`, `backdrop_effect` | Modal backdrop treatment. |
+| `panel_shape`, `panel_material`, `physical_height`, `panel_fill` | Panel surface. |
+
+The component registers no theme resources. Borrowed appearance values apply to the current
+build only. `Options.hide_title`, `query_prefix`, `query_height`, and `query_text_style` match an
+existing palette header without replacing the controlled query field.
+
+The palette currently has no component-authored motion. Alicorn's modal overlay and control
+recipes own focus/hover presentation; keep application motion outside the palette shell.
+
+## Keyboard and accessibility contract
+
+| Input | Result |
+| --- | --- |
+| `Ctrl+Shift+P` | The canonical host shortcut maps to `.Open_Command_Palette`; the application decides whether to open. |
+| `Up` / `Down` | Move selection through enabled, matching results. |
+| `Home` / `End` | Move to the first/last enabled result. |
+| `Return` | Emit one activation event with the selected stable `Item_ID`. |
+| `Escape` | Close the palette; native composition handling runs first. |
+| pointer | Row activation through the ordinary Button owner; outside click dismisses through the modal scope. |
+
+- While the query field reports active composition, the palette declines `Up`, `Down`, and
+  `Return` so the native text host can handle them.
+- The modal retains Alicorn's focus scope, hit testing, and accessibility behavior. On close,
+  focus returns to the captured opener.
+- Selection is published on the list and rows. Activation is one event; the application applies
+  its own command and error policy.
+- Not claimed: Unicode case folding, fuzzy ranking, command registration, application dispatch,
+  or a native OS command service.
+
+## Conformance tests
+
+`command_palette/command_palette_test.odin` drives the package through `alicorn:testui` and
+covers:
+
+- substring matching, caller-filtered order, disabled skipping, and selection reconciliation
+  after removal or reorder;
+- open/close, query reset failures, match-buffer allocation failures, and status reporting;
+- pointer, keyboard, and semantic activation producing the same stable-ID event;
+- focus capture and restoration, modal containment, and Escape dismissal;
+- the `.Modal_Dialog` pattern check with a positive run and a negative control that fails at a
+  named step;
+- idle return after the palette closes.
+
+```powershell
+odin test command_palette -collection:alicorn=<alicorn> -collection:alikit=.
+./out/command_palette_example.exe --smoke
+```
+
+Headless coverage does not validate the operating system's IME candidate window, a physical
+screen-reader session, or pixels. Native smoke runs SDL_GPU D3D12 startup and one submitted
+frame.
+
+## API reference
+
+| Declaration | Notes |
+| --- | --- |
+| `State` | Controlled query buffer, cached match buffer, selection, focus/restoration flags, and `last_status`. Zero-initialize; call `init` before use. |
+| `Options` | `title`, `query_accessible_name`, `empty_message`, `allocation_error_message`, `footer_label`, `query_prefix`, `hide_title`, panel/list/row/query geometry, and `query_text_style`. |
+| `Appearance` | Optional surface overrides; `enabled=false` keeps Alicorn defaults. |
+| `Event` / `Event_Kind` | One-shot `Activated` event carrying `item_id`. |
+| `Search_Mode` | `Substring` (built-in) or `Caller_Filtered` (application supplies the ranked slice). |
+| `Status` | `Ready`, `Query_Reset_Failed`, `Query_Update_Failed`, `Match_Buffer_Allocation_Failed`. |
+| `init` / `destroy` | Allocate and release the query and match buffer. |
+| `open_palette` / `close_palette` | Controlled open/close with focus capture and restoration. |
+| `build` | Describe the modal; call from `render_overlays` after the ordinary root. |
+| `handle_key`, `text_change`, `pointer`, `after_frame` | Lower-level host path when not using `ui.run` scoping. |
+| `set_query`, `query_text` | Controlled query value for caller-filtered ranking. |
+
+## Limits
+
+- Built-in matching is ASCII case-insensitive substring search. Non-ASCII UTF-8 bytes compare
+  exactly; Unicode case folding and fuzzy ranking remain application policy.
+- The palette does not register commands, choose ranking, or perform application dispatch.
+- The lower-level path requires the application to describe the root first, then `build`, then
+  `after_frame` after `alicorn.end_frame`.
+- Headless tests do not prove native IME navigation or a platform accessibility bridge.
+
+## Compatibility
+
+<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
+<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. AliKit is source-level; see
+<a href="../../compatibility/">Compatibility and pinning</a> before updating the pair.</div>
+
+## Source map
+
+- [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/command_palette/command_palette.odin)
+- [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/command_palette/command_palette_test.odin)
+- [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette/main.odin)
+- [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/command-palette.md)
+- [Palette model](https://github.com/samanshaiza004/alicorn-kit/blob/main/palette_model/model.odin)

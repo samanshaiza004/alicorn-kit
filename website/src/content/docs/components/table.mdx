@@ -1,0 +1,190 @@
+---
+title: Table
+description: A virtualized, non-spanned table with nested table semantics, shared column tracks, and roving cell coordinates.
+---
+
+import Capture from '../../../components/Capture.astro';
+
+<div class="lede">
+<code>alikit:table</code> is a composable, virtualized, <strong>non-spanned</strong> table over
+Alicorn's compound table roles. The application owns columns, rows, sorting, filtering, and
+selection. The package owns shared column tracks, nested
+<code>Table</code> → <code>Table_Row</code> → <code>Table_Cell</code> semantics, header roles,
+roving cell coordinates, virtual row publication, and one activation proposal.
+</div>
+
+## Preview
+
+<Capture src="captures/table.png" alt="Native table window showing a filter field, sort checkbox, and a ten-row document table with name, size, kind, and status columns" caption="Native SDL_GPU capture of examples/table at Alicorn 47c9d4a. The application filters and sorts its own 120-row dataset; the table virtualizes the projection and owns the roving cell coordinate." />
+
+<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
+real native table; rows are not recreated in JavaScript.</div>
+
+## Responsibility split
+
+| Layer | Responsibility |
+| --- | --- |
+| **Alicorn** | Grid tracks, virtual list, semantic collections, grid/table roles, focus, pointer hit testing, and virtual item projection. |
+| **`table`** | Column track mapping, header/body composition, nested row/cell collections, cell coordinates, roving row focus with a column coordinate, reveal, and one activation event. |
+| **Application** | Columns, rows, stable keys, sorting, filtering, selection, formatting, and data lifetime. |
+
+The component stores only ephemeral focus and proposal state. It publishes `Selected` from the
+application's `Selection`, but never mutates it.
+
+## Copyable implementation
+
+Files: `table/table.odin`, `table/table_test.odin`, `examples/table/main.odin`,
+`examples/table/theme.json`.
+
+```odin
+import table "alikit:table"
+
+if event := table.table(
+	ctx,
+	&app.table_state,
+	app.columns[:],
+	app.visible_rows[:], // application-filtered and sorted
+	app.selection,
+	table.Options{accessible_label="Documents", row_header=true, max_visible_rows=10},
+	key=alicorn.key_string("documents"),
+	instance_id=1,
+); event.kind == .Activated {
+	app.selection = table.Selection{row_key=event.row_key, column_key=event.column_key}
+}
+```
+
+No init or destroy is required; the component allocates nothing. Call
+`table.request_focus(&state)` to focus the single Tab stop.
+
+## Parts and identities
+
+| Part | Identity | What can be omitted or replaced |
+| --- | --- | --- |
+| Table | `table_semantic_id(instance_id)` | Always present; the `Table` collection and one Tab stop. |
+| Header row | `header_row_semantic_id(instance_id)` | Omit with `Options.hide_header`; logical position 0 when present. |
+| Header cell | `header_cell_semantic_id(instance_id, column_key)` | Each column publishes `Table_Column_Header`. |
+| Body row | `row_semantic_id(instance_id, row_key)` | Application row slice; a realized row is a nested `Table_Row` collection. |
+| Body cell | `cell_semantic_id(instance_id, row_key, column_key)` | `Table_Cell`, or `Table_Row_Header` for the first column when `row_header` is set. |
+
+Column keys and row keys must be nonzero and unique within one table. Cells use
+`position_in_set` as the column coordinate; header cells are positions 0..N-1 and body cells are
+0..N-1 in their row. A header row is logical row 0, so a body row at application index `i` is at
+table position `i+1`.
+
+Virtualized rows outside the realized window are published with
+`semantic_collection_virtual_item` as `Table_Row` items, so assistive technology sees a bounded
+realized node set plus the logical row count. The total table `logical_count` is
+`row_count + (header ? 1 : 0)`.
+
+Column widths use existing Grid tracks: a positive `Column.width` becomes a fixed track
+(optionally `min_max`), and `width <= 0` becomes an equal fraction. `MAX_COLUMNS` is 64. Spans
+are intentionally deferred: v1 emits one cell per column with no `column_span`.
+
+## Styling, motion, and theme
+
+`Recipe` declares four optional namespaced surface roles:
+
+| Field | Core fallback |
+| --- | --- |
+| `header_surface_role` | `Subtle_Surface` |
+| `row_surface_role` | `Surface` |
+| `selected_row_surface_role` | `Selection` |
+| `selected_cell_surface_role` | `Selection` |
+
+Zero roles need no theme registration. Configured roles are validated with
+`theme_contract_default`, `theme_contract_check`, `theme_contract_satisfied`, and
+`theme_contract_missing_required`. The example registers `vendor.alikit.table.*` and activates
+the theme. A configured but unresolved role falls back to the core role at render time after
+setup validation.
+
+`Style` carries corner radius, focus outline width, and the selected-cell outline. `Options`
+carries header/row height, visible rows, column gap, cell padding, and text sizes. Selection is
+shown by row fill, selected-cell surface, and focus outline, not color alone. There is no table
+animation; roving focus and reveal are immediate.
+
+## Keyboard and accessibility contract
+
+| Input | Result |
+| --- | --- |
+| `Tab` | Reaches the table once. Body cells are not separate Tab stops. |
+| `Up` / `Down` | Move the focused row, skipping disabled rows and preserving the column. |
+| `Page Up` / `Page Down` | Move by `max_visible_rows`, clamp to first/last enabled row. |
+| `Left` / `Right` | Move the cell coordinate within the focused row. |
+| `Home` / `End` | First/last column of the focused row. |
+| `Return` / `Space` | Activate the focused cell. |
+| pointer | Activate the clicked cell through the ordinary Button owner. |
+
+- The table publishes `Table`, its accessible name, logical row count, `selected_id` (selected
+  row), and `current_id` (active row).
+- Rows publish `Table_Row` with the row-header/first-cell label, `Selected`, `Current`, and
+  `Disabled` as applicable. Header cells publish `Table_Column_Header`; body cells publish
+  `Table_Cell`/`Table_Row_Header`, text value, description, and column coordinate.
+- Semantic activation targets the table's stable collection item; cell roles do not advertise
+  Press/Select because Alicorn has no realized cell-action mapping at this revision.
+- Focus stays on the table owner; the cell coordinate changes through the roving model.
+- Not claimed: cell spans, cell editing, multi-select, column resizing, column/row reorder,
+  built-in sorting/filtering, or a tree table.
+
+## Conformance tests
+
+`table/table_test.odin` covers:
+
+- stable table/row/cell identities, column track mapping, and the theme contract;
+- `Table` logical count, header cells and positions, nested row collections,
+  `Table_Row_Header`, selected cell coordinates, and selected/current states;
+- Up skipping a disabled row while preserving the column, Down, Home/End columns, Return
+  activation, and pointer parity;
+- disabled row semantics and rejection;
+- 200-row virtualization: the last row starts as a virtual semantic item, then Page Down + reveal
+  realizes it, with logical count 201;
+- the example smoke path with a real 120-row dataset.
+
+```powershell
+odin test table -define:ODIN_TEST_THREADS=1 -collection:alicorn=<alicorn> -collection:alikit=.
+./out/table_example.exe --smoke
+```
+
+There is no `testui` table pattern at the pinned revision. `.Roving_List` and `.Roving_Grid`
+require a `List_Box` container, while a table must publish `Table` and nested `Table_Row`
+collections. A table pattern is a recorded core candidate; v1 uses explicit drive assertions.
+
+## API reference
+
+| Declaration | Notes |
+| --- | --- |
+| `Column` | `key`, `label`, `width`, `align`. Positive width is fixed; non-positive is fractional. |
+| `Cell` / `Row` | Cell text/value metadata and a row with a stable `key` and borrowed cell slice. |
+| `Selection` | Selected `row_key` and `column_key`. |
+| `Options` | Accessible label, header visibility, row header, row height, visible rows, column gap, cell padding, text sizes. |
+| `Recipe` / `Style` | Optional namespaced surface roles and visual geometry. |
+| `State` | Active row/column coordinate, focus request, pending proposal. |
+| `Event` / `Event_Kind` | One-shot `Activated` carrying row and column keys. |
+| `table` | Describe the table and return an activation proposal. |
+| `request_focus` | Focus the table's Tab stop after layout. |
+| `recipe_default`, `style_default` | Core-role defaults. |
+| `theme_contract_default`, `theme_contract_check` | Setup-time validation. |
+| `table_semantic_id`, `header_row_semantic_id`, `header_cell_semantic_id`, `row_semantic_id`, `cell_semantic_id` | Stable semantic identities. |
+
+## Limits
+
+- Non-spanned cells only. Row/cell spans need a coordinated core semantic and layout contract.
+- Columns are capped at 64. Project a visible subset or wait for a supported span/column policy.
+- Sorting and filtering are application callbacks; stable row keys must survive the projection.
+- A virtual row's cells are not published until it is realized. Assistive technology can request
+  the row, but per-cell values for unrealized rows are not exported.
+- Headless tests do not prove a native screen-reader table session, pixels, or physical cell
+  navigation.
+
+## Compatibility
+
+<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
+<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<a href="../../compatibility/">Compatibility and pinning</a>.</div>
+
+## Source map
+
+- [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/table/table.odin)
+- [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/table/table_test.odin)
+- [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/table/main.odin)
+- [Theme JSON](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/table/theme.json)
+- [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/table.md)
