@@ -18,7 +18,11 @@ store. This catalog describes the packages that exist today.
 | `alikit:progress` | Determinate and indeterminate progress with `Progress` semantics, numeric range, track/fill/label parts, and optional caller-driven pulse | The application owns the value/range and indeterminate phase. The component owns presentation and semantic range projection. |
 | `alikit:notices` | Runtime toast helpers plus copyable card/stack parts for inline banners and application-hosted snackbars, with reveal/retire motion | Alicorn owns the notice queue, deadlines, actions, and built-in toast overlay. The application owns card items and resolution policy. |
 | `alikit:sidebar` | A flat navigation rail with expanded/collapsed presentations, `List_Box`/`List_Box_Option` semantics, roving focus, and one proposed route | The application owns accepted routes, content, router/history, badges, and disabled policy. |
-| `alikit:table` | A virtualized, non-spanned table with shared Grid column tracks, nested table/row/cell collections, header roles, roving cell coordinates, and one activation proposal | The application owns columns, rows, stable keys, sorting, filtering, selection, formatting, and data lifetime. |
+| `alikit:table` | A static, non-spanned presentation table with intrinsic wrapped row heights, inline detail/icon formatting, headers, and optional fixed-row virtualization | The application owns columns, rows, stable keys, sorting, filtering, formatting, and data lifetime. The table owns no focus, selection, or activation. |
+| `alikit:data_grid` | An interactive dataset grid with one Tab stop, roving cell focus, row/cell selection, sort-header proposals, and essential virtualization | The application owns columns, rows, comparators, filters, accepted selection, and dispatch. AliKit owns ephemeral focus and one proposal. |
+| `alikit:dialog` | Composable Dialog / Alert_Dialog parts with Escape and backdrop policy, initial focus, focus restoration, Alert live semantics, and nested overlays | The application owns when to open, action meaning, content, and dispatch. AliKit owns dismissal/focus policy. |
+| `alikit:menu` | An anchored component-level dropdown with Menu/Menu_Item semantics, checked/disabled/separator rows, roving navigation, Escape/outside dismissal, and reveal | The application owns items, command identity, checked state, and dispatch. The runtime context menu remains the native-integration path. |
+| `alikit:scroll_area` | A focusable, bounded or intrinsic scroll container with keyboard/wheel scrolling, Scroll_View semantics, and bar-part geometry | The application owns content extents/lines and theme registration. Alicorn owns the retained scroll region and bars. |
 | `alikit:theme_contract` | Bounded setup-time validation for namespaced component theme roles | Components own their role names and core fallbacks; applications register and validate a theme once. |
 
 The command-palette example is the canonical starting point for a small
@@ -57,16 +61,14 @@ for a small controlled compound control with explicit radio semantics,
 with a published numeric range, [the notices guide](notices.md) for runtime
 toast helpers and copyable inline card parts, [the sidebar guide](sidebar.md)
 for the flat navigation rail and its collapsed presentation, and
-[the table guide](table.md) for the virtualized non-spanned table contract. The measured stock-vs-parts comparison,
+[the table guide](table.md) for the static presentation table, [the data grid guide](data-grid.md) for the interactive dataset grid, [the dialog guide](dialog.md) for modal contracts, [the menu guide](menu.md) for anchored dropdowns, and [the scroll area guide](scroll-area.md) for bounded scrolling. The measured stock-vs-parts comparison,
 contract coverage, and core-requirement list live in
 [the issue 3 research record](research/issue-003-parts-pilot.md).
 
 ## Not in AliKit yet
 
 Calendars, color pickers, split panes, terminals, and rich editors are not
-available AliKit components. The P0 table is non-spanned; row/column spans,
-built-in sorting/filtering, and cell editing are P1 or application policy. A
-tree-style sidebar with nested sections is a later Sidebar variant. Add a
+available AliKit components. Tables and data grids are non-spanned; row/column spans, built-in sorting/filtering, submenus, and cell editing are P1 or application policy. A per-node scrollbar style override is not available at the pinned Alicorn revision. A tree-style sidebar with nested sections is a later Sidebar variant. Add a
 component when a real application need demonstrates reusable behavior; keep
 application-specific data and policy in the application, and keep independent
 domain engines outside the UI runtime where practical.
