@@ -31,8 +31,9 @@ storage.
 Run `./tools/test.ps1 -Odin odin` on Windows. It checks the models, retained
 component behavior, canonical native examples, the parts-based palette, the
 icon picker (including the `alicorn:testui` modal pattern check), the v0.3
-radio/progress/notices/sidebar/table suites, the sidebar's `.Roving_List`
-pattern, and a copied-source build against the pinned dependencies. Headless
+radio/progress/notices/sidebar/table/data_grid/scroll_area/menu/dialog
+suites, the sidebar's `.Roving_List` and the dialog's `.Modal_Dialog` patterns,
+and a copied-source build against the pinned dependencies. Headless
 tests do not validate operating-system IME candidate windows, physical
 screen-reader sessions, or pixels; describe that limitation when relevant.
 Run the matching `./out/<component>_example.exe --smoke` for native SDL_GPU

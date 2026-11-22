@@ -109,6 +109,46 @@ try {
     & $OdinPath @TableTestArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit table tests failed.' }
 
+    $DataGridTestArgs = @(
+        'test', 'data_grid',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'data_grid_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @DataGridTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit data grid tests failed.' }
+
+    $ScrollAreaTestArgs = @(
+        'test', 'scroll_area',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'scroll_area_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @ScrollAreaTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit scroll area tests failed.' }
+
+    $MenuTestArgs = @(
+        'test', 'menu',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'menu_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @MenuTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit menu tests failed.' }
+
+    $DialogTestArgs = @(
+        'test', 'dialog',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'dialog_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @DialogTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit dialog tests failed.' }
+
     $PaletteTestArgs = @(
         'test', 'command_palette',
         '-define:ODIN_TEST_THREADS=1',
@@ -211,6 +251,42 @@ try {
     ) + $CompilerArguments
     & $OdinPath @TableExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native table example failed to compile.' }
+
+    $DataGridExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\data_grid'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'data_grid_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @DataGridExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native data grid example failed to compile.' }
+
+    $ScrollAreaExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\scroll_area'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'scroll_area_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @ScrollAreaExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native scroll area example failed to compile.' }
+
+    $MenuExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\menu'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'menu_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @MenuExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native menu example failed to compile.' }
+
+    $DialogExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\dialog'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'dialog_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @DialogExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native dialog example failed to compile.' }
 
     $IconPickerExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\icon_picker'),

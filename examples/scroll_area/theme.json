@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "contract": "0.2",
+  "extends": "alicorn.base",
+  "tokens": {
+    "alikit.scroll_area.frame": {
+      "$type": "color",
+      "$value": {"colorSpace": "srgb", "components": [0.045, 0.055, 0.078], "alpha": 1}
+    }
+  },
+  "roles": {
+    "extensions": {
+      "vendor.alikit.scroll_area.frame": {"$type": "color", "$value": "{alikit.scroll_area.frame}"}
+    }
+  }
+}

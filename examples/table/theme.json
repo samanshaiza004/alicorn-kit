@@ -11,21 +11,16 @@
       "$type": "color",
       "$value": {"colorSpace": "srgb", "components": [0.05, 0.06, 0.085], "alpha": 1}
     },
-    "alikit.table.selected_row": {
+    "alikit.table.alternate": {
       "$type": "color",
-      "$value": {"colorSpace": "srgb", "components": [0.10, 0.16, 0.24], "alpha": 1}
-    },
-    "alikit.table.selected_cell": {
-      "$type": "color",
-      "$value": {"colorSpace": "srgb", "components": [0.14, 0.27, 0.40], "alpha": 1}
+      "$value": {"colorSpace": "srgb", "components": [0.058, 0.07, 0.098], "alpha": 1}
     }
   },
   "roles": {
     "extensions": {
       "vendor.alikit.table.header": {"$type": "color", "$value": "{alikit.table.header}"},
       "vendor.alikit.table.row": {"$type": "color", "$value": "{alikit.table.row}"},
-      "vendor.alikit.table.selected_row": {"$type": "color", "$value": "{alikit.table.selected_row}"},
-      "vendor.alikit.table.selected_cell": {"$type": "color", "$value": "{alikit.table.selected_cell}"}
+      "vendor.alikit.table.alternate": {"$type": "color", "$value": "{alikit.table.alternate}"}
     }
   }
 }
