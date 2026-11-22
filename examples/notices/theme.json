@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "contract": "0.2",
+  "extends": "alicorn.base",
+  "tokens": {
+    "alikit.notices.card": {
+      "$type": "color",
+      "$value": {"colorSpace": "srgb", "components": [0.085, 0.10, 0.145], "alpha": 1}
+    }
+  },
+  "roles": {
+    "extensions": {
+      "vendor.alikit.notices.card": {"$type": "color", "$value": "{alikit.notices.card}"}
+    }
+  }
+}

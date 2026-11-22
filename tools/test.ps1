@@ -79,6 +79,16 @@ try {
     & $OdinPath @ProgressTestArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit progress tests failed.' }
 
+    $NoticesTestArgs = @(
+        'test', 'notices',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'notices_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @NoticesTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit notices tests failed.' }
+
     $PaletteTestArgs = @(
         'test', 'command_palette',
         '-define:ODIN_TEST_THREADS=1',
@@ -154,6 +164,15 @@ try {
     ) + $CompilerArguments
     & $OdinPath @ProgressExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native progress example failed to compile.' }
+
+    $NoticesExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\notices'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'notices_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @NoticesExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native notices example failed to compile.' }
 
     $IconPickerExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\icon_picker'),

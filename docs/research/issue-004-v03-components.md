@@ -85,7 +85,28 @@ bounded `layout_nodes_visited` count after an input-driven value change. No
 
 ## Notices
 
-(To be filled by the notices slice.)
+Package: `notices`. Real toasts call `notice_post`/`notice_emit` and keep the
+runtime as the only queue, including stable-ID deduplication, capacity,
+action-bearing persistence, live Status/Alert announcements, and one-shot
+expiry. Thin helpers expose post/dismiss/take-action/next-deadline/advance.
+
+The composable parts are an inline `card` and `stack` over application-owned
+`Item` values. They publish Status/Alert semantics, ordinary action/close
+buttons, reveal-only content motion, and an opacity retire path that reports
+`Retire_Settled` after the presentation settles. Reduced motion snaps.
+
+Why not a custom toast overlay over the runtime queue? At this pin
+`notice_overlay_describe` owns the complete card tree. A custom overlay would
+have to duplicate the visual card and, because there is no public live-region
+annotation (`pending.semantic.live` is private), it would regress the
+announcement guarantee. The card parts therefore target inline banners and
+application-hosted surfaces; real toasts stay runtime-rendered. This is recorded
+below as a core gap.
+
+Tests cover runtime toast Status semantics, pointer action delivery through
+`notice_take_action`, the exact one-shot expiry deadline without polling,
+action-bearing persistence, inline card value/description/action delivery, and
+the retire-settle path.
 
 ## Sidebar / Navigation Rail
 
