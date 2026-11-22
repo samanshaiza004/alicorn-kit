@@ -29,9 +29,9 @@ export const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 | `api` | Public types and procedures for API-reference generation. |
 | `limits` | Explicit non-claims and known core gaps. |
 
-The top level records the Alicorn and AccessKit revisions, the validation commands, and three
-supporting packages (`palette_model`, `tree_model`, and `theme_contract`) that are not standalone
-catalog pages today.
+The top level records the Alicorn and AccessKit revisions, the validation commands, and four
+supporting packages (`palette_model`, `tree_model`, `selection`, and `theme_contract`) that are not
+standalone catalog pages today.
 
 ## Registry seed, not a package manifest
 
@@ -58,8 +58,8 @@ contracts without scraping prose.
       "tests": ["radio_group/radio_group_test.odin"],
       "example": "examples/radio_group/main.odin",
       "capture": "website/public/captures/radio-group.png",
-      "parts": ["group", "option", "indicator", "label", "focus ring"],
-      "api": ["State", "Options", "Event", "radio_group", "request_focus"]
+      "parts": ["group_begin/group_end", "item_begin/item_end", "indicator", "label"],
+      "api": ["State", "Options", "Event", "group_begin", "item_begin", "group_end", "radio_group"]
     }
   ]
 }

@@ -19,8 +19,10 @@ projects when consuming it.
 
 The v0.3 P0 sprint adds:
 
-- a controlled radio group with `Radio_Group`/`Radio_Button` semantics;
-- determinate and indeterminate progress with a published numeric range;
+- composable radio parts and a wrapper with `Radio_Group`/`Radio_Button`
+  semantics;
+- composable linear or ring progress with a published numeric range;
+- a segmented control and the shared pure single-selection behavior;
 - notice helpers plus copyable card/stack parts for inline banners;
 - a collapsed/expanded navigation rail with a proposed app-owned route;
 - a virtualized, non-spanned table with nested table/row/cell semantics.
@@ -49,9 +51,12 @@ command services.
   composite with search, grid/list appearances, named parts, and tests.
 - [Palette Parts guide](docs/palette-parts.md) - the parts-based result-list
   variant and its ownership boundary.
-- [Radio Group guide](docs/radio-group.md) - controlled radios, roving arrows,
-  and activation parity.
-- [Progress guide](docs/progress.md) - determinate and indeterminate bars.
+- [Radio Group guide](docs/radio-group.md) - composable radio parts, roving
+  arrows, activation parity, and custom item rendering.
+- [Progress guide](docs/progress.md) - composable determinate and indeterminate
+  linear or ring presentations.
+- [Segmented guide](docs/segmented.md) - the shared single-selection behavior
+  and its moving indicator.
 - [Notices guide](docs/notices.md) - runtime toasts and copyable inline cards.
 - [Sidebar guide](docs/sidebar.md) - the navigation rail and collapsed
   presentation.
@@ -61,6 +66,8 @@ command services.
   measured stock-vs-parts comparison, contract coverage, and GO/NO-GO.
 - [Issue 4 research record](docs/research/issue-004-v03-components.md) - pin
   choice, P0 component evidence, and core gaps.
+- [Issue 5 research record](docs/research/issue-005-selection-and-shared-behaviors.md)
+  - shared selection behavior, two consumers, and deferred extraction candidates.
 - [Agent guidance](AGENTS.md) - project boundaries and validation steps.
 
 ## Repository layout
@@ -72,8 +79,10 @@ command services.
 - `tree_view/` - Alicorn tree presentation, semantics, and input adapter.
 - `icon_picker/` - complete copyable custom composite with two appearances.
 - `theme_contract/` - bounded setup-time validation for component theme roles.
-- `radio_group/` - controlled radio group.
-- `progress/` - determinate/indeterminate progress bar.
+- `selection/` - pure single-selection behavior over a borrowed keyed item set.
+- `radio_group/` - composable controlled radio group parts and wrapper.
+- `progress/` - composable determinate/indeterminate progress parts.
+- `segmented/` - single-selection segmented control with a moving indicator.
 - `notices/` - runtime notice helpers and inline card parts.
 - `sidebar/` - navigation rail.
 - `table/` - virtualized table.

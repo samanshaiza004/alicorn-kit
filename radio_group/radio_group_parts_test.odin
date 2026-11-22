@@ -190,6 +190,14 @@ test_radio_parts_custom_cards_keep_semantics_keyboard_and_parity :: proc(t: ^tes
 	testing.expect(t, app.events >= 3, "keyboard, pointer, and semantic activation should agree")
 	testing.expect(t, !app.unknown_visible,
 		"item_begin must return visible=false for an option outside the keyed set")
+
+	// Idle settlement: no retained description or presentation remains.
+	if testing.expect(t, testui.step(&handle, testui.Input{kind=.Time_Advance, delta_ns=16_000_000}) == .Ok,
+		"the custom radio group should settle after an idle time advance") {
+		turn := testui.last_turn(&handle)
+		testing.expect(t, turn.stabilized && !turn.layout_pending,
+			"the custom radio group should report a stabilized, layout-clean idle turn")
+	}
 }
 
 @(test)

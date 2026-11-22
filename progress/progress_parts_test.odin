@@ -156,6 +156,13 @@ test_progress_parts_ring_preserves_semantics_identity_and_value :: proc(t: ^test
 		"the bare ring should not publish a Label visual part")
 	testing.expect(t, !alicorn.visual_part_owner_has_role(handle.runtime, node.visual_node, .Content),
 		"the bare ring should not publish a value Content visual part")
+
+	if testing.expect(t, testui.step(&handle, testui.Input{kind=.Time_Advance, delta_ns=16_000_000}) == .Ok,
+		"the custom ring should settle after an idle time advance") {
+		turn := testui.last_turn(&handle)
+		testing.expect(t, turn.stabilized && !turn.layout_pending,
+			"the custom ring should report a stabilized, layout-clean idle turn")
+	}
 }
 
 @(test)
@@ -170,6 +177,50 @@ test_progress_parts_track_indicator_and_custom_width :: proc(t: ^testing.T) {
 		"the convenience linear wrapper should publish the Indicator part")
 	testing.expect_value(t, app.state.last_fill_width, f32(75))
 	testing.expect_value(t, app.state.last_offset_width, f32(0))
+}
+
+Track_App :: struct {
+	state: State,
+	value: f64,
+}
+
+track_render :: proc(app: ^Track_App, ctx: ^ui.UI) {
+	part, visible := begin(
+		ctx,
+		&app.state,
+		app.value,
+		0,
+		100,
+		Options{accessible_label="Custom track", width=320},
+		key=alicorn.key_string("custom-track"),
+		instance_id=9502,
+	)
+	if !visible { return }
+	// The author owns the track size; the component supplies the fraction math
+	// from the same value and range.
+	track, track_visible := track_begin(ctx, &part, width=200, height=20, padding=0)
+	if track_visible {
+		indicator(ctx, &track)
+		track_end(ctx)
+	}
+	end(ctx, &part)
+}
+
+@(test)
+test_progress_parts_author_owned_track_geometry :: proc(t: ^testing.T) {
+	app := Track_App{value=75}
+	handle, status := testui.open(&app, track_render, width=420, height=180)
+	if !testing.expectf(t, status == .Ok, "the custom track fixture should open: %v %s",
+		status, testui.last_turn_diagnostic(&handle)) {
+		if handle.runtime != nil { testui.close(&handle) }
+		return
+	}
+	defer testui.close(&handle)
+	testing.expect_value(t, app.state.last_fill_width, f32(150))
+	testing.expect_value(t, app.state.last_offset_width, f32(0))
+	node, found := alicorn.semantic_node_lookup(handle.runtime, progress_semantic_id(9502))
+	testing.expect(t, found && node.has_numeric_value && node.numeric_value == 75,
+		"the author-owned track should keep the public numeric semantics")
 }
 
 @(test)
