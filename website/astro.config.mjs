@@ -18,7 +18,7 @@ export default defineConfig({
       tagline: 'Bring the parts that fit. Keep your application policy.',
       favicon: '/favicon.svg',
       customCss: ['./src/styles/catalog.css'],
-      editLink: { baseUrl: repository + '/edit/codex/website-catalog/website/' },
+      editLink: { baseUrl: repository + '/edit/main/website/' },
       lastUpdated: false,
       pagination: true,
       credits: false,
