@@ -49,6 +49,26 @@ try {
     & $OdinPath test tree_model '-define:ODIN_TEST_THREADS=1' "-out:$(Join-Path $OutputRoot 'tree_model_tests.exe')"
     if ($LASTEXITCODE -ne 0) { throw 'AliKit tree model tests failed.' }
 
+    $ThemeContractTestArgs = @(
+        'test', 'theme_contract',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'theme_contract_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @ThemeContractTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit theme contract tests failed.' }
+
+    $RadioGroupTestArgs = @(
+        'test', 'radio_group',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'radio_group_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @RadioGroupTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit radio group tests failed.' }
+
     $PaletteTestArgs = @(
         'test', 'command_palette',
         '-define:ODIN_TEST_THREADS=1',
@@ -106,6 +126,15 @@ try {
     ) + $CompilerArguments
     & $OdinPath @TreeExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native Tree View example failed to compile.' }
+
+    $RadioGroupExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\radio_group'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'radio_group_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @RadioGroupExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native radio group example failed to compile.' }
 
     $IconPickerExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\icon_picker'),

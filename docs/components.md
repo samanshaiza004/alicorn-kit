@@ -14,6 +14,8 @@ store. This catalog describes the packages that exist today.
 | `alikit:tree_view` | Accessible virtualized tree rows, indentation, focus reveal, keyboard navigation, and optional row-anchored context menus | The application owns expansion/loading policy, mutation, activation, selection policy, and context-menu actions. |
 | `alikit:palette_parts` | A copyable, parts-based palette result list: retained virtual rows, published `List_Box` semantics, enabled-row navigation, reveal, and one activation event | The application owns the query, matching/ranking, commands, modal shell, dismissal, and focus restoration. |
 | `alikit:icon_picker` | A complete copyable custom composite: icon search, virtualized grid or list, roving focus, selection proposal, two appearances, and one application-authored focus interaction | The application owns choices, accepted selection, commands, and any surrounding dialog. |
+| `alikit:radio_group` | A controlled radio group with `Radio_Group`/`Radio_Button` semantics, one Tab stop, roving arrows, disabled skipping, and keyboard/pointer/semantic activation parity | The application owns the selected value and mutual exclusion. The component owns ephemeral focus and one proposed selection event. |
+| `alikit:theme_contract` | Bounded setup-time validation for namespaced component theme roles | Components own their role names and core fallbacks; applications register and validate a theme once. |
 
 The command-palette example is the canonical starting point for a small
 Alicorn application using AliKit. It shows application-owned actions, optional
@@ -43,9 +45,10 @@ visible-row windows, keyboard behavior, context-menu targeting, and the
 application-owned data contract.
 
 See [the icon picker guide](icon-picker.md) for a complete copyable custom
-composite with two appearances and named parts, and
+composite with two appearances and named parts,
 [the palette-parts guide](palette-parts.md) for the parts-based result-list
-variant and its ownership boundary. The measured stock-vs-parts comparison,
+variant and its ownership boundary, and [the radio group guide](radio-group.md)
+for a small controlled compound control with explicit radio semantics. The measured stock-vs-parts comparison,
 contract coverage, and core-requirement list live in
 [the issue 3 research record](research/issue-003-parts-pilot.md).
 
