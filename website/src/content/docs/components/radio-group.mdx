@@ -17,7 +17,8 @@ assistive-technology activation parity.
 <Capture src="captures/radio-group.png" alt="Native radio group window with a Reading preferences card, a vertical text-size group, and a horizontal density group" caption="Native SDL_GPU capture of examples/radio_group at Alicorn 47c9d4a. The themed surfaces come from the example theme; the selected dot and focus presentation do not rely on color alone." />
 
 <div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
-real native control; keyboard behavior is documented and tested in the package.</div>
+real native control; keyboard behavior is documented and tested in the package.
+The capture predates the parts examples; re-capture is pending.</div>
 
 ## Responsibility split
 
@@ -64,6 +65,37 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 No init or destroy is required; the component allocates nothing. Call
 `radio.request_focus(&state)` when an application interaction should move focus to the group's
 single Tab stop.
+
+## Compose the parts
+
+`radio_group` is a convenience wrapper over the public parts. The same group can be
+composed directly; the parts own the Button owner, `Radio_Button` semantics, roving focus, checked
+state, and activation parity, while the author owns everything between `item_begin` and `item_end`.
+
+```odin
+group, visible := radio.group_begin(ctx, &app.group, app.options[:], app.selected,
+	label="Text size", key=alicorn.key_string("size"), instance_id=41)
+if visible {
+	for option in app.options {
+		item, item_visible := radio.item_begin(ctx, &group, option)
+		if item_visible {
+			radio.indicator(ctx, item) // omit to replace the dot
+			radio.label(ctx, item)     // omit for a custom title layout
+			radio.item_end(ctx, item)
+		}
+	}
+	event := radio.group_end(ctx, &group) // one Selection_Proposed, if any
+}
+```
+
+`Item` exposes `option`, `index`, `count`, `checked`, `focused`, `focus_visible`, `disabled`, and
+`visible`. An option outside the group's keyed set returns `visible=false` and publishes no
+semantics. `item_begin` also accepts an ordinary `ui.Layout_Style` when the author wants to own the
+item's outer geometry.
+
+Three independently compilable examples cover the paths: the default appearance
+(`examples/radio_group`), radical choice cards with picture/price/description and no default dot
+(`examples/radio_group_parts`), and a dialog-hosted form (`examples/radio_group_composition`).
 
 ## Parts and identities
 
@@ -158,8 +190,12 @@ instead of claiming a pattern that does not exist.
 | `Options` | Accessible label, orientation, selection mode, item geometry, label size, `no_wrap`. |
 | `Recipe` / `Style` | Optional namespaced surface roles and visual geometry. |
 | `State` | Active roving value, focus request, and pending proposal. |
+| `Group` / `Item` | Per-description parts contexts; `Item` exposes checked/focused/disabled/position state. |
+| `group_begin` / `item_begin` | Open the group and one semantic item; both return a `visible` flag. |
+| `indicator` / `label` | Optional default visual parts. |
+| `item_end` / `group_end` | Close the item and group; `group_end` returns the proposal. |
 | `Event` / `Event_Kind` | One-shot `Selection_Proposed` carrying `value`. |
-| `radio_group` | Describe the group and return a proposal. |
+| `radio_group` | Convenience wrapper built from the parts. |
 | `request_focus` | Focus the group's Tab stop after layout. |
 | `recipe_default`, `style_default` | Core-role defaults. |
 | `theme_contract_default`, `theme_contract_check`, `theme_contract_satisfied`, `theme_contract_missing_required` | Setup-time validation. |
@@ -184,7 +220,10 @@ instead of claiming a pattern that does not exist.
 ## Source map
 
 - [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/radio_group/radio_group.odin)
-- [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/radio_group/radio_group_test.odin)
-- [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/radio_group/main.odin)
+- [Default tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/radio_group/radio_group_test.odin)
+- [Parts tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/radio_group/radio_group_parts_test.odin)
+- [Default example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/radio_group/main.odin)
+- [Parts example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/radio_group_parts/main.odin)
+- [Composition example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/radio_group_composition/main.odin)
 - [Theme JSON](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/radio_group/theme.json)
 - [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/radio-group.md)

@@ -1,9 +1,32 @@
 package radio_group
 
-// Radio Group is a controlled, copyable compound control. The application owns
-// the selected value and performs mutual exclusion; this package publishes the
-// Radio_Group/Radio_Button semantics, one Tab stop, roving arrow navigation,
-// pointer/semantic activation parity, and a namespaced appearance recipe.
+// Radio Group is a controlled, copyable compound control built from public
+// parts. The application owns the selected value and performs mutual exclusion;
+// these parts publish the Radio_Group/Radio_Button semantics, one Tab stop,
+// roving arrow navigation, pointer/semantic activation parity, and a namespaced
+// appearance recipe.
+//
+// Authors can use the complete radio_group() component or compose the parts:
+//
+//	group, visible := radio.group_begin(ctx, &state, options, selected,
+//		label="Text size", key=key, instance_id=1)
+//	if visible {
+//		for option in options {
+//			item, item_visible := radio.item_begin(ctx, &group, option)
+//			if item_visible {
+//				radio.indicator(ctx, item) // optional default dot
+//				radio.label(ctx, item)     // optional default label
+//				radio.item_end(ctx, item)
+//			}
+//		}
+//		event = radio.group_end(ctx, &group)
+//	}
+//
+// Everything between item_begin and item_end belongs to the author: keep the
+// default parts, omit the indicator, or replace the inside of the Button owner
+// with any ordinary Alicorn layout. The parts retain keyboard navigation,
+// roving focus, checked-state publication, and Radio_Button semantics; the
+// application still owns the accepted selected value.
 //
 // It is ordinary AliKit code: no runtime registration, second UI tree, focus
 // policy, or private runtime access. Copy the folder and change drawing or
@@ -144,7 +167,7 @@ State :: struct {
 
 	// proposed is a selection proposed during a description that cannot return
 	// it directly (pointer or semantic activation). It is reported by the next
-	// radio_group call so every input path shares one controlled result.
+	// group_end call so every input path shares one controlled result.
 	proposed:     bool,
 	proposed_value: u64,
 
@@ -158,6 +181,41 @@ Event_Kind :: enum { None, Selection_Proposed }
 Event :: struct {
 	kind:  Event_Kind,
 	value: u64,
+}
+
+// Group is the per-description group context returned by group_begin. It owns
+// no application selection and allocates nothing; the caller-owned State
+// remains the only retained interaction state.
+Group :: struct {
+	ctx:            ^ui.UI,
+	state:          ^State,
+	options:        []Option,
+	selected_value: u64,
+	resolved:       Options,
+	style:          Style,
+	recipe:         Recipe,
+	instance_id:    u64,
+	root:           alicorn.Node_ID,
+	collection:     alicorn.Semantic_Collection_Handle,
+	visible:        bool,
+}
+
+// Item is the per-description option context returned by item_begin. The
+// public fields expose everything a custom appearance needs: the caller-owned
+// option, its stable index and position, checked state, roving focus, focus
+// visibility, and disabled policy.
+Item :: struct {
+	group:         ^Group,
+	option:        Option,
+	index:         int,
+	count:         int,
+	owner:         alicorn.Node_ID,
+	checked:       bool,
+	focused:       bool,
+	focus_visible: bool,
+	disabled:      bool,
+	visible:       bool,
+	activated:     bool,
 }
 
 @(private)
@@ -179,6 +237,27 @@ group_semantic_id :: proc(instance_id: u64) -> alicorn.Semantic_ID {
 option_semantic_id :: proc(instance_id, value: u64) -> alicorn.Semantic_ID {
 	if instance_id == 0 || instance_id > MAX_INSTANCE_ID || value == 0 { return {} }
 	return alicorn.Semantic_ID{namespace=RADIO_GROUP_NAMESPACE, value=mix(instance_id, value)}
+}
+
+// instance_from_key derives a stable instance identity when a parts author
+// supplies only the UI key. An explicit nonzero instance_id is always
+// preferred when the key may change between descriptions.
+instance_from_key :: proc(key: ui.UI_Key) -> u64 {
+	switch value in key {
+	case alicorn.UI_Unkeyed:
+		return 0
+	case u64:
+		return mix(value, 0x524B4559)
+	case alicorn.UI_Key_Pair:
+		return mix(value.first, value.second)
+	case string:
+		hash := u64(0xCBF29CE484222325)
+		for byte in value {
+			hash = (hash ~ u64(byte))*0x100000001B3
+		}
+		return mix(hash, 0x52535452)
+	}
+	return 0
 }
 
 // request_focus asks the next description to focus the group's single Tab
@@ -391,164 +470,48 @@ surface_or_fallback :: proc(
 		style=style, shape=shape, stroke=stroke, label=label)
 }
 
-@(private)
-emit_option :: proc(
-	ctx: ^ui.UI,
-	state: ^State,
-	options: []Option,
-	resolved: Options,
-	style: Style,
-	recipe: Recipe,
-	option: Option,
-	index: int,
-	collection: alicorn.Semantic_Collection_Handle,
-	instance_id: u64,
-	selected_value: u64,
-) -> Event {
-	checked := option.value != 0 && option.value == selected_value
-	active := index == state.active_index
-	root_focused := state.root_node != 0 && alicorn.focused_node(ctx.runtime) == state.root_node
-	owner, activated := alicorn.button_begin(
-		ctx,
-		option.label,
-		key=ui.key_pair(ITEM_KEY, option.value),
-		style=ui.layout_style(.Row,
-			width=resolved.item_min_width if resolved.orientation == .Horizontal else -1,
-			height=resolved.item_height,
-			grow=1 if resolved.orientation == .Vertical else 0),
-		state=alicorn.Button_State{selected=checked, disabled=option.disabled},
-		presentation=.Custom,
-		focusable=false,
-	)
-	if owner == 0 { return {} }
-
-	states := alicorn.Semantic_States{}
-	actions := alicorn.Semantic_Actions{}
-	if option.disabled { states = alicorn.semantic_states_add(states, .Disabled) }
-	if checked {
-		states = alicorn.semantic_states_add(states, .Checked)
-		states = alicorn.semantic_states_add(states, .Selected)
-	}
-	if active { states = alicorn.semantic_states_add(states, .Current) }
-	if !option.disabled {
-		actions = alicorn.semantic_actions_add(actions, .Press)
-		actions = alicorn.semantic_actions_add(actions, .Focus)
-	}
-	_ = alicorn.semantic_collection_item(ctx, collection, u64(index), alicorn.Semantic_Node_Description{
-		id=option_semantic_id(instance_id, option.value),
-		role=.Radio_Button,
-		label=option.label,
-		description=option.description,
-		value=option.label,
-		states=states,
-		actions=actions,
-		visual_node=owner,
-	})
-
-	fill_role := recipe.item_surface_role
-	fallback := alicorn.Style_Color_Role.Subtle_Surface
-	if checked {
-		fill_role = recipe.selected_surface_role
-		fallback = .Selection
-	}
-	stroke_role := alicorn.Style_Color_Role.Border
-	if active && root_focused { stroke_role = .Focus }
-	stroke := alicorn.Paint_Stroke{
-		color=alicorn.style_color(ctx, stroke_role),
-		width=style.focus_width if active && root_focused else 1,
-	}
-	surface_id := surface_or_fallback(
-		ctx,
-		fill_role,
-		fallback,
-		key=ui.key_u64(1),
-		style=ui.layout_style(.Row, width=-1, height=-1, padding=resolved.item_padding,
-			gap=max(resolved.item_padding, 6), align=.Center),
-		shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=style.corner_radius},
-		stroke=stroke,
-		label="radio-option-surface",
-	)
-	if surface_id != 0 {
-		_ = alicorn.visual_part_attach(ctx, surface_id, owner, alicorn.visual_part_core(.Surface))
-		indicator := surface_or_fallback(
-			ctx,
-			recipe.indicator_surface_role,
-			.Subtle_Surface,
-			key=ui.key_u64(2),
-			style=ui.layout_style(.Row, width=resolved.indicator_size, height=resolved.indicator_size,
-				align=.Center, justify=.Center),
-			shape=alicorn.Surface_Shape{kind=.Circle},
-			stroke=alicorn.Paint_Stroke{color=alicorn.style_color(ctx, .Border), width=1},
-			label="radio-indicator",
-		)
-		if indicator != 0 {
-			_ = alicorn.visual_part_attach(ctx, indicator, owner, alicorn.visual_part_core(.Indicator))
-			if checked {
-				inner_size := max(resolved.indicator_size*0.46, 4)
-				dot := surface_or_fallback(
-					ctx,
-					recipe.selected_indicator_role,
-					.Accent,
-					key=ui.key_u64(3),
-					style=ui.layout_style(.Row, width=inner_size, height=inner_size),
-					shape=alicorn.Surface_Shape{kind=.Circle},
-					stroke={},
-					label="radio-selected-dot",
-				)
-				if dot != 0 {
-					_ = alicorn.visual_part_attach(ctx, dot, owner, alicorn.visual_part_core(.Selected_Indicator))
-					alicorn.surface_end(ctx)
-				}
-			}
-			alicorn.surface_end(ctx)
-		}
-		text_color := alicorn.style_color(ctx, .Text)
-		if option.disabled { text_color = alicorn.style_color(ctx, .Muted_Text) }
-		label_style := ui.layout_style(.Row, grow=1)
-		label_id := ui.text(ctx, option.label,
-			key=ui.key_u64(4),
-			style=label_style,
-			color=text_color,
-			size=resolved.label_size,
-			decorative=true,
-			text_style=alicorn.Text_Style{overflow=.Ellipsis},
-		)
-		if label_id != 0 {
-			_ = alicorn.visual_part_attach(ctx, label_id, owner, alicorn.visual_part_core(.Label))
-		}
-		alicorn.surface_end(ctx)
-	}
-	alicorn.button_end(ctx)
-	if activated && !option.disabled {
-		propose(state, option.value)
-	}
-	return {}
-}
-
-// radio_group describes one controlled radio group. selected_value is the
-// application-owned selection and is never mutated. The returned event is the
-// one proposed selection change for this description, if any. instance_id must
-// be stable and unique among simultaneously mounted groups.
-radio_group :: proc(
+// group_begin opens the group's single focus scope and Radio_Group collection.
+// options is the caller-owned keyed option slice; selected_value is the
+// application-owned selection. label overrides the accessible label when
+// nonempty. When instance_id is zero, a stable identity is derived from key.
+//
+// The returned Group is a per-description value. Pass its address to
+// item_begin and group_end. visible is false when the key scope, runtime, or
+// collection is unavailable; call group_end only when visible is true.
+group_begin :: proc(
 	ctx: ^ui.UI,
 	state: ^State,
 	options: []Option,
 	selected_value: u64,
+	label: string = "",
+	key: ui.UI_Key = {},
+	instance_id: u64 = 0,
 	group_options: Options = {},
-	key: ui.UI_Key,
-	instance_id: u64,
 	recipe: Recipe = {},
 	style: Style = {},
-) -> (event: Event) {
-	if ctx == nil || ctx.runtime == nil || state == nil || instance_id == 0 ||
-	   instance_id > MAX_INSTANCE_ID {
-		return
-	}
+) -> (group: Group, visible: bool) {
+	if ctx == nil || ctx.runtime == nil || state == nil { return }
+	resolved_instance := instance_id
+	if resolved_instance == 0 { resolved_instance = instance_from_key(key) }
+	if resolved_instance == 0 || resolved_instance > MAX_INSTANCE_ID { return }
+
 	resolved := options_resolve(group_options)
+	if label != "" { resolved.accessible_label = label }
 	state.last_orientation = resolved.orientation
 	resolved_style := style_resolve(style, resolved)
 	if !ui.key_scope(ctx, key) { return }
+
 	reconcile_active(state, options, selected_value)
+	group = Group{
+		ctx=ctx,
+		state=state,
+		options=options,
+		selected_value=selected_value,
+		resolved=resolved,
+		style=resolved_style,
+		recipe=recipe,
+		instance_id=resolved_instance,
+	}
 
 	state.root_node = 0
 	direction := alicorn.Layout_Direction.Column
@@ -568,14 +531,15 @@ radio_group :: proc(
 	)
 	if root == 0 { return }
 	state.root_node = root
+	group.root = root
 
-	selected_id := option_semantic_id(instance_id, selected_value)
+	selected_id := option_semantic_id(resolved_instance, selected_value)
 	if index_of_value(options, selected_value) < 0 { selected_id = {} }
-	current_id := option_semantic_id(instance_id, state.active_value)
+	current_id := option_semantic_id(resolved_instance, state.active_value)
 	collection := alicorn.semantic_collection_begin(
 		ctx,
 		root,
-		group_semantic_id(instance_id),
+		group_semantic_id(resolved_instance),
 		.Radio_Group,
 		resolved.accessible_label,
 		u64(len(options)),
@@ -584,33 +548,240 @@ radio_group :: proc(
 		realized_first=0,
 		realized_last=u64(len(options)),
 	)
-	if collection.id.namespace != 0 {
-		_ = ui.interaction_scope(ctx, root, rawptr(state), alicorn.Interaction_Scope_Options{
-			keys={.Left, .Right, .Up, .Down, .Home, .End, .Return, .Toggle},
-			composition_yield_keys={.Left, .Right, .Up, .Down, .Home, .End, .Return, .Toggle},
-		})
-		for {
-			queued, found := alicorn.interaction_event_next(ctx.runtime, root)
-			if !found { break }
-			if queued.kind == .Key && apply_key(state, options, resolved, queued.key) {
-				alicorn.invalidate_root(ctx.runtime, "radio group keyboard navigation")
-			}
-		}
-		if len(options) > 0 {
-			for option, index in options {
-				emit_option(ctx, state, options, resolved, resolved_style, recipe, option, index,
-					collection, instance_id, selected_value)
-			}
-		}
-		// Pointer and semantic activation are observed while the options are
-		// described, so report their proposal in this same call. Keyboard
-		// proposals were queued before the loop and are reported here too.
-		if state.proposed {
-			state.proposed = false
-			event = Event{kind=.Selection_Proposed, value=state.proposed_value}
+	if collection.id.namespace == 0 {
+		alicorn.container_end(ctx)
+		state.root_node = 0
+		group.root = 0
+		return
+	}
+	group.collection = collection
+	_ = ui.interaction_scope(ctx, root, rawptr(state), alicorn.Interaction_Scope_Options{
+		keys={.Left, .Right, .Up, .Down, .Home, .End, .Return, .Toggle},
+		composition_yield_keys={.Left, .Right, .Up, .Down, .Home, .End, .Return, .Toggle},
+	})
+	for {
+		queued, found := alicorn.interaction_event_next(ctx.runtime, root)
+		if !found { break }
+		if queued.kind == .Key && apply_key(state, options, resolved, queued.key) {
+			alicorn.invalidate_root(ctx.runtime, "radio group keyboard navigation")
 		}
 	}
+	group.visible = true
+	return group, true
+}
+
+// item_begin opens one Radio_Button owner and publishes its Radio_Button
+// semantic item. It returns visible=false for an invalid group, an unknown or
+// zero option value, or a failed Button owner; in that case the author skips
+// both the visual subtree and its semantics, and must not call item_end.
+//
+// item_style defaults to the group's orientation geometry. Pass an ordinary
+// ui.layout_style value to own the item's outer width, height, direction,
+// padding, gap, and alignment. The Button owner remains the semantic and hit
+// owner regardless of the visual tree inside it.
+item_begin :: proc(
+	ctx: ^ui.UI,
+	group: ^Group,
+	option: Option,
+	item_style: ui.Layout_Style = {},
+) -> (item: Item, visible: bool) {
+	if ctx == nil || ctx.runtime == nil || group == nil || !group.visible { return }
+	index := index_of_value(group.options, option.value)
+	// A disabled option is a valid semantic item; only an unknown or zero value
+	// is skipped.
+	if index < 0 { return }
+
+	resolved := group.resolved
+	state := group.state
+	checked := option.value != 0 && option.value == group.selected_value
+	active := index == state.active_index
+	root_focused := state.root_node != 0 && alicorn.focused_node(ctx.runtime) == state.root_node
+	style := item_style
+	if style == (ui.Layout_Style{}) {
+		style = ui.layout_style(.Row,
+			width=resolved.item_min_width if resolved.orientation == .Horizontal else -1,
+			height=resolved.item_height,
+			grow=1 if resolved.orientation == .Vertical else 0)
+	}
+	owner, activated := alicorn.button_begin(
+		ctx,
+		option.label,
+		key=ui.key_pair(ITEM_KEY, option.value),
+		style=style,
+		state=alicorn.Button_State{selected=checked, disabled=option.disabled},
+		presentation=.Custom,
+		focusable=false,
+	)
+	if owner == 0 { return }
+
+	states := alicorn.Semantic_States{}
+	actions := alicorn.Semantic_Actions{}
+	if option.disabled { states = alicorn.semantic_states_add(states, .Disabled) }
+	if checked {
+		states = alicorn.semantic_states_add(states, .Checked)
+		states = alicorn.semantic_states_add(states, .Selected)
+	}
+	if active { states = alicorn.semantic_states_add(states, .Current) }
+	if !option.disabled {
+		actions = alicorn.semantic_actions_add(actions, .Press)
+		actions = alicorn.semantic_actions_add(actions, .Focus)
+	}
+	_ = alicorn.semantic_collection_item(ctx, group.collection, u64(index), alicorn.Semantic_Node_Description{
+		id=option_semantic_id(group.instance_id, option.value),
+		role=.Radio_Button,
+		label=option.label,
+		description=option.description,
+		value=option.label,
+		states=states,
+		actions=actions,
+		visual_node=owner,
+	})
+
+	item = Item{
+		group=group,
+		option=option,
+		index=index,
+		count=len(group.options),
+		owner=owner,
+		checked=checked,
+		focused=active,
+		focus_visible=active && root_focused,
+		disabled=option.disabled,
+		visible=true,
+		activated=activated,
+	}
+	return item, true
+}
+
+// indicator draws the default radio indicator and, when checked, its dot. It is
+// optional: omit it and draw any surface, icon, image, or animated visual
+// inside the item. The semantic item and interaction owner are already
+// published by item_begin.
+indicator :: proc(ctx: ^ui.UI, item: Item) -> alicorn.Node_ID {
+	if ctx == nil || ctx.runtime == nil || !item.visible || item.group == nil { return 0 }
+	group := item.group
+	resolved := group.resolved
+	recipe := group.recipe
+	indicator := surface_or_fallback(
+		ctx,
+		recipe.indicator_surface_role,
+		.Subtle_Surface,
+		key=ui.key_u64(2),
+		style=ui.layout_style(.Row, width=resolved.indicator_size, height=resolved.indicator_size,
+			align=.Center, justify=.Center),
+		shape=alicorn.Surface_Shape{kind=.Circle},
+		stroke=alicorn.Paint_Stroke{color=alicorn.style_color(ctx, .Border), width=1},
+		label="radio-indicator",
+	)
+	if indicator == 0 { return 0 }
+	_ = alicorn.visual_part_attach(ctx, indicator, item.owner, alicorn.visual_part_core(.Indicator))
+	if item.checked {
+		inner_size := max(resolved.indicator_size*0.46, 4)
+		dot := surface_or_fallback(
+			ctx,
+			recipe.selected_indicator_role,
+			.Accent,
+			key=ui.key_u64(3),
+			style=ui.layout_style(.Row, width=inner_size, height=inner_size),
+			shape=alicorn.Surface_Shape{kind=.Circle},
+			stroke={},
+			label="radio-selected-dot",
+		)
+		if dot != 0 {
+			_ = alicorn.visual_part_attach(ctx, dot, item.owner, alicorn.visual_part_core(.Selected_Indicator))
+			alicorn.surface_end(ctx)
+		}
+	}
+	alicorn.surface_end(ctx)
+	return indicator
+}
+
+// label draws the option label as the default text part. Omit it for a custom
+// title/price/description layout inside the same item owner.
+label :: proc(ctx: ^ui.UI, item: Item, text: string = "") -> alicorn.Node_ID {
+	if ctx == nil || ctx.runtime == nil || !item.visible || item.group == nil { return 0 }
+	value := text
+	if value == "" { value = item.option.label }
+	text_color := alicorn.style_color(ctx, .Text)
+	if item.disabled { text_color = alicorn.style_color(ctx, .Muted_Text) }
+	label_id := ui.text(ctx, value,
+		key=ui.key_u64(4),
+		style=ui.layout_style(.Row, grow=1),
+		color=text_color,
+		size=item.group.resolved.label_size,
+		decorative=true,
+		text_style=alicorn.Text_Style{overflow=.Ellipsis},
+	)
+	if label_id != 0 {
+		_ = alicorn.visual_part_attach(ctx, label_id, item.owner, alicorn.visual_part_core(.Label))
+	}
+	return label_id
+}
+
+// item_end closes the item's Button owner and records a pointer or semantic
+// activation as the group's one pending selection proposal. Call it only when
+// item_begin returned visible=true.
+item_end :: proc(ctx: ^ui.UI, item: Item) {
+	if ctx == nil || !item.visible { return }
+	alicorn.button_end(ctx)
+	if item.activated && !item.disabled {
+		propose(item.group.state, item.option.value)
+	}
+}
+
+// group_end closes the group's collection scope and returns the one selection
+// proposal produced by this description, if any. It also schedules a pending
+// focus request.
+group_end :: proc(ctx: ^ui.UI, group: ^Group) -> (event: Event) {
+	if ctx == nil || group == nil || group.root == 0 { return }
+	if group.state != nil && group.state.proposed {
+		group.state.proposed = false
+		event = Event{kind=.Selection_Proposed, value=group.state.proposed_value}
+	}
 	alicorn.container_end(ctx)
-	if state.focus_pending { schedule_after_frame(state, ctx.runtime) }
+	if group.state != nil && group.state.focus_pending {
+		schedule_after_frame(group.state, ctx.runtime)
+	}
+	group.visible = false
+	group.root = 0
 	return
+}
+
+// radio_group is the convenience component built from the exact public parts.
+// selected_value is the application-owned selection and is never mutated. The
+// returned event is the one proposed selection change for this description, if
+// any. instance_id must be stable and unique among simultaneously mounted
+// groups.
+radio_group :: proc(
+	ctx: ^ui.UI,
+	state: ^State,
+	options: []Option,
+	selected_value: u64,
+	group_options: Options = {},
+	key: ui.UI_Key,
+	instance_id: u64,
+	recipe: Recipe = {},
+	style: Style = {},
+) -> (event: Event) {
+	group, visible := group_begin(
+		ctx,
+		state,
+		options,
+		selected_value,
+		label=group_options.accessible_label,
+		key=key,
+		instance_id=instance_id,
+		group_options=group_options,
+		recipe=recipe,
+		style=style,
+	)
+	if !visible { return }
+	for option in options {
+		item, item_visible := item_begin(ctx, &group, option)
+		if !item_visible { continue }
+		indicator(ctx, item)
+		label(ctx, item)
+		item_end(ctx, item)
+	}
+	return group_end(ctx, &group)
 }
