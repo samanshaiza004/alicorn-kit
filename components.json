@@ -127,23 +127,25 @@
       "purpose": "A controlled radio group with one Tab stop, roving arrows, and activation parity.",
       "page": "/components/radio-group/",
       "source": ["radio_group/radio_group.odin"],
-      "tests": ["radio_group/radio_group_test.odin"],
+      "tests": ["radio_group/radio_group_test.odin", "radio_group/radio_group_parts_test.odin"],
       "example": "examples/radio_group/main.odin",
+      "partExamples": ["examples/radio_group_parts/main.odin", "examples/radio_group_composition/main.odin"],
       "capture": "website/public/captures/radio-group.png",
-      "dependencies": ["alicorn:runtime", "alicorn:ui", "alikit:theme_contract"],
+      "captureNote": "Capture predates the parts examples; re-capture pending.",
+      "dependencies": ["alikit:selection", "alicorn:runtime", "alicorn:ui", "alikit:theme_contract"],
       "ownedState": "State (active roving value, focus request, pending proposal)",
       "applicationOwns": ["selected value", "mutual exclusion", "labels", "disabled policy", "domain command"],
-      "parts": ["group", "option", "indicator", "label", "focus ring"],
+      "parts": ["group_begin/group_end", "item_begin/item_end", "indicator (optional)", "label (optional)", "author-owned item subtree", "focus ring"],
       "keyboard": ["Tab reaches the group once", "Up/Left and Down/Right move with wrap by default", "Home/End", "Space/Return propose", "Follow_Focus selects on arrow; Activate requires an explicit activation"],
-      "accessibility": ["Radio_Group/Radio_Button roles", "Checked/Selected/Current states", "Press/Focus actions when enabled", "one Tab stop; focus stays on the group"],
+      "accessibility": ["Radio_Group/Radio_Button roles", "Checked/Selected/Current states", "Press/Focus actions when enabled", "one Tab stop; focus stays on the group", "custom parts preserve semantics and activation parity"],
       "themeRoles": {
         "item_surface_role": "Subtle_Surface",
         "selected_surface_role": "Selection",
         "indicator_surface_role": "Subtle_Surface",
         "selected_indicator_role": "Accent"
       },
-      "api": ["Option", "Orientation", "Selection_Mode", "Options", "Recipe", "Style", "State", "Event", "radio_group", "request_focus", "recipe_default", "style_default", "theme_contract_default", "theme_contract_check", "group_semantic_id", "option_semantic_id"],
-      "limits": ["Small, caller-owned option slice; no virtualization", "Single-line ellipsis labels", "Headless tests do not prove a physical screen-reader session", "No Radio_Group testui pattern at the pinned revision"]
+      "api": ["Option", "Orientation", "Selection_Mode", "Options", "Recipe", "Style", "State", "Group", "Item", "Event", "group_begin", "item_begin", "indicator", "label", "item_end", "group_end", "radio_group", "request_focus", "recipe_default", "style_default", "theme_contract_default", "theme_contract_check", "group_semantic_id", "option_semantic_id", "instance_from_key"],
+      "limits": ["Small, caller-owned option slice; no virtualization", "Default label is single-line with ellipsis", "Option values must be nonzero and unique", "Headless tests do not prove a physical screen-reader session", "No Radio_Group testui pattern at the pinned revision"]
     },
     {
       "id": "progress",
@@ -154,21 +156,47 @@
       "purpose": "Determinate and indeterminate progress with a published numeric range.",
       "page": "/components/progress/",
       "source": ["progress/progress.odin"],
-      "tests": ["progress/progress_test.odin"],
+      "tests": ["progress/progress_test.odin", "progress/progress_parts_test.odin"],
       "example": "examples/progress/main.odin",
+      "partExamples": ["examples/progress_parts/main.odin", "examples/progress_composition/main.odin"],
       "capture": "website/public/captures/progress.png",
+      "captureNote": "Capture predates the parts examples; re-capture pending.",
       "dependencies": ["alicorn:runtime", "alicorn:ui", "alikit:theme_contract"],
       "ownedState": "State (diagnostic resolved fraction, phase, reduced-motion decision, geometry)",
       "applicationOwns": ["value and range", "indeterminate phase", "motion scheduling"],
-      "parts": ["root", "label", "value", "track", "fill"],
+      "parts": ["begin/end", "label (optional)", "value_text (optional)", "track_begin/track_end", "indicator (optional)", "author-owned linear or ring presentation"],
       "keyboard": ["Non-interactive: no Tab stop, keys, or actions"],
-      "accessibility": ["Progress role", "human-readable value (percentage or Loading)", "numeric range only when determinate", "indeterminate publishes no fabricated percentage"],
+      "accessibility": ["Progress role", "human-readable value (percentage or Loading)", "numeric range only when determinate", "indeterminate publishes no fabricated percentage", "custom parts preserve the accessible value and range"],
       "themeRoles": {
         "track_surface_role": "Subtle_Surface",
         "fill_surface_role": "Accent"
       },
-      "api": ["Options", "Recipe", "State", "progress", "progress_semantic_id", "fraction", "recipe_default", "theme_contract_default", "theme_contract_check"],
-      "limits": ["Definite track width required", "Application owns continuous indeterminate motion", "Value text is %.0f%% unless value_label is supplied", "Headless tests do not prove native announcements"]
+      "api": ["Options", "Recipe", "State", "Progress", "Track", "begin", "label", "value_text", "track_begin", "indicator", "track_end", "end", "progress", "progress_semantic_id", "fraction", "format_value", "linear_geometry", "ring_sweep", "ring_shape", "ring_segment_shape", "recipe_default", "theme_contract_default", "theme_contract_check"],
+      "limits": ["Definite default track width required", "Application owns continuous indeterminate motion", "Default value text is %.0f%% unless value_label is supplied", "A ring Arc requires a nonzero sweep", "Headless tests do not prove native announcements"]
+    },
+    {
+      "id": "segmented",
+      "name": "Segmented Control",
+      "package": "alikit:segmented",
+      "kind": "component",
+      "status": "stable",
+      "purpose": "Single selection over equal-width segments with a moving indicator built on the shared selection behavior.",
+      "page": "/components/segmented/",
+      "source": ["segmented/segmented.odin"],
+      "tests": ["segmented/segmented_test.odin"],
+      "example": "examples/segmented/main.odin",
+      "dependencies": ["alikit:selection", "alicorn:runtime", "alicorn:ui", "alikit:theme_contract"],
+      "ownedState": "State (active roving key/index, focus request, pending proposal, indicator diagnostics)",
+      "applicationOwns": ["selected view or mode", "accepted proposal", "view content", "disabled policy", "domain dispatch"],
+      "parts": ["track", "moving selected indicator", "segment Button owner", "segment label"],
+      "keyboard": ["Tab reaches the control once", "Up/Left and Down/Right move with wrap by default", "Home/End", "Space/Return propose", "Follow_Focus selects on arrow; Activate requires an explicit activation"],
+      "accessibility": ["Tab_List/Tab roles", "Selected/Checked/Current states", "Select/Focus actions when enabled", "one Tab stop", "the moving indicator is decorative"],
+      "themeRoles": {
+        "track_surface_role": "Subtle_Surface",
+        "indicator_surface_role": "Selection"
+      },
+      "api": ["Item", "Options", "Recipe", "Style", "State", "Event", "control", "request_focus", "Selection_Mode", "recipe_default", "style_default", "theme_contract_default", "theme_contract_check", "control_semantic_id", "segment_semantic_id"],
+      "limits": ["Equal-width segments only", "Small, caller-owned item slice; no virtualization", "The indicator animates only translation, not width", "No testui segmented pattern at the pinned revision", "Headless tests do not prove a physical screen-reader session"]
     },
     {
       "id": "notices",
@@ -264,6 +292,14 @@
       "purpose": "UI-independent tree validation, navigation, stable identity, and window reconciliation.",
       "source": ["tree_model/model.odin"],
       "tests": ["tree_model/model_test.odin"]
+    },
+    {
+      "id": "selection",
+      "name": "Selection",
+      "package": "alikit:selection",
+      "purpose": "Pure, allocation-free single-selection policy over a borrowed keyed item set: focus repair, disabled skipping, at-most-one publication, and Follow_Focus/Activate proposals.",
+      "source": ["selection/selection.odin"],
+      "tests": ["selection/selection_test.odin"]
     },
     {
       "id": "theme-contract",
