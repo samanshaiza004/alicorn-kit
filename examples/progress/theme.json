@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "contract": "0.2",
+  "extends": "alicorn.base",
+  "tokens": {
+    "alikit.progress.track": {
+      "$type": "color",
+      "$value": {"colorSpace": "srgb", "components": [0.075, 0.09, 0.125], "alpha": 1}
+    },
+    "alikit.progress.fill": {
+      "$type": "color",
+      "$value": {"colorSpace": "srgb", "components": [0.31, 0.78, 0.66], "alpha": 1}
+    }
+  },
+  "roles": {
+    "extensions": {
+      "vendor.alikit.progress.track": {"$type": "color", "$value": "{alikit.progress.track}"},
+      "vendor.alikit.progress.fill": {"$type": "color", "$value": "{alikit.progress.fill}"}
+    }
+  }
+}

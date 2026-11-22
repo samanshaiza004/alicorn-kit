@@ -69,7 +69,19 @@ radio-group pattern in `testui`; `.Roving_List` requires `List_Box`. A
 
 ## Progress Bar
 
-(To be filled by the progress slice.)
+Package: `progress`. Determinate mode publishes `.Progress` with a formatted
+value and `semantic_numeric_range`; indeterminate mode deliberately omits
+numeric properties. Parts are the label, value, track, and fill, with named
+visual parts on the stable progress owner. The track uses a definite width so
+the fill geometry is exact and value changes stay inside a bounded layout
+frontier.
+
+There is no component timer. The application supplies `indeterminate_phase`;
+`pulse=true` adds a paint-only opacity response through `ui.motion` and reduced
+motion selects `.Snap`. The test checks fraction clamping, semantic range,
+indeterminate non-claims, phase movement, reduced-motion observation, and a
+bounded `layout_nodes_visited` count after an input-driven value change. No
+`testui` progress pattern exists or is needed for a non-interactive node.
 
 ## Notices
 

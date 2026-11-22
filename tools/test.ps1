@@ -69,6 +69,16 @@ try {
     & $OdinPath @RadioGroupTestArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit radio group tests failed.' }
 
+    $ProgressTestArgs = @(
+        'test', 'progress',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'progress_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @ProgressTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit progress tests failed.' }
+
     $PaletteTestArgs = @(
         'test', 'command_palette',
         '-define:ODIN_TEST_THREADS=1',
@@ -135,6 +145,15 @@ try {
     ) + $CompilerArguments
     & $OdinPath @RadioGroupExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native radio group example failed to compile.' }
+
+    $ProgressExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\progress'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'progress_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @ProgressExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native progress example failed to compile.' }
 
     $IconPickerExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\icon_picker'),
