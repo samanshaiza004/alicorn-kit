@@ -1,5 +1,10 @@
 # Issue 3: composable parts and copyable custom components
 
+> Lineage: this record covers the v0.2-era parts pilot. The v0.3 P0 component
+> sprint builds directly on this branch and is recorded in
+> [issue 4](issue-004-v03-components.md), including the move from the v0.2.3
+> tag to the v0.3 core-semantics master commit.
+
 Date: 2026-11-21
 Branch: `codex/issue-3-parts-pilot`
 Pinned Alicorn: `a19d2c89138bcf1f19b00ed6ece58b70ede0508a` (master, includes the
