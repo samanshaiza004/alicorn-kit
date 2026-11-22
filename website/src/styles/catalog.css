@@ -40,9 +40,9 @@
 
 .component-card img {
   width: 100%;
-  aspect-ratio: 16 / 10;
-  object-fit: cover;
-  object-position: top left;
+  aspect-ratio: 4 / 3;
+  object-fit: contain;
+  object-position: top center;
   border-radius: 0.45rem;
   border: 1px solid var(--sl-color-gray-6);
   background: #0b0d13;
