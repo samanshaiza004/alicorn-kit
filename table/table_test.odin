@@ -6,62 +6,38 @@ import testui "alicorn:testui"
 import ui "alicorn:ui"
 
 Test_App :: struct {
-	state:     State,
-	columns:   [3]Column,
-	rows:      [6]Row,
-	cells:     [6][3]Cell,
-	selection: Selection,
-	events:    int,
-	last_row:  u64,
-	last_col:  u64,
+	columns: [3]Column,
+	rows:    [4]Row,
+	cells:   [4][3]Cell,
 }
 
 fixture_columns :: proc() -> [3]Column {
 	return {
-		{key=10, label="Name", align=.Start},
+		{key=10, label="Name", width=200, align=.Start},
 		{key=20, label="Size", width=90, align=.End},
-		{key=30, label="Kind", width=70, align=.Start},
+		{key=30, label="Kind", width=110, align=.Start},
 	}
 }
 
 fixture_render :: proc(app: ^Test_App, ctx: ^ui.UI) {
-	event := table(
-		ctx,
-		&app.state,
-		app.columns[:],
-		app.rows[:],
-		app.selection,
-		Options{accessible_label="Files", row_header=true, max_visible_rows=5},
-		key=alicorn.key_string("table-fixture"),
-		instance_id=9101,
-	)
-	if event.kind == .Activated {
-		app.selection.row_key = event.row_key
-		app.selection.column_key = event.column_key
-		app.last_row = event.row_key
-		app.last_col = event.column_key
-		app.events += 1
-	}
+	table(ctx, app.columns[:], app.rows[:],
+		Options{accessible_label="Files", row_header=true}, key=alicorn.key_string("table-fixture"),
+		instance_id=9201)
 }
 
 fixture_open :: proc(app: ^Test_App, t: ^testing.T) -> (testui.Test_Handle(Test_App), bool) {
 	app.columns = fixture_columns()
-	app.cells = [6][3]Cell{
-		{{text="alpha"}, {text="12 KB"}, {text="file"}},
-		{{text="beta"}, {text="3 MB"}, {text="file"}},
+	app.cells = [4][3]Cell{
+		{{text="short", detail="one line"}, {text="12 KB"}, {text="file"}},
+		{{text="a deliberately long cell value that must wrap across several visual lines", detail="and a detail line"}, {text="3 MB"}, {text="file"}},
 		{{text="gamma"}, {text="0 B"}, {text="folder"}},
 		{{text="delta"}, {text="8 KB"}, {text="file"}},
-		{{text="epsilon"}, {text="1 MB"}, {text="folder"}},
-		{{text="zeta"}, {text="5 KB"}, {text="file"}},
 	}
-	for index in 0..<6 {
+	for index in 0..<4 {
 		app.rows[index] = Row{key=u64(100+index), cells=app.cells[index][:]}
 	}
-	app.rows[2].disabled = true
-	app.selection = Selection{row_key=103, column_key=20}
-	_ = request_focus(&app.state)
-	handle, status := testui.open(app, fixture_render, width=620, height=360)
-	if !testing.expectf(t, status == .Ok, "the table fixture should open: %v %s",
+	handle, status := testui.open(app, fixture_render, width=620, height=420)
+	if !testing.expectf(t, status == .Ok, "the static table fixture should open: %v %s",
 		status, testui.last_turn_diagnostic(&handle)) {
 		if handle.runtime != nil { testui.close(&handle) }
 		return {}, false
@@ -80,7 +56,7 @@ find_role :: proc(handle: ^testui.Test_Handle(Test_App), role: alicorn.Semantic_
 }
 
 @(test)
-test_table_identity_tracks_and_theme_contract :: proc(t: ^testing.T) {
+test_static_table_identity_tracks_and_theme_contract :: proc(t: ^testing.T) {
 	testing.expect(t, table_semantic_id(0).namespace == 0, "instance zero must not publish identity")
 	testing.expect(t, row_semantic_id(1, 0).namespace == 0, "row key zero must not publish identity")
 	testing.expect(t, cell_semantic_id(1, 2, 3) != cell_semantic_id(1, 3, 2),
@@ -90,8 +66,8 @@ test_table_identity_tracks_and_theme_contract :: proc(t: ^testing.T) {
 	tracks: [MAX_COLUMNS]alicorn.Grid_Track
 	count := tracks_for(columns[:], tracks[:])
 	testing.expect_value(t, count, 3)
-	testing.expect_value(t, tracks[0].kind, alicorn.Grid_Track_Kind.Fraction)
-	testing.expect_value(t, tracks[1].kind, alicorn.Grid_Track_Kind.Fixed)
+	testing.expect_value(t, tracks[0].kind, alicorn.Grid_Track_Kind.Fixed)
+	testing.expect_value(t, tracks[0].value, f32(200))
 	testing.expect_value(t, tracks[1].value, f32(90))
 
 	recipe := Recipe{
@@ -99,7 +75,7 @@ test_table_identity_tracks_and_theme_contract :: proc(t: ^testing.T) {
 	}
 	contract := theme_contract_default(recipe)
 	testing.expect_value(t, contract.required_count, 1)
-	testing.expect_value(t, contract.optional_count, 3)
+	testing.expect_value(t, contract.optional_count, 2)
 	rt := alicorn.new_runtime(alicorn.Rect{0, 0, 200, 120})
 	defer alicorn.destroy_runtime(&rt)
 	report := theme_contract_check(&rt, alicorn.DEFAULT_STYLE_THEME_ID, contract)
@@ -109,7 +85,7 @@ test_table_identity_tracks_and_theme_contract :: proc(t: ^testing.T) {
 }
 
 @(test)
-test_table_semantics_headers_coordinates_and_navigation :: proc(t: ^testing.T) {
+test_static_table_semantics_wrapped_rows_and_no_managed_focus :: proc(t: ^testing.T) {
 	app := Test_App{}
 	handle, ok := fixture_open(&app, t)
 	if !ok { return }
@@ -118,107 +94,74 @@ test_table_semantics_headers_coordinates_and_navigation :: proc(t: ^testing.T) {
 	table_node := find_table(&handle)
 	defer testui.destroy_find_result(&table_node)
 	if !testing.expect(t, table_node.match == .Unique, "the table should publish one Table") { return }
-	testing.expect(t, table_node.element.is_collection && table_node.element.logical_count == 7,
-		"the table should publish a header plus six rows")
-	testing.expect_value(t, table_node.element.collection_selected_id, row_semantic_id(9101, 103))
+	testing.expect(t, table_node.element.is_collection && table_node.element.logical_count == 5,
+		"the static table publishes a header plus four logical rows")
+	testing.expect(t, table_node.element.collection_selected_id.namespace == 0 &&
+		table_node.element.collection_current_id.namespace == 0,
+		"the static table must not publish a selection or current cell")
 
 	for label, index in ([3]string{"Name", "Size", "Kind"}) {
 		header := find_role(&handle, .Table_Column_Header, label)
 		if testing.expect(t, header.match == .Unique, "each column header should be unique") {
 			testing.expect_value(t, header.element.position_in_set, u64(index))
-			testing.expect_value(t, header.element.parent_semantic_id, header_row_semantic_id(9101))
+			testing.expect(t, !alicorn.semantic_actions_has(header.element.actions, .Press),
+				"a static header is not a sort control")
 		}
 		testui.destroy_find_result(&header)
 	}
 
-	delta := find_role(&handle, .Table_Row, "delta")
-	if !testing.expect(t, delta.match == .Unique, "the delta row should be realized") { return }
-	testing.expectf(t, !delta.element.is_virtual_item, "the active row should be realized (window=%d..%d)",
-		app.state.last_first, app.state.last_last)
-	testing.expect(t, delta.element.collection_selected, "the selected row should publish Selected")
-	testing.expect(t, delta.element.collection_current, "the active row should publish Current")
-	testing.expect_value(t, delta.element.position_in_set, u64(4))
-	testui.destroy_find_result(&delta)
-
-	row_header := find_role(&handle, .Table_Row_Header, "delta")
-	selected_cell := find_role(&handle, .Table_Cell, "8 KB")
-	if testing.expect(t, row_header.match == .Unique, "the first body cell should be a row header") {
-		testing.expect_value(t, row_header.element.position_in_set, u64(0))
-		testing.expect(t, row_header.element.collection_selected == false,
-			"the row header is not the selected Size cell")
+	short_row := find_role(&handle, .Table_Row, "short")
+	long_row := find_role(&handle, .Table_Row, "a deliberately long cell value that must wrap across several visual lines")
+	if testing.expect(t, short_row.match == .Unique && long_row.match == .Unique,
+		"both intrinsic-height rows should be realized") {
+		testing.expectf(t, long_row.element.bounds.h > short_row.element.bounds.h + 8,
+			"wrapped text and a detail line should grow the row (short=%.1f long=%.1f)",
+			short_row.element.bounds.h, long_row.element.bounds.h)
+		testing.expect(t, !short_row.element.collection_selected && !short_row.element.collection_current,
+			"a static row must not publish Selected or Current")
 	}
-	if testing.expect(t, selected_cell.match == .Unique, "the selected Size cell should be realized") {
-		testing.expect_value(t, selected_cell.element.position_in_set, u64(1))
-		testing.expect(t, selected_cell.element.collection_selected && selected_cell.element.collection_current,
-			"the selected cell should also be Current at its coordinate")
-	}
-	testui.destroy_find_result(&row_header)
-	testui.destroy_find_result(&selected_cell)
+	testui.destroy_find_result(&short_row)
+	testui.destroy_find_result(&long_row)
 
-	// Up from delta/Size skips the disabled gamma row and stays in Size.
-	if !testing.expect(t, testui.step(&handle, testui.Input{kind=.Key, key=.Up}) == .Ok, "Up should be scoped") { return }
-	testing.expect_value(t, app.state.active_row_key, u64(101))
-	testing.expect_value(t, app.state.active_column_key, u64(20))
-	// Down reaches delta again; End moves to Kind in the active row.
+	cell := find_role(&handle, .Table_Cell, "12 KB")
+	if testing.expect(t, cell.match == .Unique, "body cells publish Table_Cell") {
+		testing.expect(t, !cell.element.collection_selected && !cell.element.collection_current,
+			"a static cell must not publish selected/current state")
+	}
+	testui.destroy_find_result(&cell)
+
+	// No managed navigation: an arrow key changes nothing the component owns.
+	before := find_table(&handle)
+	before_current := before.element.collection_current_id
+	testui.destroy_find_result(&before)
 	_ = testui.step(&handle, testui.Input{kind=.Key, key=.Down})
-	testing.expect_value(t, app.state.active_row_key, u64(103))
-	_ = testui.step(&handle, testui.Input{kind=.Key, key=.End})
-	testing.expect_value(t, app.state.active_column_key, u64(30))
-	_ = testui.step(&handle, testui.Input{kind=.Key, key=.Home})
-	testing.expect_value(t, app.state.active_column_key, u64(10))
-
-	// Return proposes the active cell; the application accepts it as selection.
-	_ = testui.step(&handle, testui.Input{kind=.Key, key=.Return})
-	testing.expect_value(t, app.last_row, u64(103))
-	testing.expect_value(t, app.last_col, u64(10))
-	testing.expect_value(t, app.selection.column_key, u64(10))
-
-	// Pointer activation of the active row's Size cell proposes the same
-	// coordinates as keyboard activation.
-	delta_size := find_role(&handle, .Table_Cell, "8 KB")
-	if testing.expect(t, delta_size.match == .Unique, "delta's Size cell should be realized") {
-		click := testui.click(&handle, &delta_size.element)
-		testing.expectf(t, click == .Ok, "the delta Size cell should accept a click: %v", click)
-		testing.expectf(t, app.last_row == 103 && app.last_col == 20,
-			"pointer activation should propose delta/Size, got %d/%d", app.last_row, app.last_col)
-	}
-	testui.destroy_find_result(&delta_size)
-
-	// Disabled gamma cells do not activate.
-	gamma := find_role(&handle, .Table_Row, "gamma")
-	if testing.expect(t, gamma.match == .Unique, "the disabled row should be published") {
-		testing.expect(t, alicorn.semantic_states_has(gamma.element.states, .Disabled),
-			"the disabled row should publish Disabled")
-	}
-	testui.destroy_find_result(&gamma)
+	after := find_table(&handle)
+	testing.expect_value(t, after.element.collection_current_id, before_current)
+	testui.destroy_find_result(&after)
 }
 
 LARGE_ROW_COUNT :: 200
 
 Large_Fixture :: struct {
-	state:   State,
-	columns: []Column,
-	rows:    []Row,
+	columns: [3]Column,
+	rows:    [LARGE_ROW_COUNT]Row,
+	cells:   [LARGE_ROW_COUNT][3]Cell,
 }
 
 large_render :: proc(fixture: ^Large_Fixture, ctx: ^ui.UI) {
-	_ = table(ctx, &fixture.state, fixture.columns, fixture.rows,
-		Selection{row_key=1000, column_key=20},
-		Options{accessible_label="Files", row_header=true, max_visible_rows=5},
-		key=alicorn.key_string("table-large-fixture"), instance_id=9102)
+	table(ctx, fixture.columns[:], fixture.rows[:],
+		Options{accessible_label="Large files", row_header=true, virtualize=true,
+			max_visible_rows=6, virtual_row_height=30},
+		key=alicorn.key_string("table-large-fixture"), instance_id=9202)
 }
 
 @(test)
-test_table_virtualizes_and_reveals_large_rows :: proc(t: ^testing.T) {
-	columns := fixture_columns()
-	cells: [LARGE_ROW_COUNT][3]Cell
-	rows: [LARGE_ROW_COUNT]Row
+test_static_table_optional_virtualization :: proc(t: ^testing.T) {
+	fixture := Large_Fixture{columns=fixture_columns()}
 	for index in 0..<LARGE_ROW_COUNT {
-		cells[index] = {{text=fixture_row_name(index)}, {text="1 KB"}, {text="file"}}
-		rows[index] = Row{key=u64(1000+index), cells=cells[index][:]}
+		fixture.cells[index] = {{text=static_name(index)}, {text="1 KB"}, {text="file"}}
+		fixture.rows[index] = Row{key=u64(1000+index), cells=fixture.cells[index][:]}
 	}
-	fixture := Large_Fixture{columns=columns[:], rows=rows[:]}
-	_ = request_focus(&fixture.state)
 	handle, status := testui.open(&fixture, large_render, width=620, height=320)
 	if !testing.expectf(t, status == .Ok, "the large table fixture should open: %v %s",
 		status, testui.last_turn_diagnostic(&handle)) {
@@ -227,13 +170,15 @@ test_table_virtualizes_and_reveals_large_rows :: proc(t: ^testing.T) {
 	}
 	defer testui.close(&handle)
 
-	table_node := testui.find(&handle, testui.Query{role=.Table, name="Files", match_role=true, match_name=true})
+	table_node := testui.find(&handle, testui.Query{role=.Table, name="Large files", match_role=true, match_name=true})
 	if !testing.expect(t, table_node.match == .Unique, "the large table should publish one Table") {
 		testui.destroy_find_result(&table_node)
 		return
 	}
 	testing.expect_value(t, table_node.element.logical_count, u64(LARGE_ROW_COUNT+1))
+	table_bounds := table_node.element.bounds
 	testui.destroy_find_result(&table_node)
+
 	last := testui.find(&handle, testui.Query{role=.Table_Row, name="Row 200", match_role=true, match_name=true})
 	if testing.expect(t, last.match == .Unique, "the last logical row should have a virtual semantic item") {
 		testing.expect(t, last.element.is_virtual_item,
@@ -241,21 +186,19 @@ test_table_virtualizes_and_reveals_large_rows :: proc(t: ^testing.T) {
 	}
 	testui.destroy_find_result(&last)
 
+	// Wheel scrolling is runtime-owned; the static table opts into a fixed-row
+	// virtual window and does not need managed focus to move it.
 	for _ in 0..<40 {
-		_ = testui.step(&handle, testui.Input{kind=.Key, key=.Page_Down})
+		_ = testui.step(&handle, testui.Input{kind=.Scroll, scroll=alicorn.Scroll_Event{
+			x=table_bounds.x+40, y=table_bounds.y+40, delta_y=-120,
+		}})
 	}
-	testing.expect_value(t, fixture.state.active_row_index, LARGE_ROW_COUNT-1)
-	_ = testui.describe_once(&handle)
 	last = testui.find(&handle, testui.Query{role=.Table_Row, name="Row 200", match_role=true, match_name=true})
 	if testing.expect(t, last.match == .Unique, "the last row should remain published") {
 		testing.expect(t, !last.element.is_virtual_item,
-			"paging to the end should realize the last logical row")
+			"scrolling to the end should realize the last logical row")
 	}
 	testui.destroy_find_result(&last)
-}
-
-fixture_row_name :: proc(index: int) -> string {
-	return static_name(index)
 }
 
 @(private)
