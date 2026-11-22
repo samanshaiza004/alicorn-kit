@@ -24,8 +24,10 @@ FILL_KEY :: u64(0xA11C_3A02)
 Options :: struct {
 	accessible_label: string,
 	value_label:      string,
-	show_label:       bool,
-	show_value:       bool,
+	// hide_label and hide_value are opt-out flags so a partial Options value
+	// keeps both documented parts visible.
+	hide_label:       bool,
+	hide_value:       bool,
 	// width is the definite track width in logical pixels. A percentage-width
 	// fill needs a definite parent, so the component keeps the track explicit.
 	width:            f32,
@@ -44,8 +46,6 @@ Options :: struct {
 }
 
 DEFAULT_OPTIONS :: Options{
-	show_label=true,
-	show_value=true,
 	width=260,
 	track_height=10,
 	track_padding=1,
@@ -221,10 +221,10 @@ progress :: proc(
 		_ = alicorn.semantic_numeric_range(ctx, clamped, minimum, maximum, 0)
 	}
 
-	if resolved.show_label || resolved.show_value {
+	if !resolved.hide_label || !resolved.hide_value {
 		if ui.row(ctx, key=alicorn.key_string("alikit-progress-heading"), width=-1,
 			height=alicorn.LAYOUT_SIZE_FIT_CONTENT, align=.Center, gap=8) {
-			if resolved.show_label {
+			if !resolved.hide_label {
 				label := resolved.accessible_label
 				if resolved.value_label != "" && resolved.accessible_label == "" { label = resolved.value_label }
 				label_id := ui.text(ctx, label,
@@ -239,7 +239,7 @@ progress :: proc(
 					_ = alicorn.visual_part_attach(ctx, label_id, root, alicorn.visual_part_core(.Label))
 				}
 			}
-			if resolved.show_value {
+			if !resolved.hide_value {
 				value_id := ui.text(ctx, value_text,
 					key=ui.key_u64(2),
 					size=resolved.value_size,
