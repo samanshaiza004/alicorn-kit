@@ -1,0 +1,225 @@
+---
+title: Segmented Control
+description: Single selection over equal-width segments with Tab_List/Tab semantics, one Tab stop, roving arrows, and a moving indicator.
+---
+
+import Capture from '../../../components/Capture.astro';
+
+<div class="lede">
+<code>alikit:segmented</code> is a single-selection control over equal-width segments. It publishes
+<code>Tab_List</code> / <code>Tab</code> semantics, one Tab stop, roving arrow navigation, disabled
+skipping, and keyboard, pointer, and assistive-technology activation parity. The selected surface
+translates to the active segment through Alicorn's paint-only motion and snaps under Reduce Motion.
+</div>
+
+## Preview
+
+<Capture src="captures/segmented.png" alt="Native segmented control window with four equal-width view segments and a selected indicator" caption="Native SDL_GPU capture of examples/segmented at Alicorn 47c9d4a. The example theme supplies the track and indicator roles; the selected surface translates by segment width." />
+
+<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
+real native control; keyboard behavior and motion policy are documented and tested in the package.</div>
+
+## Installation
+
+Files: `segmented/segmented.odin`, `segmented/segmented_test.odin`,
+`examples/segmented/main.odin`, `examples/segmented/theme.json`.
+
+```odin
+import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
+import segmented "alikit:segmented"
+```
+
+No init or destroy is required. The component allocates nothing.
+
+## Composition
+
+Segmented is a complete component built on the shared `alikit:selection` model. It composes with
+any card, dialog, form, or page shell.
+
+| Layer | Responsibility |
+| --- | --- |
+| **Alicorn** | Layout, surfaces and positioned children, focus, pointer hit testing, Button activation, semantic collections, and paint-only motion. |
+| **`alikit:selection`** | Pure single-selection policy: keyed lookup, disabled skipping, focus repair, at-most-one publication, and mode proposals. |
+| **`segmented`** | Equal-width layout, `Tab_List`/`Tab` semantics, roving focus routing, the moving indicator, recipe, and one proposed value. |
+| **Application** | The selected view/mode, accepted proposal, view content, and dispatch. |
+
+## Minimal example
+
+```odin
+import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
+import segmented "alikit:segmented"
+
+App :: struct {
+	state:    segmented.State,
+	items:    [3]segmented.Item,
+	selected: u64,
+}
+
+render :: proc(app: ^App, ctx: ^ui.UI) {
+	if event := segmented.control(
+		ctx,
+		&app.state,
+		app.items[:],
+		app.selected,
+		segmented.Options{accessible_label="Workspace view", width=480},
+		key=alicorn.key_string("view"),
+		instance_id=1,
+	); event.kind == .Selection_Proposed {
+		app.selected = event.value
+	}
+}
+```
+
+Call `segmented.request_focus(&state)` when an application interaction should move focus to the
+control's one Tab stop.
+
+## Controlled example
+
+With `Selection_Mode.Follow_Focus` (the default), arrow movement proposes the new segment
+immediately. With `Selection_Mode.Activate`, arrows move only the roving focus; Space, Return,
+pointer, or semantic `Select` proposes a value.
+
+```odin
+event := segmented.control(ctx, &app.view, app.items[:], app.selected,
+	segmented.Options{
+		accessible_label="Workspace view",
+		width=480,
+		selection_mode=.Activate,
+		no_wrap=true,
+	},
+	key=alicorn.key_string("view"), instance_id=41)
+switch event.kind {
+case .Selection_Proposed:
+	app.selected = event.value
+case .None:
+}
+```
+
+Selected/checked identity follows `Item.value` across reorder and removal. Disabled segments stay
+visible, publish `Disabled`, are skipped by navigation, and do not advertise `Select` or `Focus`.
+
+## Custom rendering examples
+
+The component ships one appearance because the moving indicator translates by whole equal-width
+segments. Customize geometry and theme roles:
+
+```odin
+event := segmented.control(ctx, &app.state, app.items[:], app.selected,
+	segmented.Options{
+		accessible_label="Density",
+		width=360,
+		height=44,
+		padding=4,
+		corner_radius=12,
+		label_size=13,
+	},
+	key=alicorn.key_string("density"), instance_id=42,
+	recipe=segmented.Recipe{
+		track_surface_role=alicorn.style_extension_color_role_id("vendor.app.segmented", "track"),
+		indicator_surface_role=alicorn.style_extension_color_role_id("vendor.app.segmented", "indicator"),
+	},
+)
+```
+
+For icons-over-labels, an outline indicator, or another visual contract, copy
+`segmented/segmented.odin` as ordinary AliKit source and change the item/label/indicator drawing.
+Keep the `Tab_List`/`Tab` collection, the single Tab stop, the roving key routing, and the one
+proposed value.
+
+## Styling and motion
+
+`Recipe` declares two optional namespaced surface roles:
+
+| Field | Core fallback |
+| --- | --- |
+| `track_surface_role` | `Subtle_Surface` |
+| `indicator_surface_role` | `Selection` |
+
+A zero role needs no theme registration. Configured roles are validated with
+`theme_contract_default`, `theme_contract_check`, `theme_contract_satisfied`, and
+`theme_contract_missing_required`. The example registers `vendor.alikit.segmented.*` and activates
+the theme with `alicorn.style_environment_push`; delete the registration to use core roles.
+
+`Options` carries the definite width, height, padding, corner radius, label size, selection mode,
+and `no_wrap`. `Style` carries the focus-ring width. The track outline uses `.Border`, or `.Focus`
+while the control owns keyboard focus.
+
+The selected indicator is a positioned surface. Its target is
+`active_index * segment_width`; the component declares a paint-only `ui.motion` translation and
+lets Alicorn animate it. The first description snaps to the initial segment, and Reduce Motion
+selects `Motion_Intent.Snap`. The translation does not change layout, hit bounds, or semantics.
+
+## API reference
+
+| Declaration | Notes |
+| --- | --- |
+| `Item` | `value`, `label`, `disabled`; values must be nonzero and unique. |
+| `Options` | Accessible label, width, height, padding, corner radius, label size, selection mode, `no_wrap`. |
+| `Recipe` / `Style` | Optional track/indicator surface roles and focus width. |
+| `State` | Active roving key/index, focus request, pending proposal, indicator diagnostics. |
+| `Event` / `Event_Kind` | One-shot `Selection_Proposed` carrying `value`. |
+| `control` | Describe the control and return one proposal. |
+| `request_focus` | Focus the control's Tab stop after layout. |
+| `Selection_Mode` | Alias of `alikit:selection.Mode`. |
+| `recipe_default`, `style_default` | Core-role defaults. |
+| `theme_contract_default`, `theme_contract_check`, `theme_contract_satisfied`, `theme_contract_missing_required` | Setup-time validation. |
+| `control_semantic_id`, `segment_semantic_id` | Stable semantic identities. |
+
+## Accessibility and conformance
+
+| Input | Result |
+| --- | --- |
+| `Tab` | Reaches the control once. Segments are not separate Tab stops. |
+| `Up` / `Left` | Previous enabled segment (wraps by default). |
+| `Down` / `Right` | Next enabled segment (wraps by default). |
+| `Home` / `End` | First/last enabled segment. |
+| `Space` / `Return` | Propose the active segment. |
+| pointer | Ordinary Button activation proposes the clicked segment. |
+| semantic `Select` | Same retained Button activation as pointer and keyboard. |
+
+- The control publishes `Tab_List`, its accessible name, the logical segment count, `selected_id`,
+  and `current_id`. Segments publish `Tab`, `Selected` + `Checked` when selected, `Current` when
+  active, and `Select` + `Focus` when enabled.
+- Disabled segments are skipped, do not activate, publish `Disabled`, and do not advertise actions.
+- The moving indicator is decorative and publishes no extra semantic entity.
+- Not claimed: page content management, closable segments, or animated width changes.
+
+`segmented/segmented_test.odin` covers stable identity, the theme contract, semantics and action
+presence, roving wrap/disabled skipping, keyboard/pointer/semantic parity, `Activate` mode, the
+indicator target and reduced motion, reorder identity, and idle settlement.
+
+```powershell
+odin test segmented -define:ODIN_TEST_THREADS=1 -collection:alicorn=<alicorn> -collection:alikit=.
+./out/segmented_example.exe --smoke
+```
+
+There is no `testui` pattern kind for a segmented control. `.Roving_List` requires a `List_Box`,
+while this component publishes `Tab_List`; explicit drive assertions are used.
+
+## Source and limitations
+
+- Headless tests do not prove pixels, native high-contrast rendering, or a physical screen-reader
+  session. Native smoke covers SDL_GPU startup and one submitted frame.
+- All segments have equal width. The moving indicator translates by whole segments; variable-width
+  segments are intentionally out of scope.
+- Small, caller-owned item slice; no virtualization.
+- The first description snaps the indicator; later changes animate through Alicorn's motion policy.
+- Labels are single-line with ellipsis overflow.
+- `State.active_key` is presentation state; do not persist it as the application's selection.
+
+## Compatibility
+
+<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
+<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<a href="../../compatibility/">Compatibility and pinning</a>.</div>
+
+## Source map
+
+- [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/segmented/segmented.odin)
+- [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/segmented/segmented_test.odin)
+- [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/segmented/main.odin)
+- [Theme JSON](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/segmented/theme.json)
+- [Shared selection model](https://github.com/samanshaiza004/alicorn-kit/blob/main/selection/selection.odin)
+- [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/segmented.md)

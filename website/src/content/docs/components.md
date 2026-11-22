@@ -16,13 +16,15 @@ contract, tests, API, and limits.
 | [`alikit:tree_view`](tree-view/) | Accessible virtualized tree rows, indentation, focus reveal, keyboard navigation, and optional row-anchored context menus. | [Tree View](tree-view/) |
 | [`alikit:icon_picker`](icon-picker/) | A complete copyable icon composite: search, virtualized grid or list, roving focus, selection proposal, and two appearances. | [Icon Picker](icon-picker/) |
 | [`alikit:palette_parts`](palette-parts/) | A copyable parts-based palette result list: virtual rows, `List_Box` semantics, enabled-row navigation, and one activation event. | [Palette Parts](palette-parts/) |
-| [`alikit:radio_group`](radio-group/) | A controlled radio group with `Radio_Group`/`Radio_Button` semantics, one Tab stop, roving arrows, and activation parity. | [Radio Group](radio-group/) |
-| [`alikit:progress`](progress/) | Determinate and indeterminate progress with `Progress` semantics, numeric range, track/fill/label parts, and optional caller-driven pulse. | [Progress](progress/) |
+| [`alikit:radio_group`](radio-group/) | Controlled radio group parts: `Radio_Group`/`Radio_Button` semantics, one Tab stop, roving arrows, activation parity, and replaceable item rendering. | [Radio Group](radio-group/) |
+| [`alikit:progress`](progress/) | Composable determinate/indeterminate progress with `Progress` semantics, numeric range, linear or ring presentations, and optional caller-driven pulse. | [Progress](progress/) |
+| [`alikit:segmented`](segmented/) | Single selection over equal-width segments with `Tab_List`/`Tab` semantics, one Tab stop, roving arrows, and a moving indicator. | [Segmented Control](segmented/) |
 | [`alikit:notices`](notices/) | Runtime toast helpers plus copyable card/stack parts for inline banners and application-hosted snackbars. | [Notices](notices/) |
 | [`alikit:sidebar`](sidebar/) | A flat navigation rail with expanded/collapsed presentations, `List_Box`/`List_Box_Option` semantics, roving focus, and one proposed route. | [Sidebar](sidebar/) |
 | [`alikit:table`](table/) | A virtualized, non-spanned table with shared Grid column tracks, nested table/row/cell collections, and roving cell coordinates. | [Table](table/) |
 | [`alikit:palette_model`](../manifest/) | Filtering and navigating a caller-owned list without UI dependencies. | Model package |
 | [`alikit:tree_model`](../manifest/) | UI-independent tree-row validation, keyboard navigation, stable focus/selection, and paged-window reconciliation. | Model package |
+| [`alikit:selection`](../manifest/) | Pure, allocation-free single-selection policy over a borrowed keyed item set. | Behavior package |
 | [`alikit:theme_contract`](../manifest/) | Bounded setup-time validation for namespaced component theme roles. | Support package |
 
 ## Ownership at a glance

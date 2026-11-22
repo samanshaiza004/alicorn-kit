@@ -242,6 +242,7 @@ $components = @(
     @{ Name='palette-parts'; Exe='palette_parts_example.exe' },
     @{ Name='radio-group'; Exe='radio_group_example.exe' },
     @{ Name='progress'; Exe='progress_example.exe' },
+    @{ Name='segmented'; Exe='segmented_example.exe' },
     @{ Name='notices'; Exe='notices_example.exe' },
     @{ Name='sidebar'; Exe='sidebar_example.exe'; ClickButton='Collapse rail' },
     @{ Name='table'; Exe='table_example.exe' }

@@ -59,6 +59,16 @@ try {
     & $OdinPath @ThemeContractTestArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit theme contract tests failed.' }
 
+    $SelectionTestArgs = @(
+        'test', 'selection',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'selection_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @SelectionTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit selection tests failed.' }
+
     $RadioGroupTestArgs = @(
         'test', 'radio_group',
         '-define:ODIN_TEST_THREADS=1',
@@ -78,6 +88,16 @@ try {
     ) + $CompilerArguments
     & $OdinPath @ProgressTestArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit progress tests failed.' }
+
+    $SegmentedTestArgs = @(
+        'test', 'segmented',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'segmented_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @SegmentedTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit segmented tests failed.' }
 
     $NoticesTestArgs = @(
         'test', 'notices',
@@ -216,6 +236,24 @@ try {
     & $OdinPath @RadioGroupExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native radio group example failed to compile.' }
 
+    $RadioGroupPartsExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\radio_group_parts'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'radio_group_parts_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @RadioGroupPartsExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native radio group parts example failed to compile.' }
+
+    $RadioGroupCompositionExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\radio_group_composition'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'radio_group_composition_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @RadioGroupCompositionExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native radio group composition example failed to compile.' }
+
     $ProgressExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\progress'),
         $AlicornCollection,
@@ -224,6 +262,33 @@ try {
     ) + $CompilerArguments
     & $OdinPath @ProgressExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native progress example failed to compile.' }
+
+    $ProgressPartsExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\progress_parts'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'progress_parts_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @ProgressPartsExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native progress parts example failed to compile.' }
+
+    $ProgressCompositionExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\progress_composition'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'progress_composition_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @ProgressCompositionExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native progress composition example failed to compile.' }
+
+    $SegmentedExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\segmented'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'segmented_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @SegmentedExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native segmented example failed to compile.' }
 
     $NoticesExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\notices'),

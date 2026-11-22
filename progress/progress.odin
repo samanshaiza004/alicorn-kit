@@ -1,14 +1,33 @@
 package progress
 
-// Progress is a presentation-only determinate or indeterminate progress bar.
-// It publishes one Progress semantic node with a numeric range while
-// determinate, and never publishes a numeric value while indeterminate. Track,
-// fill, label, and value are ordinary retained parts.
+// Progress is a presentation-only determinate or indeterminate progress
+// component built from public parts. It publishes one Progress semantic node
+// with a numeric range while determinate, and never publishes a numeric value
+// while indeterminate. Track, fill, label, and value are ordinary retained
+// parts.
 //
-// The component owns no timer. An indeterminate pulse is caller-driven: the
-// application supplies a 0..1 phase and may advance it from its own animation
-// loop. When motion is enabled, the fill retargets through Alicorn's paint-only
-// motion model; reduced motion snaps instead.
+// Authors can use the complete progress() component or compose the parts:
+//
+//	p, visible := progress.begin(ctx, &state, value, minimum, maximum,
+//		options=options, key=key, instance_id=1)
+//	if visible {
+//		progress.label(ctx, &p)
+//		progress.value_text(ctx, &p)
+//		track, track_visible := progress.track_begin(ctx, &p)
+//		if track_visible {
+//			progress.indicator(ctx, &track) // optional default fill
+//			progress.track_end(ctx)
+//		}
+//		progress.end(ctx, &p)
+//	}
+//
+// The author owns layout between the part calls. A linear bar, a ring donut,
+// or an application-specific meter can share one numeric range, one semantic
+// node, and the public fraction/geometry helpers. The component owns no timer.
+// An indeterminate pulse is caller-driven: the application supplies a 0..1
+// phase and may advance it from its own animation loop. When motion is enabled,
+// the fill retargets through Alicorn's paint-only motion model; reduced motion
+// snaps instead.
 
 import "core:fmt"
 import "core:math"
@@ -112,6 +131,41 @@ State :: struct {
 	last_offset_width:   f32,
 }
 
+// Progress is the per-description context returned by begin. It borrows the
+// caller-owned State and the application's numeric range; it allocates nothing.
+Progress :: struct {
+	ctx:           ^ui.UI,
+	state:         ^State,
+	resolved:      Options,
+	recipe:        Recipe,
+	value:         f64,
+	minimum:       f64,
+	maximum:       f64,
+	normalized:    f64,
+	clamped_value: f64,
+	value_text:    string,
+	determinate:   bool,
+	root:          alicorn.Node_ID,
+	visible:       bool,
+}
+
+// Track is the per-description context returned by track_begin. It carries the
+// resolved inner size and the component-computed fill/offset geometry so an
+// author can draw a custom indicator inside the same track.
+Track :: struct {
+	ctx:          ^ui.UI,
+	progress:     ^Progress,
+	node:         alicorn.Node_ID,
+	width:        f32,
+	height:       f32,
+	padding:      f32,
+	inner_width:  f32,
+	inner_height: f32,
+	fill_width:   f32,
+	offset_width: f32,
+	visible:      bool,
+}
+
 @(private)
 mix :: proc(seed, value: u64) -> u64 {
 	state := seed+value+0x9E3779B97F4A7C15
@@ -165,9 +219,65 @@ fraction :: proc(value, minimum, maximum: f64) -> f64 {
 	return clamp((value-minimum)/(maximum-minimum), 0, 1)
 }
 
-@(private)
-formatted_value :: proc(fraction: f64) -> string {
-	return fmt.tprintf("%.0f%%", fraction*100)
+// format_value returns the default human-readable percentage for a normalized
+// fraction. The value is clamped to 0..1.
+format_value :: proc(normalized: f64) -> string {
+	return fmt.tprintf("%.0f%%", clamp(normalized, 0, 1)*100)
+}
+
+// linear_geometry computes the default fill and indeterminate-offset widths for
+// a track whose content width is inner_width. It is the same public math the
+// convenience progress() wrapper uses, so custom linear appearances and the
+// default stay in agreement. The result is zero for a non-positive width.
+linear_geometry :: proc(
+	inner_width: f32,
+	normalized: f64,
+	indeterminate: bool = false,
+	phase: f32 = 0,
+	segment_width: f32 = DEFAULT_OPTIONS.indeterminate_width,
+) -> (fill_width, offset_width: f32) {
+	if inner_width <= 0 || math.is_nan(inner_width) || math.is_inf(inner_width) { return 0, 0 }
+	segment := clamp(segment_width, 0, 1)
+	if math.is_nan(segment) || math.is_inf(segment) { segment = DEFAULT_OPTIONS.indeterminate_width }
+	fill_fraction: f64 = clamp(normalized, 0, 1)
+	if indeterminate { fill_fraction = f64(segment) }
+	fill_width = inner_width*f32(fill_fraction)
+	if indeterminate {
+		p := clamp(phase, 0, 1)
+		if math.is_nan(p) || math.is_inf(p) { p = 0 }
+		offset_width = inner_width*f32((1-segment)*p)
+	}
+	return
+}
+
+// ring_sweep returns the clockwise sweep in radians for a normalized fraction.
+// Start at -PI/2 (12 o'clock) for the conventional progress ring.
+ring_sweep :: proc(normalized: f64) -> f32 {
+	return f32(clamp(normalized, 0, 1))*2*math.PI
+}
+
+// ring_shape returns a drawable Arc surface for a determinate ring. A caller
+// must skip drawing when fraction <= 0 because an Arc requires a nonzero sweep.
+ring_shape :: proc(
+	normalized: f64,
+	radius: f32 = 0.45,
+	start_angle: f32 = -math.PI/2,
+) -> alicorn.Surface_Shape {
+	return alicorn.surface_shape_arc(start_angle, ring_sweep(normalized), radius)
+}
+
+// ring_segment_shape returns the moving indeterminate ring segment. phase and
+// segment_width use the same normalized 0..1 inputs as the linear appearance.
+ring_segment_shape :: proc(
+	phase: f32,
+	segment_width: f32 = DEFAULT_OPTIONS.indeterminate_width,
+	radius: f32 = 0.45,
+	start_angle: f32 = -math.PI/2,
+) -> alicorn.Surface_Shape {
+	segment := clamp(segment_width, 0, 1)
+	p := clamp(phase, 0, 1)
+	advance := (1-segment)*p
+	return alicorn.surface_shape_arc(start_angle+advance*2*math.PI, segment*2*math.PI, radius)
 }
 
 @(private)
@@ -183,24 +293,31 @@ surface_role :: proc(role: alicorn.Style_Extension_Color_Role_ID, fallback: alic
 	return alicorn.surface_core_color_role(fallback)
 }
 
-// progress describes one progress bar. value/minimum/maximum are ignored for
-// numeric semantics while options.indeterminate is true. The value_label
-// override replaces the formatted percentage in both visible and semantic
-// values.
-progress :: proc(
+// begin opens the progress root, binds the stable Progress semantic identity,
+// and publishes the visible value plus the numeric range while determinate.
+// value/minimum/maximum are ignored for numeric semantics while
+// options.indeterminate is true. The value_label override replaces the
+// formatted percentage in both visible and semantic values.
+//
+// visible is false when the runtime, state, instance identity, key scope, or
+// root is unavailable; call end only when visible is true.
+begin :: proc(
 	ctx: ^ui.UI,
 	state: ^State,
 	value, minimum, maximum: f64,
 	options: Options = {},
-	key: ui.UI_Key,
+	key: ui.UI_Key = {},
 	instance_id: u64,
 	recipe: Recipe = {},
-) {
-	if ctx == nil || ctx.runtime == nil || instance_id == 0 || instance_id > MAX_INSTANCE_ID { return }
+) -> (progress: Progress, visible: bool) {
+	if ctx == nil || ctx.runtime == nil || state == nil || instance_id == 0 ||
+	   instance_id > MAX_INSTANCE_ID {
+		return
+	}
 	resolved := options_resolve(options)
 	if !ui.key_scope(ctx, key) { return }
 	normalized := fraction(value, minimum, maximum)
-	percentage_text := formatted_value(normalized)
+	percentage_text := format_value(normalized)
 	value_text := percentage_text
 	if resolved.value_label != "" { value_text = resolved.value_label }
 	if resolved.indeterminate && resolved.value_label == "" { value_text = "Loading" }
@@ -216,104 +333,215 @@ progress :: proc(
 	if root == 0 { return }
 	_ = alicorn.semantic_bind(ctx, progress_semantic_id(instance_id))
 	_ = alicorn.semantic_description(ctx, .Progress, resolved.accessible_label, value=value_text)
+	clamped := minimum+normalized*(maximum-minimum)
 	if !resolved.indeterminate {
-		clamped := minimum+normalized*(maximum-minimum)
 		_ = alicorn.semantic_numeric_range(ctx, clamped, minimum, maximum, 0)
 	}
 
-	if !resolved.hide_label || !resolved.hide_value {
-		if ui.row(ctx, key=alicorn.key_string("alikit-progress-heading"), width=-1,
-			height=alicorn.LAYOUT_SIZE_FIT_CONTENT, align=.Center, gap=8) {
-			if !resolved.hide_label {
-				label := resolved.accessible_label
-				if resolved.value_label != "" && resolved.accessible_label == "" { label = resolved.value_label }
-				label_id := ui.text(ctx, label,
-					key=ui.key_u64(1),
-					style=ui.layout_style(.Row, grow=1),
-					size=resolved.label_size,
-					decorative=true,
-					color=alicorn.style_color(ctx, .Text),
-					text_style=alicorn.Text_Style{overflow=.Ellipsis},
-				)
-				if label_id != 0 {
-					_ = alicorn.visual_part_attach(ctx, label_id, root, alicorn.visual_part_core(.Label))
-				}
-			}
-			if !resolved.hide_value {
-				value_id := ui.text(ctx, value_text,
-					key=ui.key_u64(2),
-					size=resolved.value_size,
-					decorative=true,
-					color=alicorn.style_color(ctx, .Muted_Text),
-				)
-				if value_id != 0 {
-					_ = alicorn.visual_part_attach(ctx, value_id, root, alicorn.visual_part_core(.Content))
-				}
-			}
-		}
+	progress = Progress{
+		ctx=ctx,
+		state=state,
+		resolved=resolved,
+		recipe=recipe,
+		value=value,
+		minimum=minimum,
+		maximum=maximum,
+		normalized=normalized,
+		clamped_value=clamped,
+		value_text=value_text,
+		determinate=!resolved.indeterminate,
+		root=root,
+		visible=true,
 	}
 
 	inner_width := max(resolved.width-2*resolved.track_padding, 0)
-	fill_fraction := normalized
-	if resolved.indeterminate { fill_fraction = f64(resolved.indeterminate_width) }
-	fill_width := inner_width*f32(fill_fraction)
-	offset_width: f32 = 0
-	if resolved.indeterminate {
-		offset_width = inner_width*f32((1-resolved.indeterminate_width)*resolved.indeterminate_phase)
-	}
+	fill_width, offset_width := linear_geometry(inner_width, normalized,
+		resolved.indeterminate, resolved.indeterminate_phase, resolved.indeterminate_width)
+	state.last_phase = resolved.indeterminate_phase
+	state.last_reduced_motion = reduced_motion(ctx.runtime)
+	state.last_fraction = normalized
+	state.has_last_fraction = !resolved.indeterminate
+	state.last_fill_width = fill_width
+	state.last_offset_width = offset_width
+	return progress, true
+}
 
-	track := alicorn.surface_begin(
+// label emits the default label text part under the progress root. An empty
+// text uses the accessible label. It is optional: omit it for a custom layout.
+label :: proc(ctx: ^ui.UI, progress: ^Progress, text: string = "") -> alicorn.Node_ID {
+	if ctx == nil || ctx.runtime == nil || progress == nil || !progress.visible { return 0 }
+	value := text
+	if value == "" { value = progress.resolved.accessible_label }
+	label_id := ui.text(ctx, value,
+		key=ui.key_u64(1),
+		style=ui.layout_style(.Row, grow=1),
+		size=progress.resolved.label_size,
+		decorative=true,
+		color=alicorn.style_color(ctx, .Text),
+		text_style=alicorn.Text_Style{overflow=.Ellipsis},
+	)
+	if label_id != 0 {
+		_ = alicorn.visual_part_attach(ctx, label_id, progress.root, alicorn.visual_part_core(.Label))
+	}
+	return label_id
+}
+
+// value_text emits the default visible value part. An empty text uses the
+// component-formatted percentage or the indeterminate "Loading" value.
+// Semantic value publication is independent of this visual part.
+value_text :: proc(ctx: ^ui.UI, progress: ^Progress, text: string = "") -> alicorn.Node_ID {
+	if ctx == nil || ctx.runtime == nil || progress == nil || !progress.visible { return 0 }
+	value := text
+	if value == "" { value = progress.value_text }
+	value_id := ui.text(ctx, value,
+		key=ui.key_u64(2),
+		size=progress.resolved.value_size,
+		decorative=true,
+		color=alicorn.style_color(ctx, .Muted_Text),
+	)
+	if value_id != 0 {
+		_ = alicorn.visual_part_attach(ctx, value_id, progress.root, alicorn.visual_part_core(.Content))
+	}
+	return value_id
+}
+
+// track_begin opens the default surface track and computes its inner geometry.
+// width/height/padding <= 0 (padding < 0) use the resolved Options values.
+// The author owns anything described after track_begin: call indicator for the
+// default fill, draw a custom indicator, or open a different track entirely.
+track_begin :: proc(
+	ctx: ^ui.UI,
+	progress: ^Progress,
+	width: f32 = 0,
+	height: f32 = 0,
+	padding: f32 = -1,
+) -> (track: Track, visible: bool) {
+	if ctx == nil || ctx.runtime == nil || progress == nil || !progress.visible { return }
+	resolved := progress.resolved
+	track_width := width
+	if track_width <= 0 { track_width = resolved.width }
+	track_height := height
+	if track_height <= 0 { track_height = resolved.track_height }
+	track_padding := padding
+	if track_padding < 0 { track_padding = resolved.track_padding }
+
+	track_node := alicorn.surface_begin(
 		ctx,
-		surface_role(recipe.track_surface_role, .Subtle_Surface),
+		surface_role(progress.recipe.track_surface_role, .Subtle_Surface),
 		key=ui.key_u64(3),
-		style=ui.layout_style(.Row, width=resolved.width, height=resolved.track_height,
-			padding=resolved.track_padding, align=.Center),
+		style=ui.layout_style(.Row, width=track_width, height=track_height,
+			padding=track_padding, align=.Center),
 		shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=resolved.corner_radius},
 		label="progress-track",
 	)
-	if track != 0 {
-		_ = alicorn.visual_part_attach(ctx, track, root, alicorn.visual_part_core(.Surface))
-		if offset_width > 0 {
-			_ = alicorn.container_begin(ctx, .Container,
-				label="progress-indeterminate-offset",
-				key=ui.key_u64(4),
-				style=ui.layout_style(.Row, width=offset_width,
-					height=max(resolved.track_height-2*resolved.track_padding, 0)),
-			)
-			alicorn.container_end(ctx)
-		}
-		if fill_width > 0 {
-			fill := alicorn.surface_begin(
-				ctx,
-				surface_role(recipe.fill_surface_role, .Accent),
-				key=ui.key_u64(FILL_KEY),
-				style=ui.layout_style(.Row, width=fill_width,
-					height=max(resolved.track_height-2*resolved.track_padding, 0)),
-				shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle,
-					corner_radius=max(resolved.corner_radius-resolved.track_padding, 0)},
-				label="progress-fill",
-			)
-			if fill != 0 {
-				_ = alicorn.visual_part_attach(ctx, fill, root, alicorn.visual_part_core(.Indicator))
-				if resolved.pulse && resolved.indeterminate {
-					alpha := 0.62+0.38*f32((math.sin(f64(resolved.indeterminate_phase)*2*math.PI)+1)*0.5)
-					intent := alicorn.Motion_Intent.Settle
-					if reduced_motion(ctx.runtime) { intent = .Snap }
-					_ = ui.motion(ctx, fill, alicorn.Motion_Target{opacity=f64(alpha), has_opacity=true}, intent)
-				}
-				alicorn.surface_end(ctx)
-			}
-		}
-		alicorn.surface_end(ctx)
+	if track_node == 0 { return }
+	_ = alicorn.visual_part_attach(ctx, track_node, progress.root, alicorn.visual_part_core(.Surface))
+	inner_width := max(track_width-2*track_padding, 0)
+	inner_height := max(track_height-2*track_padding, 0)
+	fill_width, offset_width := linear_geometry(inner_width, progress.normalized,
+		resolved.indeterminate, resolved.indeterminate_phase, resolved.indeterminate_width)
+	track = Track{
+		ctx=ctx,
+		progress=progress,
+		node=track_node,
+		width=track_width,
+		height=track_height,
+		padding=track_padding,
+		inner_width=inner_width,
+		inner_height=inner_height,
+		fill_width=fill_width,
+		offset_width=offset_width,
+		visible=true,
 	}
+	progress.state.last_phase = resolved.indeterminate_phase
+	progress.state.last_fraction = progress.normalized
+	progress.state.has_last_fraction = !resolved.indeterminate
+	progress.state.last_fill_width = fill_width
+	progress.state.last_offset_width = offset_width
+	return track, true
+}
 
-	if state != nil {
-		state.last_phase = resolved.indeterminate_phase
-		state.last_reduced_motion = reduced_motion(ctx.runtime)
-		state.last_fraction = normalized
-		state.has_last_fraction = !resolved.indeterminate
-		state.last_fill_width = fill_width
-		state.last_offset_width = offset_width
+// indicator draws the default fill (and the indeterminate offset segment)
+// inside an open track. It is optional; the author can instead draw any custom
+// indicator inside the track or replace the track entirely. The semantic
+// Progress owner is unchanged.
+indicator :: proc(ctx: ^ui.UI, track: ^Track) -> alicorn.Node_ID {
+	if ctx == nil || ctx.runtime == nil || track == nil || !track.visible || track.progress == nil {
+		return 0
 	}
+	progress := track.progress
+	resolved := progress.resolved
+	if track.offset_width > 0 {
+		_ = alicorn.container_begin(ctx, .Container,
+			label="progress-indeterminate-offset",
+			key=ui.key_u64(4),
+			style=ui.layout_style(.Row, width=track.offset_width,
+				height=track.inner_height),
+		)
+		alicorn.container_end(ctx)
+	}
+	if track.fill_width <= 0 { return 0 }
+	fill := alicorn.surface_begin(
+		ctx,
+		surface_role(progress.recipe.fill_surface_role, .Accent),
+		key=ui.key_u64(FILL_KEY),
+		style=ui.layout_style(.Row, width=track.fill_width,
+			height=track.inner_height),
+		shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle,
+			corner_radius=max(resolved.corner_radius-track.padding, 0)},
+		label="progress-fill",
+	)
+	if fill == 0 { return 0 }
+	_ = alicorn.visual_part_attach(ctx, fill, progress.root, alicorn.visual_part_core(.Indicator))
+	if resolved.pulse && resolved.indeterminate {
+		alpha := 0.62+0.38*f32((math.sin(f64(resolved.indeterminate_phase)*2*math.PI)+1)*0.5)
+		intent := alicorn.Motion_Intent.Settle
+		if reduced_motion(ctx.runtime) { intent = .Snap }
+		_ = ui.motion(ctx, fill, alicorn.Motion_Target{opacity=f64(alpha), has_opacity=true}, intent)
+	}
+	alicorn.surface_end(ctx)
+	return fill
+}
+
+// track_end closes the surface scope opened by track_begin.
+track_end :: proc(ctx: ^ui.UI) {
+	if ctx == nil { return }
+	alicorn.surface_end(ctx)
+}
+
+// end closes the progress root. Call it only when begin returned visible=true.
+end :: proc(ctx: ^ui.UI, progress: ^Progress) {
+	if ctx == nil || progress == nil || !progress.visible { return }
 	alicorn.container_end(ctx)
+	progress.visible = false
+	progress.root = 0
+}
+
+// progress is the convenience component built from the exact public parts.
+// It preserves the original linear appearance, label/value heading, and
+// determinate/indeterminate behavior. The returned value is not used.
+progress :: proc(
+	ctx: ^ui.UI,
+	state: ^State,
+	value, minimum, maximum: f64,
+	options: Options = {},
+	key: ui.UI_Key,
+	instance_id: u64,
+	recipe: Recipe = {},
+) {
+	part, visible := begin(ctx, state, value, minimum, maximum, options, key, instance_id, recipe)
+	if !visible { return }
+	if !part.resolved.hide_label || !part.resolved.hide_value {
+		if ui.row(ctx, key=alicorn.key_string("alikit-progress-heading"), width=-1,
+			height=alicorn.LAYOUT_SIZE_FIT_CONTENT, align=.Center, gap=8) {
+			if !part.resolved.hide_label { label(ctx, &part) }
+			if !part.resolved.hide_value { value_text(ctx, &part) }
+		}
+	}
+	track, track_visible := track_begin(ctx, &part)
+	if track_visible {
+		indicator(ctx, &track)
+		track_end(ctx)
+	}
+	end(ctx, &part)
 }
