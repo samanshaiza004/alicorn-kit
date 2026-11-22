@@ -30,11 +30,13 @@ storage.
 
 Run `./tools/test.ps1 -Odin odin` on Windows. It checks the models, retained
 component behavior, canonical native examples, the parts-based palette, the
-icon picker (including the `alicorn:testui` modal pattern check), and a
-copied-source build against the pinned dependencies. Headless tests do not
-validate operating-system IME candidate windows; describe that limitation when
-relevant. Run `./out/icon_picker_example.exe --smoke` for the native SDL_GPU
-smoke.
+icon picker (including the `alicorn:testui` modal pattern check), the v0.3
+radio/progress/notices/sidebar/table suites, the sidebar's `.Roving_List`
+pattern, and a copied-source build against the pinned dependencies. Headless
+tests do not validate operating-system IME candidate windows, physical
+screen-reader sessions, or pixels; describe that limitation when relevant.
+Run the matching `./out/<component>_example.exe --smoke` for native SDL_GPU
+smoke coverage.
 
 Update the catalog and component guide when public packages or ownership
 contracts change. Record measured decisions and core requirements in

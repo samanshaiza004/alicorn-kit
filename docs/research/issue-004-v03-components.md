@@ -151,6 +151,31 @@ table pattern (nested rows/cells, header roles, coordinates, virtual reveal) is
 recorded as a core candidate. Row and column spans are deferred by decision:
 v1 emits one cell per column and documents that limit.
 
+## Pattern checks
+
+| Component | Pattern | Result |
+| --- | --- | --- |
+| Sidebar | `.Roving_List` | Positive conformance with container focus, no wrap, disabled skipping, selection activation. |
+| Radio Group | none | `.Roving_List` requires `List_Box`; a radio group publishes `Radio_Group`. Explicit drive assertions used. |
+| Table | none | Roving patterns require `List_Box`; a table publishes `Table` with nested `Table_Row` collections. Explicit drive assertions used. |
+| Progress | none | Non-interactive presentation contract. |
+| Notices | none | Runtime toast card plus inline Status/Alert cards. |
+
+## Validation
+
+`tools/test.ps1 -Odin C:\odin\odin.exe` passes on the pinned revision:
+`palette_model` 4, `tree_model` 8, `theme_contract` 2, `radio_group` 4,
+`progress` 4, `notices` 3, `sidebar` 4, `table` 3, `command_palette` 6,
+`tree_view` 6, `palette_parts` 8, and `icon_picker` 12 tests (64 total). Every
+native example compiles. The new `radio_group`, `progress`, `notices`, `sidebar`,
+and `table` examples pass `--smoke` on SDL_GPU Direct3D 12 with `idle true` and
+one submitted frame (the notices example also demonstrates runtime toasts and
+inline card motion).
+
+The headless suites cannot prove physical screen-reader speech, OS IME candidate
+windows, native high-contrast rendering, or pixels. Native smoke does not
+interact with accessibility bridges.
+
 ## Core gaps proposed to Alicorn
 
 1. A radio-group pattern kind in `testui` (container `Radio_Group`, options
@@ -158,7 +183,23 @@ v1 emits one cell per column and documents that limit.
 2. A notice presentation hook. At this pin `notice_overlay_describe` owns the
    complete card tree; an application cannot supply card parts, motion, or a
    custom card recipe without duplicating the overlay.
-3. A table pattern kind (nested `Table`/`Table_Row` collections, header roles,
+3. A public live-region annotation for application-authored semantics. Runtime
+   notice cards set `Semantic_Descriptor.live` privately; a custom Status/Alert
+   card cannot request the same polite/assertive announcement. This is why the
+   package does not replace the runtime toast overlay.
+4. A table pattern kind (nested `Table`/`Table_Row` collections, header roles,
    row/column coordinates, virtual row reveal).
-4. A public monotonic clock query for components that need a deadline without
+5. A public monotonic clock query for components that need a deadline without
    owning a timer. The notice queue exposes its next deadline but not "now".
+6. Roving semantic focus for non-Tab-stop collection items. Both the rail and
+   table advertise `Focus` on roving items to satisfy the pattern contract, but
+   rows are intentionally non-focusable, so a semantic `Focus` action on an
+   individual item is rejected by realized-action eligibility. A container-
+   routed focus request remains the desired shape.
+7. Row/column span semantics for tables. V1 deliberately emits one non-spanned
+   cell per column; a span contract needs both semantic span fields and a layout
+   representation. This is deferred rather than approximated.
+8. Page Up/Down clamping in the pure roving model. `roving_propose` returns -1
+   at the set boundary; the table clamps page moves to the first/last enabled
+   row itself. A documented page-clamp option would let consumers stop
+   duplicating that policy.

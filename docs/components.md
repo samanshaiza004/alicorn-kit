@@ -64,10 +64,12 @@ contract coverage, and core-requirement list live in
 ## Not in AliKit yet
 
 Calendars, color pickers, split panes, terminals, and rich editors are not
-available AliKit components. Add a component when a real application need
-demonstrates reusable behavior; keep application-specific data and policy in
-the application, and keep independent domain engines outside the UI runtime
-where practical.
+available AliKit components. The P0 table is non-spanned; row/column spans,
+built-in sorting/filtering, and cell editing are P1 or application policy. A
+tree-style sidebar with nested sections is a later Sidebar variant. Add a
+component when a real application need demonstrates reusable behavior; keep
+application-specific data and policy in the application, and keep independent
+domain engines outside the UI runtime where practical.
 
 Copyable source components are intentionally small enough to copy and change:
 start from `icon_picker/icon_picker.odin` and its example, or from the
