@@ -71,8 +71,16 @@ selected_route :: proc(app: ^App) -> sidebar.Item {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.row(ctx, key=alicorn.key_string("sidebar-example-root"), width=-1, height=-1,
-		padding=18, gap=18) {
+	if alicorn.container_begin(ctx, .Container, label="sidebar-example-root",
+		key=alicorn.key_string("sidebar-example-root"),
+		style=alicorn.layout_style(.Row, width=-1, height=-1, grow=1, padding=18, gap=18),
+		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
+		if ui.row(ctx, key=alicorn.key_string("sidebar-example-body"), width=-1, height=-1,
+			grow=1, gap=18) {
+		theme_scope := alicorn.Style_Environment_Scope{}
+		if app.theme_id != 0 {
+			theme_scope = alicorn.style_environment_push(ctx, alicorn.Style_Environment{theme=app.theme_id})
+		}
 		if event := sidebar.rail(
 			ctx,
 			&app.rail,
@@ -85,6 +93,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 		); event.kind == .Selection_Proposed {
 			app.selected_key = event.key
 		}
+		if theme_scope.active { alicorn.style_environment_pop(ctx, theme_scope) }
 		if ui.column(ctx, key=alicorn.key_string("sidebar-example-content"), width=-1, height=-1,
 			grow=1, padding=24, gap=12, align=.Start) {
 			_ = ui.text(ctx, selected_route(app).label, size=26)
@@ -99,6 +108,8 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 					size=12, color=alicorn.style_color(ctx, .Danger))
 			}
 		}
+		}
+		alicorn.container_end(ctx)
 	}
 }
 

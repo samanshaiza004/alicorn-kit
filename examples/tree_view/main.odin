@@ -1,6 +1,7 @@
 package main
 
 import "core:fmt"
+import "core:os"
 import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import tree_view "alikit:tree_view"
@@ -75,24 +76,34 @@ apply_event :: proc(app: ^App, event: tree_view.Event) {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	_ = ui.text(ctx, "AliKit · Tree View", size=24)
-	_ = ui.text(ctx, "Use Up/Down to move, Left/Right to collapse or expand, and Enter to activate.")
-	if app.last_item != 0 {
-		_ = ui.text(ctx, fmt.tprintf("Focused item ID: %d", u64(app.last_item)))
+	if alicorn.container_begin(ctx, .Container, label="tree-example-root",
+		key=alicorn.key_string("tree-example-root"),
+		style=alicorn.layout_style(.Column, width=-1, height=-1, grow=1, padding=16, gap=8),
+		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
+		_ = ui.text(ctx, "AliKit · Tree View", size=24)
+		_ = ui.text(ctx, "Use Up/Down to move, Left/Right to collapse or expand, and Enter to activate.")
+		if app.last_item != 0 {
+			_ = ui.text(ctx, fmt.tprintf("Focused item ID: %d", u64(app.last_item)))
+		}
+		window := tree_view.Window{total_count=app.row_count, revision=app.revision, items=app.rows[:app.row_count]}
+		event := tree_view.build(ctx, &app.view, window, alicorn.key_string("example-tree"),
+			tree_view.Options{
+				accessible_label="Project files",
+				selection_enabled=true,
+				select_on_focus=true,
+				icon_proc=row_icon,
+			})
+		apply_event(app, event)
+		alicorn.container_end(ctx)
 	}
-	window := tree_view.Window{total_count=app.row_count, revision=app.revision, items=app.rows[:app.row_count]}
-	event := tree_view.build(ctx, &app.view, window, alicorn.key_string("example-tree"),
-		tree_view.Options{
-			accessible_label="Project files",
-			selection_enabled=true,
-			select_on_focus=true,
-			icon_proc=row_icon,
-		})
-	apply_event(app, event)
 }
 
 main :: proc() {
+	smoke := false
+	for argument in os.args {
+		if argument == "--smoke" { smoke = true }
+	}
 	app := App{expanded={true, true, false, false, false}, revision=1}
 	rebuild_rows(&app)
-	ui.run(&app, render, title="AliKit Tree View", width=760, height=520)
+	ui.run(&app, render, title="AliKit Tree View", width=760, height=520, smoke=smoke)
 }

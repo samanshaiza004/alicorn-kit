@@ -14,7 +14,9 @@ The package owns only:
 - optional focus request for the list owner.
 
 The application still owns the query, matching/ranking, commands, modal shell,
-dismissal, and focus restoration. See
+dismissal, and focus restoration. The compiling host is
+[`examples/palette_parts`](../examples/palette_parts/main.odin); it keeps the
+query field and inline result list in one application-owned surface. See
 [the issue 3 research record](research/issue-003-parts-pilot.md) for the
 measured comparison with `alikit:command_palette`.
 

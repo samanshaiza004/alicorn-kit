@@ -1,0 +1,75 @@
+---
+title: Component catalog
+description: The AliKit packages available today, their ownership boundary, and when to use each one.
+---
+
+AliKit is a small, optional set of source-level Odin packages built on Alicorn. It does not add
+another runtime, component lifecycle, or application state store. This catalog describes the
+packages that exist today; every entry links to a page with the native preview, copyable source,
+contract, tests, API, and limits.
+
+## Available components
+
+| Package | Use it for | Native preview |
+| --- | --- | --- |
+| [`alikit:command_palette`](command-palette/) | An accessible modal palette with a controlled query, selection, keyboard navigation, virtualized results, and focus restoration. | [Command Palette](command-palette/) |
+| [`alikit:tree_view`](tree-view/) | Accessible virtualized tree rows, indentation, focus reveal, keyboard navigation, and optional row-anchored context menus. | [Tree View](tree-view/) |
+| [`alikit:icon_picker`](icon-picker/) | A complete copyable icon composite: search, virtualized grid or list, roving focus, selection proposal, and two appearances. | [Icon Picker](icon-picker/) |
+| [`alikit:palette_parts`](palette-parts/) | A copyable parts-based palette result list: virtual rows, `List_Box` semantics, enabled-row navigation, and one activation event. | [Palette Parts](palette-parts/) |
+| [`alikit:radio_group`](radio-group/) | A controlled radio group with `Radio_Group`/`Radio_Button` semantics, one Tab stop, roving arrows, and activation parity. | [Radio Group](radio-group/) |
+| [`alikit:progress`](progress/) | Determinate and indeterminate progress with `Progress` semantics, numeric range, track/fill/label parts, and optional caller-driven pulse. | [Progress](progress/) |
+| [`alikit:notices`](notices/) | Runtime toast helpers plus copyable card/stack parts for inline banners and application-hosted snackbars. | [Notices](notices/) |
+| [`alikit:sidebar`](sidebar/) | A flat navigation rail with expanded/collapsed presentations, `List_Box`/`List_Box_Option` semantics, roving focus, and one proposed route. | [Sidebar](sidebar/) |
+| [`alikit:table`](table/) | A virtualized, non-spanned table with shared Grid column tracks, nested table/row/cell collections, and roving cell coordinates. | [Table](table/) |
+| [`alikit:palette_model`](../manifest/) | Filtering and navigating a caller-owned list without UI dependencies. | Model package |
+| [`alikit:tree_model`](../manifest/) | UI-independent tree-row validation, keyboard navigation, stable focus/selection, and paged-window reconciliation. | Model package |
+| [`alikit:theme_contract`](../manifest/) | Bounded setup-time validation for namespaced component theme roles. | Support package |
+
+## Ownership at a glance
+
+| Layer | Owns |
+| --- | --- |
+| **Application** | Domain state, commands, ranking, hierarchy, loading, mutation, routing, dispatch, and product policy. |
+| **AliKit** | Reusable interaction behavior, semantics, copyable presentation parts, and setup-time theme contracts. |
+| **Alicorn** | Layout, styling, motion, focus, input routing, semantics, virtual lists, rendering, and conformance primitives. |
+
+The component pages state the exact split per component. When a behavior is application policy,
+AliKit exposes the event or callback instead of owning a second policy engine.
+
+## Choosing a result-list path
+
+The command palette and Palette Parts intentionally overlap:
+
+- Use `alikit:command_palette` when the application wants a complete modal palette with built-in
+  substring filtering, query field, focus restoration, and a virtualized result list.
+- Use `alikit:palette_parts` when the application already owns the query field, matching,
+  ranking, modal shell, dismissal, and focus restoration, and only wants the reusable result
+  list part.
+- Use `alikit:palette_model` alone when the application wants the filtering and selection rules
+  without Alicorn presentation.
+
+The parts pilot exists to keep the component boundaries honest, not to replace the stock
+palette. See [Palette Parts](palette-parts/).
+
+## Not in AliKit yet
+
+Calendars, color pickers, split panes, terminals, and rich editors are not available. The P0
+table is non-spanned; row/column spans, built-in sorting/filtering, and cell editing are P1 or
+application policy. A tree-style sidebar with nested sections is a later Sidebar variant.
+
+Copyable source components are intentionally small enough to copy and change. Start from
+`icon_picker/icon_picker.odin` and its example, or from the `palette_parts` result list. A copy is
+application code: it may edit drawing, omit optional parts, and add bespoke interactions with
+ordinary state and scoped input. Do not copy a second runtime, state store, or modal policy.
+
+## Authoring conventions
+
+AliKit components are ordinary Odin procedures. Keep persistent interaction state in an explicit
+caller-owned `State` only when the component needs it; add `init`/`destroy` only when it owns
+resources. Return `bool` for a simple value change, a typed event when callers must distinguish
+several actions, and an explicit status/result for fallible operations.
+
+Components use Alicorn's built-in semantic theme roles by default. A component with optional
+extension roles exposes a recipe; applications validate that contract once during initialization.
+See [Alicorn's component-authoring standard](https://github.com/Carnival-Science/Alicorn/blob/master/docs/component-authoring.md)
+for the five-point publication standard used by every page here.

@@ -1,0 +1,190 @@
+---
+title: Radio Group
+description: A controlled radio group with Radio_Group/Radio_Button semantics, one Tab stop, roving arrows, and activation parity.
+---
+
+import Capture from '../../../components/Capture.astro';
+
+<div class="lede">
+<code>alikit:radio_group</code> is a controlled compound control for choosing one value from a
+small fixed set. It publishes <code>Radio_Group</code> / <code>Radio_Button</code> semantics, one
+Tab stop, roving arrow navigation, disabled skipping, and pointer, keyboard, and
+assistive-technology activation parity.
+</div>
+
+## Preview
+
+<Capture src="captures/radio-group.png" alt="Native radio group window with a Reading preferences card, a vertical text-size group, and a horizontal density group" caption="Native SDL_GPU capture of examples/radio_group at Alicorn 47c9d4a. The themed surfaces come from the example theme; the selected dot and focus presentation do not rely on color alone." />
+
+<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
+real native control; keyboard behavior is documented and tested in the package.</div>
+
+## Responsibility split
+
+| Layer | Responsibility |
+| --- | --- |
+| **Alicorn** | Layout, retained nodes, focus, pointer hit testing, Button activation, semantic collection projection, and Radio roles. |
+| **`radio_group`** | Option layout, roving index proposal, checked/current presentation, namespaced surface recipe, Press/Focus actions, and one proposed selection event. |
+| **Application** | The selected value and mutual exclusion; labels, disabled policy, and domain commands. |
+
+`selected_value` is an input. `State` contains only ephemeral interaction state: the active roving
+identity, a focus request, and one pending proposal.
+
+## Copyable implementation
+
+Files: `radio_group/radio_group.odin`, `radio_group/radio_group_test.odin`,
+`examples/radio_group/main.odin`, `examples/radio_group/theme.json`.
+
+```odin
+import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
+import radio "alikit:radio_group"
+
+App :: struct {
+	group:    radio.State,
+	options:  [3]radio.Option,
+	selected: u64,
+}
+
+render :: proc(app: ^App, ctx: ^ui.UI) {
+	if event := radio.radio_group(
+		ctx,
+		&app.group,
+		app.options[:],
+		app.selected,
+		radio.Options{accessible_label="Text size", orientation=.Vertical},
+		key=alicorn.key_string("text-size"),
+		instance_id=1,
+	); event.kind == .Selection_Proposed {
+		app.selected = event.value
+	}
+}
+```
+
+No init or destroy is required; the component allocates nothing. Call
+`radio.request_focus(&state)` when an application interaction should move focus to the group's
+single Tab stop.
+
+## Parts and identities
+
+| Part | Identity | What can be omitted or replaced |
+| --- | --- | --- |
+| Group | `group_semantic_id(instance_id)` | Always present; the one Tab stop and `Radio_Group` collection owner. |
+| Option | `option_semantic_id(instance_id, value)` | Omit an option by removing it from the slice; remaining identities do not change. |
+| Indicator and label | stable child keys under the option owner | Replace drawing inside the Button owner; keep the semantic item call. |
+| Focus ring | active option while the group owns focus | Style width is component-owned. |
+
+Option value `0`, a zero instance ID, and duplicate values are invalid. Checked identity follows
+the stable value, not the row index. Reordering keeps `Checked`, `Selected`, and the active
+identity attached to the same value. Removing the active value repairs focus with Alicorn's pure
+roving model: selected value first, else the nearest enabled option, else the first enabled
+option.
+
+## Styling, motion, and theme
+
+`Recipe` declares four optional namespaced **surface** roles:
+
+| Field | Core fallback |
+| --- | --- |
+| `item_surface_role` | `Subtle_Surface` |
+| `selected_surface_role` | `Selection` |
+| `indicator_surface_role` | `Subtle_Surface` |
+| `selected_indicator_role` | `Accent` |
+
+A zero role needs no theme registration. A configured role is validated once with
+`theme_contract_default`, `theme_contract_check`, `theme_contract_satisfied`, and
+`theme_contract_missing_required`. The example registers `vendor.alikit.radio_group.*` roles
+from `theme.json`; delete that registration to use core roles. The example activates the
+registered theme with `alicorn.style_environment_push` so the extension roles resolve.
+
+`Style` carries corner radius, indicator radius, and focus-ring width. `Options` carries
+orientation, selection mode, item geometry, and label size. Selection is shown by the filled
+radio dot and the selected surface, not by color alone. There is no motion: a radio value change
+must be immediately readable.
+
+## Keyboard and accessibility contract
+
+| Input | Result |
+| --- | --- |
+| `Tab` | Reaches the group once. Options are not separate Tab stops. |
+| `Up` / `Left` | Previous enabled option (wraps by default). |
+| `Down` / `Right` | Next enabled option (wraps by default). |
+| `Home` / `End` | First/last enabled option. |
+| `Space` / `Return` | Propose the active option. |
+| pointer | Ordinary Button activation proposes the clicked option. |
+| semantic `Press` | Same retained Button activation as pointer and keyboard. |
+
+- `Selection_Mode.Follow_Focus` (default) proposes on arrow movement. `Selection_Mode.Activate`
+  moves only roving focus; an explicit activation proposes.
+- Disabled options are skipped, do not activate, publish `Disabled`, and do not advertise
+  `Press`/`Focus`.
+- The group publishes `Radio_Group`, its accessible name, logical option count, `selected_id`, and
+  `current_id`. Options publish `Radio_Button`, label, `Checked` + `Selected` when selected,
+  `Current` when active, and `Press` + `Focus` when enabled.
+- Focus stays on the group while the active item changes; focus does not follow the pointer into
+  an option.
+- Not claimed: multiple selection, a Checkbox contract, type-ahead, or a popup.
+
+## Conformance tests
+
+`radio_group/radio_group_test.odin` drives the package through `alicorn:testui`:
+
+- semantic roles, parenting, positions, `Checked`/`Selected`/`Current`, and action presence;
+- roving Up/Down/Home/End with disabled skipping and wrap;
+- keyboard, pointer, and semantic Press proposing the same value;
+- `Activate` mode keeping focus and controlled selection separate;
+- vertical and horizontal appearances preserving identity while changing layout;
+- reorder keeping selection attached to the stable value;
+- the theme contract reporting configured and missing roles;
+- idle: no remaining description or presentation work on the final turn.
+
+```powershell
+odin test radio_group -define:ODIN_TEST_THREADS=1 -collection:alicorn=<alicorn> -collection:alikit=.
+./out/radio_group_example.exe --smoke
+```
+
+There is no `testui` pattern kind for a radio group at the pinned revision. `.Roving_List`
+requires a `List_Box` container, while a radio group must publish `Radio_Group`. A
+`.Radio_Group` pattern is a candidate Alicorn addition; explicit drive assertions are used
+instead of claiming a pattern that does not exist.
+
+## API reference
+
+| Declaration | Notes |
+| --- | --- |
+| `Option` | `value`, `label`, `description`, `disabled`. |
+| `Orientation` | `.Horizontal` or `.Vertical`. |
+| `Selection_Mode` | `.Follow_Focus` or `.Activate`. |
+| `Options` | Accessible label, orientation, selection mode, item geometry, label size, `no_wrap`. |
+| `Recipe` / `Style` | Optional namespaced surface roles and visual geometry. |
+| `State` | Active roving value, focus request, and pending proposal. |
+| `Event` / `Event_Kind` | One-shot `Selection_Proposed` carrying `value`. |
+| `radio_group` | Describe the group and return a proposal. |
+| `request_focus` | Focus the group's Tab stop after layout. |
+| `recipe_default`, `style_default` | Core-role defaults. |
+| `theme_contract_default`, `theme_contract_check`, `theme_contract_satisfied`, `theme_contract_missing_required` | Setup-time validation. |
+| `group_semantic_id`, `option_semantic_id` | Stable semantic identities. |
+
+## Limits
+
+- The component expects a small, caller-owned option slice; it does not virtualize. Use a Select
+  for long lists.
+- Label text is single-line with ellipsis overflow. Provide a short label; at the pinned revision
+  a narrower fit-content row can elide more aggressively than the requested item width.
+- `State.active_value` is presentation state; do not persist it as the application's selection.
+- Headless tests do not prove a physical screen-reader session, OS high-contrast rendering, or
+  pixels.
+
+## Compatibility
+
+<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
+<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<a href="../../compatibility/">Compatibility and pinning</a>.</div>
+
+## Source map
+
+- [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/radio_group/radio_group.odin)
+- [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/radio_group/radio_group_test.odin)
+- [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/radio_group/main.odin)
+- [Theme JSON](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/radio_group/theme.json)
+- [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/radio-group.md)

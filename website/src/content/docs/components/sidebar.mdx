@@ -1,0 +1,191 @@
+---
+title: Sidebar
+description: A flat navigation rail with expanded and collapsed presentations, List_Box semantics, roving focus, and one proposed route.
+---
+
+import Capture from '../../../components/Capture.astro';
+
+<div class="lede">
+<code>alikit:sidebar</code> is the P0 Sidebar shape: a vertical, icon-led navigation rail with
+expanded and collapsed presentations. It publishes one <code>List_Box</code> with
+<code>List_Box_Option</code> routes, one Tab stop, roving Up/Down/Home/End focus, and one proposed
+route change on activation.
+</div>
+
+## Preview
+
+<Capture src="captures/sidebar.png" alt="Native navigation rail window in the collapsed icon-only presentation, with a Files content pane and a Collapse rail checkbox" caption="Native SDL_GPU capture of examples/sidebar at Alicorn 47c9d4a, shown collapsed. Collapsing changes width and omits visible labels; semantic IDs, selected state, and focus ownership do not change." />
+
+<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
+real native rail; route content and routing stay application-owned.</div>
+
+## Responsibility split
+
+| Layer | Responsibility |
+| --- | --- |
+| **Alicorn** | Layout, focus, pointer hit testing, retained Button activation, `List_Box`/`List_Box_Option` semantics, and the roving model. |
+| **`sidebar`** | Rail and row drawing, expanded/collapsed presentations, roving index proposal, selected/current presentation, namespaced surface recipe, and one selection event. |
+| **Application** | Accepted route, route content, router/history, badges, and disabled policy. |
+
+A tree-style sidebar with nested sections is a later variant. This package deliberately
+implements the flat navigation rail first: stable route identity, one focus representative, and
+no second navigation model.
+
+## Copyable implementation
+
+Files: `sidebar/sidebar.odin`, `sidebar/sidebar_test.odin`, `examples/sidebar/main.odin`,
+`examples/sidebar/theme.json`.
+
+```odin
+import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
+import sidebar "alikit:sidebar"
+
+ROUTES := [2]sidebar.Item{
+	{key=1, label="Overview", icon=.Info, detail="Workspace summary"},
+	{key=2, label="Files", icon=.Folder_Closed, detail="Browse workspace files"},
+}
+
+App :: struct {
+	rail:         sidebar.State,
+	selected_key: u64,
+	collapsed:    bool,
+}
+
+render :: proc(app: ^App, ctx: ^ui.UI) {
+	if event := sidebar.rail(
+		ctx,
+		&app.rail,
+		ROUTES[:],
+		app.selected_key,
+		sidebar.Options{accessible_label="Workspace navigation", collapsed=app.collapsed},
+		key=alicorn.key_string("workspace-rail"),
+		instance_id=1,
+	); event.kind == .Selection_Proposed {
+		app.selected_key = event.key
+		// Navigate the application route here. The rail does not own a router.
+	}
+}
+```
+
+Call `sidebar.request_focus(&state)` when an application interaction should move focus to the
+rail. The next description focuses the rail after layout.
+
+## Parts and identities
+
+| Part | Identity | What can be omitted or replaced |
+| --- | --- | --- |
+| Rail | `rail_semantic_id(instance_id)` | Always present; the one Tab stop and `List_Box` collection. |
+| Route row | `item_semantic_id(instance_id, key)` | Application supplies the item slice. Removing an item keeps remaining identities. |
+| Icon / label / badge | stable child keys under the row owner | Collapsed presentation omits visible label/badge; the accessible label remains. |
+| Selected indicator | `.Selected_Indicator` | Replace drawing; keep selected state and `Selected` semantics. |
+
+Route key `0`, zero instance ID, and duplicate keys are invalid. Selected and Current identity
+follow the stable key across reorder. Removing the active key repairs focus with the selected key
+first, then the nearest enabled route, then the first enabled route. The accent indicator and
+label weight make selection visible without relying on color alone.
+
+## Styling, motion, and theme
+
+`Recipe` declares three optional namespaced surface roles:
+
+| Field | Core fallback |
+| --- | --- |
+| `rail_surface_role` | `Surface` |
+| `item_surface_role` | `Surface` |
+| `selected_surface_role` | `Selection` |
+
+Zero roles need no theme registration. Configured roles are validated with
+`theme_contract_default`, `theme_contract_check`, `theme_contract_satisfied`, and
+`theme_contract_missing_required`. The example registers `vendor.alikit.sidebar.*` and activates
+the theme. A missing configured role falls back to the core role at render time after setup
+validation, so the rail remains usable.
+
+`Style` carries corner radius, selected-indicator width, and focus-ring width. `Options` carries
+collapsed state, rail/expanded width, item height, gap, padding, icon size, label size, and
+`wrap`. Collapsing changes width and omits the visible label; it does not change semantic IDs,
+selected state, or focus ownership. There is no motion: navigation selection is immediately
+readable.
+
+## Keyboard and accessibility contract
+
+| Input | Result |
+| --- | --- |
+| `Tab` | Reaches the rail once. Rows are not separate Tab stops. |
+| `Up` / `Down` | Previous/next enabled route. |
+| `Home` / `End` | First/last enabled route. |
+| `Return` / `Space` | Propose the active route. |
+| pointer | Ordinary Button activation proposes the clicked route. |
+| semantic `Select` | The same proposal through `List_Box_Option`. |
+
+- Navigation stops at the ends by default; set `Options.wrap` to wrap.
+- Arrow navigation alone does not change selection.
+- Disabled routes are skipped, publish `Disabled`, and do not advertise `Select`/`Focus`.
+- The rail publishes `List_Box`, its accessible name, logical route count, `selected_id`, and
+  `current_id`. Rows publish `List_Box_Option`, label, description (detail), `Selected`,
+  `Current`, and `Select` + `Focus` when enabled.
+- The rail is the focus representative; rows are intentionally non-focusable. Semantic `Focus`
+  on a row may be rejected by the runtime's realized-action eligibility rule, a recorded core gap
+  shared with the icon picker. The rail's own Focus action remains valid.
+- Not claimed: nested sections, expand/collapse route groups, a router, history, or drag reorder.
+
+## Conformance tests
+
+`sidebar/sidebar_test.odin` covers:
+
+- `List_Box`/`List_Box_Option` semantics, selected/current identity, disabled action rejection,
+  and parent structure;
+- Down skipping a disabled route, Return activation, pointer activation, and semantic `Select`
+  parity;
+- the `.Roving_List` pattern with a container focus representative, disabled skipping, no wrap,
+  Home/End, and selection activation;
+- collapsed/expanded width changes with identical semantic identity and selected state;
+- reorder keeping selection attached to its stable key;
+- the theme contract.
+
+```powershell
+odin test sidebar -define:ODIN_TEST_THREADS=1 -collection:alicorn=<alicorn> -collection:alikit=.
+./out/sidebar_example.exe --smoke
+```
+
+The `.Roving_List` check is a real positive conformance run. Its negative controls are covered by
+Alicorn's own `testui` fixture; this package does not duplicate the core fixture.
+
+## API reference
+
+| Declaration | Notes |
+| --- | --- |
+| `Item` | Route `key`, `label`, `icon`, `detail`, optional `badge`, `disabled`. |
+| `Options` | Collapsed state, widths, item height, gap, padding, icon/label size, `wrap`. |
+| `Recipe` / `Style` | Optional namespaced surface roles and visual geometry. |
+| `State` | Active roving key, focus request, pending proposal. |
+| `Event` / `Event_Kind` | One-shot `Selection_Proposed` carrying `key`. |
+| `rail` | Describe the rail and return a route proposal. |
+| `request_focus` | Focus the rail after layout. |
+| `recipe_default`, `style_default` | Core-role defaults. |
+| `theme_contract_default`, `theme_contract_check` | Setup-time validation. |
+| `rail_semantic_id`, `item_semantic_id` | Stable semantic identities. |
+
+## Limits
+
+- The rail is flat. A nested sidebar needs a tree projection and is a separate P1 component.
+- Collapsed rows show icons only. Provide a meaningful icon and accessible label; there is no
+  built-in tooltip.
+- The application owns route content, routing, history, and any shortcut that jumps directly to a
+  route.
+- Headless tests do not prove a physical screen-reader session, pixel output, or native route
+  focus.
+
+## Compatibility
+
+<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
+<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<a href="../../compatibility/">Compatibility and pinning</a>.</div>
+
+## Source map
+
+- [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/sidebar/sidebar.odin)
+- [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/sidebar/sidebar_test.odin)
+- [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/sidebar/main.odin)
+- [Theme JSON](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/sidebar/theme.json)
+- [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/sidebar.md)

@@ -65,6 +65,16 @@ for the flat navigation rail and its collapsed presentation, and
 contract coverage, and core-requirement list live in
 [the issue 3 research record](research/issue-003-parts-pilot.md).
 
+## Published catalog
+
+The static catalog in [`website/`](../website/) renders every component page
+with a native SDL_GPU capture, copyable source, ownership and input contracts,
+theme roles, API reference, and test coverage. Rebuild it with
+`cd website && npm ci && npm run build`. The machine-readable registry seed is
+[`components.json`](../components.json), and
+[`tools/capture_catalog.ps1`](../tools/capture_catalog.ps1) regenerates the
+native captures from `out/`.
+
 ## Not in AliKit yet
 
 Calendars, color pickers, split panes, terminals, and rich editors are not

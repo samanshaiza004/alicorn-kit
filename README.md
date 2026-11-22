@@ -6,8 +6,8 @@ controls, semantics, layout, and host input APIs. It does not introduce another
 UI tree, state store, or application lifecycle.
 
 AliKit provides a command palette, a generic Tree View, a copyable icon picker,
-and the v0.3 P0 components: radio group, progress, notices, navigation rail,
-static table, data grid, dialog, menu, and scroll area. The application owns domain state, ranking, route selection,
+and the v0.3 P0 components: radio group, progress, notices, navigation rail, and
+virtualized table. The application owns domain state, ranking, route selection,
 and dispatch. AliKit owns reusable interaction behavior, semantics, and
 copyable presentation parts.
 
@@ -23,9 +23,7 @@ The v0.3 P0 sprint adds:
 - determinate and indeterminate progress with a published numeric range;
 - notice helpers plus copyable card/stack parts for inline banners;
 - a collapsed/expanded navigation rail with a proposed app-owned route;
-- a static presentation table and an interactive data grid split with nested
-  table/row/cell semantics;
-- composable Dialog/Alert Dialog, dropdown Menu, and Scroll Area contracts.
+- a virtualized, non-spanned table with nested table/row/cell semantics.
 
 Every component follows Alicorn's five-point component-authoring standard:
 copyable implementation, composable parts, recipe/style/theme contract,
@@ -57,18 +55,12 @@ command services.
 - [Notices guide](docs/notices.md) - runtime toasts and copyable inline cards.
 - [Sidebar guide](docs/sidebar.md) - the navigation rail and collapsed
   presentation.
-- [Table guide](docs/table.md) - static presentation, intrinsic wrapped rows,
+- [Table guide](docs/table.md) - virtualized nested table semantics, navigation,
   and the non-spanned v1 decision.
-- [Data Grid guide](docs/data-grid.md) - interactive cell navigation and selection.
-- [Dialog guide](docs/dialog.md) - modal dismissal, focus, Alert, and nesting.
-- [Menu guide](docs/menu.md) - anchored dropdown parts and navigation.
-- [Scroll Area guide](docs/scroll-area.md) - bounded/intrinsic scrolling contracts.
 - [Issue 3 research record](docs/research/issue-003-parts-pilot.md) - inventory,
   measured stock-vs-parts comparison, contract coverage, and GO/NO-GO.
 - [Issue 4 research record](docs/research/issue-004-v03-components.md) - pin
   choice, P0 component evidence, and core gaps.
-- [P0-2 research record](docs/research/issue-p0-2-dialog-scroll.md) - dialog,
-  menu, scroll area, table split, and core gaps.
 - [Agent guidance](AGENTS.md) - project boundaries and validation steps.
 
 ## Repository layout
@@ -84,13 +76,11 @@ command services.
 - `progress/` - determinate/indeterminate progress bar.
 - `notices/` - runtime notice helpers and inline card parts.
 - `sidebar/` - navigation rail.
-- `table/` - static presentation table.
-- `data_grid/` - interactive dataset grid.
-- `dialog/` - Dialog and Alert_Dialog parts.
-- `menu/` - anchored dropdown menu parts.
-- `scroll_area/` - styled scroll container.
-- `examples/` - native consumers for every component.
+- `table/` - virtualized table.
+- `examples/` - native consumers for every component, including the parts-based palette.
 - `docs/` - component guides and research records.
+- `website/` - the Astro + Starlight component catalog with native captures.
+- `components.json` - machine-readable component registry seed.
 
 ## Validation
 
@@ -108,3 +98,26 @@ and run:
 The script also copies `icon_picker/` beside a small consumer and compiles it
 with only the Alicorn collection, so copyable-source consumption does not depend
 on AliKit's package topology.
+
+## Component catalog
+
+The static catalog lives in `website/`. It renders native example captures,
+copyable source, ownership and input contracts, theme roles, API references,
+and test coverage for every component. Build it locally with:
+
+```powershell
+cd website
+npm ci
+npm run build
+```
+
+Re-capture the native PNGs after a component or pin change:
+
+```powershell
+./tools/capture_catalog.ps1 -BinDir out -OutDir website/public/captures
+```
+
+`components.json` is the machine-readable registry seed. The catalog does not
+recreate a component in JavaScript; interactive WebGPU previews are a later
+step. See [the website README](website/README.md) for the site choice and the
+GitHub Pages workflow note.

@@ -1,0 +1,182 @@
+---
+title: Palette Parts
+description: A copyable parts-based result list for applications that own the palette shell, query, and ranking.
+---
+
+import Capture from '../../../components/Capture.astro';
+
+<div class="lede">
+<code>alikit:palette_parts</code> is a copyable, parts-based variant of the command palette's
+result list. It owns the retained virtual list, published <code>List_Box</code> collection,
+selection reconciliation by stable <code>Item_ID</code>, enabled-row navigation, reveal, and one
+activation event. The application owns the query, matching and ranking, commands, modal shell,
+dismissal, and focus restoration.
+</div>
+
+## Preview
+
+<Capture src="captures/palette-parts.png" alt="Native palette parts window with a filter field and a six-row result list" caption="Native SDL_GPU capture of examples/palette_parts at Alicorn 47c9d4a. This is the reusable result-list part, not the modal command palette." />
+
+<div class="preview-note">Interactive WebGPU preview is a later catalog step. This capture is the
+real native application; the row list is not recreated in JavaScript.</div>
+
+## Responsibility split
+
+| Layer | Responsibility |
+| --- | --- |
+| **Alicorn** | Virtual list, scroll region, Button owners, `List_Box` semantics, focus, and rendering. |
+| **`palette_parts`** | Row drawing, selection by stable ID, enabled navigation, reveal, `List_Box` collection, and one activation event. |
+| **Application** | Query field, matching/ranking, commands, modal shell, dismissal, and focus restoration. |
+
+This package deliberately does not wrap `alikit:command_palette`. It exists to show which pieces
+of the stock palette are ordinary public Alicorn facilities and which policy remains
+application-owned. The stock palette remains the complete choice.
+
+## Copyable implementation
+
+Files: `palette_parts/parts.odin`, `palette_parts/parts_test.odin`,
+`palette_parts/pilot_test.odin`, `examples/palette_parts/main.odin`.
+
+```odin
+import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
+import model "alikit:palette_model"
+import parts "alikit:palette_parts"
+
+ITEMS := [2]model.Item{
+	{id=model.Item_ID(1), title="Open File", description="Browse the workspace"},
+	{id=model.Item_ID(2), title="Build Project", keywords="compile"},
+}
+
+App :: struct {
+	matches: [2]model.Match,
+	visible: int,
+	results: parts.State,
+}
+
+render :: proc(app: ^App, ctx: ^ui.UI) {
+	app.visible, _ = model.filter(ITEMS[:], "", app.matches[:])
+	event := parts.results(
+		ctx,
+		&app.results,
+		ITEMS[:],
+		app.matches[:app.visible],
+		key=alicorn.key_string("app-palette-results"),
+		options=parts.Options{accessible_label="Commands"},
+	)
+	if event.kind == .Activated {
+		// Dispatch event.item_id in application code.
+	}
+}
+```
+
+Pass a fresh visible slice each description. The part never stores item strings. `handle_key` is
+the application's keyboard path when its query field owns focus:
+
+```odin
+handled, event := parts.handle_key(&app.results, rt, ITEMS[:], app.matches[:app.visible], key)
+```
+
+When the list owns focus, its retained interaction scope delivers the same keys through
+`interaction_event_next` during the next description. Both paths use `palette_model.move` and
+`palette_model.activate`; there is no second selection policy. `request_focus` asks for one
+after-frame focus of the list.
+
+## Parts and identities
+
+| Part | Identity | What can be replaced |
+| --- | --- | --- |
+| Virtual list | `State.list_node` | Row height, maximum height, and focus-on-pointer policy. |
+| Row owner | stable `Item_ID` | `row_build` is the part to copy and edit. |
+| Leading icon | stable child key | Replace the 16-unit accent box with an icon or swatch. |
+| Label / content | stable child keys | Restyle title and description without changing identity. |
+| Selected indicator | stable child key | Replace the check glyph; keep the selected state. |
+| List collection | `list_semantic_id(namespace)` | The `List_Box` identity and logical count. |
+
+Each realized row is a `button_begin(presentation=.Custom)` owner with a `List_Box_Option`
+semantic record. Rows expose `Selected`, `Current`, `Disabled`, and `Select`/`Focus` actions. The
+scroll region owns the `List_Box` collection with a logical count, realized range, and
+selected/current identity.
+
+## Styling, motion, and theme
+
+- Visual parts are attached for `.Icon`, `.Label`, `.Content`, and `.Selected_Indicator`, so an
+  application can restyle without changing behavior.
+- The part uses Alicorn core roles (`Surface`, `Text`, `Muted_Text`, `Selection`, `Accent`); it
+  declares no theme contract.
+- `Options` carries the accessible label, empty label, row height, list maximum height, semantic
+  namespace, and `focus_on_pointer`.
+- There is no part-authored motion. Reveal is a retained virtual-list request, not a second
+  layout pass.
+
+## Keyboard and accessibility contract
+
+| Input | Result |
+| --- | --- |
+| `Up` / `Down` | `palette_model.move` with wrapping and disabled skipping. |
+| `Home` / `End` | First/last enabled visible row. |
+| `Return` | One activation event for the selected stable item. |
+| pointer | Row activation through the ordinary Button owner. |
+| semantic `Select` | The same activation through `List_Box_Option`. |
+| caller reorder/removal | Selection follows `Item_ID`; reconcile falls back to the first enabled row. |
+
+The part publishes only realized rows. `virtual_list_ensure_visible` is requested after
+navigation; the list remains a single Tab stop with non-focusable rows.
+
+## Conformance tests
+
+`palette_parts/parts_test.odin` and `palette_parts/pilot_test.odin` cover:
+
+- retained virtual rows, published `List_Box`/`List_Box_Option` semantics, and logical count;
+- Up/Down wrapping, disabled skipping, Home/End, and Return activation;
+- pointer and semantic activation parity;
+- stable selection across caller reorder and removal;
+- reveal and focus request behavior, and idle return after navigation;
+- the stock-versus-parts comparison recorded in the issue 3 research note.
+
+```powershell
+odin test palette_parts -define:ODIN_TEST_THREADS=1 -collection:alicorn=<alicorn> -collection:alikit=.
+./out/palette_parts_example.exe --smoke
+```
+
+No dedicated `testui` pattern kind fits a result-list part; the suite uses explicit drive and
+semantic assertions. The `.Roving_List` pattern requires a `List_Box` container and a different
+focus owner model.
+
+## API reference
+
+| Declaration | Notes |
+| --- | --- |
+| `Event` / `Event_Kind` | One `Activated` event carrying `item_id`. |
+| `Options` | Accessible label, empty label, row height, maximum list height, namespace, pointer focus. |
+| `State` | Selection, derived visible index, list owner, namespace, reveal/focus flags. |
+| `results` | Describe the list and return an activation event. |
+| `handle_key` | Navigation when the query field owns focus. |
+| `request_focus` | Ask for one after-frame focus of the list. |
+| `selection_visible_index` | Report the selected row's current visible position without retained state. |
+| `item_semantic_id`, `list_semantic_id` | Stable identities for explicit semantic actions. |
+
+## Limits
+
+- It is a result-list part, not a modal palette. Add the application's own overlay/query shell.
+- It does not implement type-ahead; the query field owns text input.
+- `Page Up` / `Page Down` are not handled, matching the stock palette's current keyboard contract.
+- Headless tests do not validate native IME or a platform accessibility bridge.
+- At the pinned Alicorn revision, row text layout can elide some labels under the current
+  fit-content/grow measurement limits; the pilot record tracks the core layout gap. The part's
+  identity, navigation, semantics, and activation do not depend on the painted label width.
+
+## Compatibility
+
+<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
+<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<a href="../../compatibility/">Compatibility and pinning</a>.</div>
+
+## Source map
+
+- [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/palette_parts/parts.odin)
+- [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/palette_parts/parts_test.odin)
+- [Pilot test](https://github.com/samanshaiza004/alicorn-kit/blob/main/palette_parts/pilot_test.odin)
+- [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/palette_parts/main.odin)
+- [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/palette-parts.md)
+- [Research record](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/issue-003-parts-pilot.md)

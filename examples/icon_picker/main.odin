@@ -103,28 +103,34 @@ describe_picker :: proc(app: ^App, ctx: ^ui.UI) -> bool {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	_ = ui.text(ctx, "AliKit · Icon Picker", size=24)
-	_ = ui.text(ctx,
-		"Search, rove with arrows, Enter selects. Ctrl+F focuses search from anywhere in the picker; Ctrl+2 switches appearances.",
-		size=13, color=alicorn.style_color(ctx, .Muted_Text))
-	if ui.row(ctx, key=alicorn.key_string("example-actions"), height=36, gap=8, align=.Center) {
-		opener, clicked := alicorn.button_ex(ctx, "Insert icon…", key="example-open-picker",
-			style=ui.layout_style(width=150, height=32), variant=.Primary)
-		if clicked { open_modal(app, opener) }
-		if ui.button(ctx,
-			"Appearance: Grid" if app.appearance == .Grid else "Appearance: List",
-			key=alicorn.key_string("example-toggle-appearance"), width=170, height=32, variant=.Quiet,
-		) {
-			app.appearance = .List if app.appearance == .Grid else .Grid
+	if alicorn.container_begin(ctx, .Container, label="icon-picker-example-root",
+		key=alicorn.key_string("icon-picker-example-root"),
+		style=alicorn.layout_style(.Column, width=-1, height=-1, grow=1, padding=16, gap=8),
+		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
+		_ = ui.text(ctx, "AliKit · Icon Picker", size=24)
+		_ = ui.text(ctx,
+			"Search, rove with arrows, Enter selects. Ctrl+F focuses search from anywhere in the picker; Ctrl+2 switches appearances.",
+			size=13, color=alicorn.style_color(ctx, .Muted_Text))
+		if ui.row(ctx, key=alicorn.key_string("example-actions"), height=36, gap=8, align=.Center) {
+			opener, clicked := alicorn.button_ex(ctx, "Insert icon…", key="example-open-picker",
+				style=ui.layout_style(width=150, height=32), variant=.Primary)
+			if clicked { open_modal(app, opener) }
+			if ui.button(ctx,
+				"Appearance: Grid" if app.appearance == .Grid else "Appearance: List",
+				key=alicorn.key_string("example-toggle-appearance"), width=170, height=32, variant=.Quiet,
+			) {
+				app.appearance = .List if app.appearance == .Grid else .Grid
+			}
+			if app.selected_key != 0 {
+				_ = ui.text(ctx, "Selected choice is application-owned.", size=12,
+					color=alicorn.style_color(ctx, .Muted_Text))
+			}
 		}
-		if app.selected_key != 0 {
-			_ = ui.text(ctx, "Selected choice is application-owned.", size=12,
-				color=alicorn.style_color(ctx, .Muted_Text))
-		}
+		_ = ui.text(ctx, "The dialog above uses the complete copyable package.", size=13)
+		_ = ui.text(ctx, "Changes are proposed as one event and accepted by the application.", size=12,
+			color=alicorn.style_color(ctx, .Muted_Text))
+		alicorn.container_end(ctx)
 	}
-	_ = ui.text(ctx, "The dialog above uses the complete copyable package.", size=13)
-	_ = ui.text(ctx, "Changes are proposed as one event and accepted by the application.", size=12,
-		color=alicorn.style_color(ctx, .Muted_Text))
 }
 
 render_overlays :: proc(app: ^App, ctx: ^ui.UI) {

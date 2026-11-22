@@ -1,0 +1,277 @@
+{
+  "schema": 1,
+  "name": "AliKit component registry",
+  "description": "Machine-readable seed for the AliKit component catalog. Each entry identifies the package, its source and example files, ownership boundary, parts, contracts, and conformance entry points.",
+  "generatedBy": "codex/website-catalog",
+  "alicorn": {
+    "repository": "https://github.com/Carnival-Science/Alicorn.git",
+    "ref": "master",
+    "revision": "47c9d4a7cd1f637876190fec899daeeac00a30ae"
+  },
+  "accesskit_binding": {
+    "repository": "https://github.com/samanshaiza004/odin-accesskit.git",
+    "revision": "e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b"
+  },
+  "validation": {
+    "native": "./tools/test.ps1 -Odin odin",
+    "captures": "./tools/capture_catalog.ps1 -BinDir out -OutDir website/public/captures",
+    "website": "cd website && npm ci && npm run build"
+  },
+  "components": [
+    {
+      "id": "command-palette",
+      "name": "Command Palette",
+      "package": "alikit:command_palette",
+      "kind": "component",
+      "status": "stable",
+      "purpose": "Search and navigate a caller-owned list of actions from a keyboard-friendly modal.",
+      "page": "/components/command-palette/",
+      "source": ["command_palette/command_palette.odin"],
+      "tests": ["command_palette/command_palette_test.odin"],
+      "example": "examples/command_palette/main.odin",
+      "capture": "website/public/captures/command-palette.png",
+      "dependencies": ["alikit:palette_model", "alicorn:runtime", "alicorn:ui"],
+      "ownedState": "State (query buffer, cached matches, selection, focus restoration)",
+      "applicationOwns": ["items and stable Item_ID values", "matching/ranking policy in Caller_Filtered mode", "activation dispatch", "open shortcut"],
+      "parts": ["overlay", "panel", "title", "query field", "virtual result list", "result row", "footer"],
+      "keyboard": ["Up/Down navigate with disabled skipping", "Return activates", "Escape closes", "Ctrl+Shift+P opens from the host"],
+      "accessibility": ["Dialog modal scope", "controlled text field", "List_Box/List_Box_Option rows", "focus restoration to the opener"],
+      "themeRoles": {
+        "appearance": ["overlay_padding", "panel_padding", "panel_gap", "backdrop_color", "panel_shape", "panel_material", "physical_height", "panel_fill", "backdrop_effect"],
+        "coreFallback": ["Surface", "Text", "Muted_Text", "Selection", "Border"]
+      },
+      "api": ["State", "Options", "Appearance", "Event", "Search_Mode", "Status", "init", "destroy", "open_palette", "close_palette", "build", "handle_key", "text_change", "pointer", "after_frame", "set_query", "query_text"],
+      "limits": ["Built-in matching is ASCII case-insensitive substring search", "No Unicode case folding or fuzzy ranking", "Native IME candidate windows are host-validated, not headless-tested", "No command registration or dispatch"]
+    },
+    {
+      "id": "tree-view",
+      "name": "Tree View",
+      "package": "alikit:tree_view",
+      "kind": "component",
+      "status": "stable",
+      "purpose": "Render and navigate an application-provided visible-row projection of a tree.",
+      "page": "/components/tree-view/",
+      "source": ["tree_view/tree_view.odin", "tree_model/model.odin"],
+      "tests": ["tree_view/tree_view_test.odin", "tree_model/model_test.odin"],
+      "example": "examples/tree_view/main.odin",
+      "capture": "website/public/captures/tree-view.png",
+      "dependencies": ["alikit:tree_model", "alicorn:runtime", "alicorn:ui"],
+      "ownedState": "State (model cursor, retained scroll owner, context target)",
+      "applicationOwns": ["hierarchy", "visible-row projection", "expansion/loading policy", "selection policy", "activation and context-menu actions"],
+      "parts": ["tree scroll owner", "row", "indentation", "disclosure chevron", "icon", "label", "context-menu anchor"],
+      "keyboard": ["Up/Down navigate and skip disabled rows", "Left collapses or focuses parent", "Right expands or focuses first child", "Home/End and Page Up/Page Down", "Enter activates", "Shift+F10/Menu opens a context menu"],
+      "accessibility": ["Tree/Tree_Item semantics", "logical count with a bounded realized window", "Current/Selected/Expanded/Disabled states", "stable semantic IDs from Item_ID"],
+      "themeRoles": {
+        "appearance": ["row_height", "row_padding", "row_gap", "indent_width", "chevron_size", "icon_size"],
+        "coreFallback": ["Text", "Muted_Text", "Selection", "Focus", "Border"]
+      },
+      "api": ["State", "Options", "Item", "Window", "Event", "Event_Kind", "build", "handle_key", "pointer", "open_context_menu", "context_target", "context_anchor", "semantic_id"],
+      "limits": ["The application must build the visible preorder projection", "Paged windows report Range_Requested", "Headless tests do not prove native screen-reader traversal", "No filesystem or expansion policy"]
+    },
+    {
+      "id": "icon-picker",
+      "name": "Icon Picker",
+      "package": "alikit:icon_picker",
+      "kind": "copyable-composite",
+      "status": "stable",
+      "purpose": "A complete copyable icon chooser with search, grid/list appearances, and roving keyboard focus.",
+      "page": "/components/icon-picker/",
+      "source": ["icon_picker/icon_picker.odin"],
+      "tests": ["icon_picker/icon_picker_test.odin"],
+      "example": "examples/icon_picker/main.odin",
+      "capture": "website/public/captures/icon-picker.png",
+      "dependencies": ["alicorn:runtime", "alicorn:ui"],
+      "ownedState": "State (query buffer, filtered matches, active key)",
+      "applicationOwns": ["choices", "accepted selection", "commands", "surrounding dialog", "focus restoration"],
+      "parts": ["search field", "grid/list collection", "cell/row", "stable choice identity", "activation event", "focus requests"],
+      "keyboard": ["Up/Down move a row", "Left/Right move a cell in Grid", "Home/End row bounds", "Page Up/Page Down", "Return/Space activate", "Ctrl+F (example) focuses search"],
+      "accessibility": ["List_Box/List_Box_Option semantics with positions", "Selected/Current/Disabled states", "stable keys across reorder and appearance changes", "dialog host owns modal semantics"],
+      "themeRoles": {
+        "appearance": ["columns", "cell_size", "cell_gap", "row_height", "max_visible_rows", "icon_size", "appearance"],
+        "coreFallback": ["Surface", "Text", "Muted_Text", "Selection", "Accent"]
+      },
+      "api": ["Appearance", "Choice", "Options", "Event", "State", "init", "destroy", "picker", "set_query", "query_text", "active_key", "match_count", "request_search_focus", "request_grid_focus", "choice_semantic_id", "collection_semantic_id"],
+      "limits": ["No dedicated Grid semantic role; the grid publishes List_Box with positions", "Home/End are row bounds", "Filtering is local ASCII case-insensitive substring matching", "Space activation is subject to Alicorn text-preemption rules"]
+    },
+    {
+      "id": "palette-parts",
+      "name": "Palette Parts",
+      "package": "alikit:palette_parts",
+      "kind": "copyable-parts",
+      "status": "pilot",
+      "purpose": "A copyable parts-based result list for applications that own the palette shell, query, and ranking.",
+      "page": "/components/palette-parts/",
+      "source": ["palette_parts/parts.odin"],
+      "tests": ["palette_parts/parts_test.odin", "palette_parts/pilot_test.odin"],
+      "example": "examples/palette_parts/main.odin",
+      "capture": "website/public/captures/palette-parts.png",
+      "dependencies": ["alikit:palette_model", "alicorn:runtime", "alicorn:ui"],
+      "ownedState": "State (selection, list owner, reveal/focus request)",
+      "applicationOwns": ["query", "matching/ranking", "commands", "modal shell", "dismissal", "focus restoration"],
+      "parts": ["virtual result list", "row owner", "icon", "label", "content", "selected indicator", "List_Box collection"],
+      "keyboard": ["Up/Down with wrapping and disabled skipping", "Home/End", "Return activates", "pointer and semantic Select activate"],
+      "accessibility": ["List_Box/List_Box_Option collection", "Selected/Current/Disabled states", "read-only selection event by stable Item_ID"],
+      "themeRoles": {
+        "appearance": ["row_height", "list_max_height", "accessible_label", "empty_label"],
+        "coreFallback": ["Surface", "Text", "Muted_Text", "Selection", "Accent"]
+      },
+      "api": ["Event", "Options", "State", "results", "handle_key", "request_focus", "selection_visible_index", "item_semantic_id", "list_semantic_id"],
+      "limits": ["Not a modal palette; add the application's own overlay and query shell", "No type-ahead", "Page Up/Page Down are not handled", "Headless tests do not validate native IME or an accessibility bridge"]
+    },
+    {
+      "id": "radio-group",
+      "name": "Radio Group",
+      "package": "alikit:radio_group",
+      "kind": "component",
+      "status": "stable",
+      "purpose": "A controlled radio group with one Tab stop, roving arrows, and activation parity.",
+      "page": "/components/radio-group/",
+      "source": ["radio_group/radio_group.odin"],
+      "tests": ["radio_group/radio_group_test.odin"],
+      "example": "examples/radio_group/main.odin",
+      "capture": "website/public/captures/radio-group.png",
+      "dependencies": ["alicorn:runtime", "alicorn:ui", "alikit:theme_contract"],
+      "ownedState": "State (active roving value, focus request, pending proposal)",
+      "applicationOwns": ["selected value", "mutual exclusion", "labels", "disabled policy", "domain command"],
+      "parts": ["group", "option", "indicator", "label", "focus ring"],
+      "keyboard": ["Tab reaches the group once", "Up/Left and Down/Right move with wrap by default", "Home/End", "Space/Return propose", "Follow_Focus selects on arrow; Activate requires an explicit activation"],
+      "accessibility": ["Radio_Group/Radio_Button roles", "Checked/Selected/Current states", "Press/Focus actions when enabled", "one Tab stop; focus stays on the group"],
+      "themeRoles": {
+        "item_surface_role": "Subtle_Surface",
+        "selected_surface_role": "Selection",
+        "indicator_surface_role": "Subtle_Surface",
+        "selected_indicator_role": "Accent"
+      },
+      "api": ["Option", "Orientation", "Selection_Mode", "Options", "Recipe", "Style", "State", "Event", "radio_group", "request_focus", "recipe_default", "style_default", "theme_contract_default", "theme_contract_check", "group_semantic_id", "option_semantic_id"],
+      "limits": ["Small, caller-owned option slice; no virtualization", "Single-line ellipsis labels", "Headless tests do not prove a physical screen-reader session", "No Radio_Group testui pattern at the pinned revision"]
+    },
+    {
+      "id": "progress",
+      "name": "Progress",
+      "package": "alikit:progress",
+      "kind": "component",
+      "status": "stable",
+      "purpose": "Determinate and indeterminate progress with a published numeric range.",
+      "page": "/components/progress/",
+      "source": ["progress/progress.odin"],
+      "tests": ["progress/progress_test.odin"],
+      "example": "examples/progress/main.odin",
+      "capture": "website/public/captures/progress.png",
+      "dependencies": ["alicorn:runtime", "alicorn:ui", "alikit:theme_contract"],
+      "ownedState": "State (diagnostic resolved fraction, phase, reduced-motion decision, geometry)",
+      "applicationOwns": ["value and range", "indeterminate phase", "motion scheduling"],
+      "parts": ["root", "label", "value", "track", "fill"],
+      "keyboard": ["Non-interactive: no Tab stop, keys, or actions"],
+      "accessibility": ["Progress role", "human-readable value (percentage or Loading)", "numeric range only when determinate", "indeterminate publishes no fabricated percentage"],
+      "themeRoles": {
+        "track_surface_role": "Subtle_Surface",
+        "fill_surface_role": "Accent"
+      },
+      "api": ["Options", "Recipe", "State", "progress", "progress_semantic_id", "fraction", "recipe_default", "theme_contract_default", "theme_contract_check"],
+      "limits": ["Definite track width required", "Application owns continuous indeterminate motion", "Value text is %.0f%% unless value_label is supplied", "Headless tests do not prove native announcements"]
+    },
+    {
+      "id": "notices",
+      "name": "Notices",
+      "package": "alikit:notices",
+      "kind": "component",
+      "status": "stable",
+      "purpose": "Runtime toast helpers plus copyable card and stack parts for inline banners.",
+      "page": "/components/notices/",
+      "source": ["notices/notices.odin"],
+      "tests": ["notices/notices_test.odin"],
+      "example": "examples/notices/main.odin",
+      "capture": "website/public/captures/notices.png",
+      "dependencies": ["alicorn:runtime", "alicorn:ui", "alikit:theme_contract"],
+      "ownedState": "State per inline card (reveal/retire presentation)",
+      "applicationOwns": ["notice text", "severity", "lifetime", "actions", "resolution", "application-hosted card items"],
+      "parts": ["runtime toast", "inline card", "stack", "action buttons", "close button", "severity icon"],
+      "keyboard": ["Runtime toasts are nonmodal and take no focus", "Action buttons are ordinary Tab stops", "Escape is owned by the surrounding dialog/overlay"],
+      "accessibility": ["Runtime live-region announcements", "inline cards publish Status or Alert", "title as label, message as value, details as description", "retiring cards disable actions"],
+      "themeRoles": {
+        "card_surface_role": "Subtle_Surface (errors use Surface)"
+      },
+      "api": ["Item", "Options", "Recipe", "State", "Event", "toast", "post", "emit", "dismiss", "dismiss_handle", "take_action", "next_deadline", "advance", "card", "stack", "theme_contract_default"],
+      "limits": ["No second notice queue", "Inline cards do not publish live-region announcements", "Transient notices need a monotonic now_ns", "Custom cards inside the built-in toast overlay are a core gap"]
+    },
+    {
+      "id": "sidebar",
+      "name": "Sidebar",
+      "package": "alikit:sidebar",
+      "kind": "component",
+      "status": "stable",
+      "purpose": "A flat navigation rail with expanded and collapsed presentations and one proposed route.",
+      "page": "/components/sidebar/",
+      "source": ["sidebar/sidebar.odin"],
+      "tests": ["sidebar/sidebar_test.odin"],
+      "example": "examples/sidebar/main.odin",
+      "capture": "website/public/captures/sidebar.png",
+      "dependencies": ["alicorn:runtime", "alicorn:ui", "alikit:theme_contract"],
+      "ownedState": "State (active roving key, focus request, pending route proposal)",
+      "applicationOwns": ["accepted route", "route content", "router/history", "badges", "disabled policy"],
+      "parts": ["rail", "route row", "icon", "label", "badge", "selected indicator"],
+      "keyboard": ["Tab reaches the rail once", "Up/Down move with no wrap by default", "Home/End", "Return/Space propose", "pointer and semantic Select propose the same route"],
+      "accessibility": ["List_Box/List_Box_Option", "Selected/Current/Disabled states", "one focus representative", "collapsed rows keep their accessible name"],
+      "themeRoles": {
+        "rail_surface_role": "Surface",
+        "item_surface_role": "Surface",
+        "selected_surface_role": "Selection"
+      },
+      "api": ["Item", "Options", "Recipe", "Style", "State", "Event", "rail", "request_focus", "recipe_default", "style_default", "theme_contract_default", "theme_contract_check", "rail_semantic_id", "item_semantic_id"],
+      "limits": ["Flat rail only; nested sections are a P1 variant", "No built-in tooltip for collapsed icons", "App owns routing, history, and route content", "Row semantic Focus may be rejected by a recorded core gap"]
+    },
+    {
+      "id": "table",
+      "name": "Table",
+      "package": "alikit:table",
+      "kind": "component",
+      "status": "stable",
+      "purpose": "A virtualized, non-spanned table with nested table semantics and roving cell coordinates.",
+      "page": "/components/table/",
+      "source": ["table/table.odin"],
+      "tests": ["table/table_test.odin"],
+      "example": "examples/table/main.odin",
+      "capture": "website/public/captures/table.png",
+      "dependencies": ["alicorn:runtime", "alicorn:ui", "alikit:theme_contract"],
+      "ownedState": "State (active row/column coordinate, focus request, pending proposal)",
+      "applicationOwns": ["columns", "rows", "stable keys", "sorting", "filtering", "selection", "formatting", "data lifetime"],
+      "parts": ["table", "header row", "header cell", "body row", "body cell", "selected row", "selected cell", "focus outline"],
+      "keyboard": ["Tab reaches the table once", "Up/Down move rows and preserve the column", "Page Up/Page Down move by visible rows", "Left/Right and Home/End move the cell coordinate", "Return/Space activate"],
+      "accessibility": ["Table collection with nested Table_Row collections", "Table_Column_Header and Table_Cell/Table_Row_Header roles", "selected/current/disabled states", "virtual rows published as semantic virtual items"],
+      "themeRoles": {
+        "header_surface_role": "Subtle_Surface",
+        "row_surface_role": "Surface",
+        "selected_row_surface_role": "Selection",
+        "selected_cell_surface_role": "Selection"
+      },
+      "api": ["Alignment", "Column", "Cell", "Row", "Selection", "Options", "Recipe", "Style", "State", "Event", "table", "request_focus", "recipe_default", "style_default", "theme_contract_default", "table_semantic_id", "row_semantic_id", "cell_semantic_id"],
+      "limits": ["Non-spanned cells only", "Maximum 64 columns", "Built-in sorting/filtering/editing are not included", "Unrealized virtual rows do not export per-cell values", "No table testui pattern at the pinned revision"]
+    }
+  ],
+  "supportingPackages": [
+    {
+      "id": "palette-model",
+      "name": "Palette Model",
+      "package": "alikit:palette_model",
+      "purpose": "UI-independent filtering and selection behavior for command lists.",
+      "source": ["palette_model/model.odin"],
+      "tests": ["palette_model/model_test.odin"]
+    },
+    {
+      "id": "tree-model",
+      "name": "Tree Model",
+      "package": "alikit:tree_model",
+      "purpose": "UI-independent tree validation, navigation, stable identity, and window reconciliation.",
+      "source": ["tree_model/model.odin"],
+      "tests": ["tree_model/model_test.odin"]
+    },
+    {
+      "id": "theme-contract",
+      "name": "Theme Contract",
+      "package": "alikit:theme_contract",
+      "purpose": "Bounded setup-time validation for namespaced component theme roles.",
+      "source": ["theme_contract/contract.odin"],
+      "tests": ["theme_contract/contract_test.odin"]
+    }
+  ]
+}
