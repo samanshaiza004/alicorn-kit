@@ -65,11 +65,14 @@ update failures are also available through `last_status`.
 
 ## Input and lifecycle
 
-When used with `ui.run`, the palette registers its modal input scope during
-`build`. Alicorn routes navigation, dismissal, outside clicks, and query text
-changes to the palette automatically; the application only handles its
-application-specific command for opening the palette and dispatches the
-returned activation event. The canonical example uses this path.
+When used with `ui.run`, pass `render_overlays` and call `build` from that hook,
+after the ordinary root has closed. `modal_overlay_begin` requires an empty
+container stack, so a palette built inside the application's root container does
+not render. The palette registers its modal input scope during `build`. Alicorn
+routes navigation, dismissal, outside clicks, and query text changes to the
+palette automatically; the application only handles its application-specific
+command for opening the palette and dispatches the returned activation event.
+The canonical example uses this path.
 
 The current item slice is supplied to `build` on each description, so queued
 input is applied against fresh application data. In caller-filtered mode, build
