@@ -110,6 +110,10 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 		_ = ui.text(ctx, "Runtime toasts plus copyable inline card parts.",
 			size=13, color=alicorn.style_color(ctx, .Muted_Text))
 
+		theme_scope := alicorn.Style_Environment_Scope{}
+		if app.theme_id != 0 {
+			theme_scope = alicorn.style_environment_push(ctx, alicorn.Style_Environment{theme=app.theme_id})
+		}
 		if ui.panel(ctx, key=alicorn.key_string("notices-example-card"), width=600,
 			height=alicorn.LAYOUT_SIZE_FIT_CONTENT, padding=20, gap=12,
 			fill=alicorn.style_color(ctx, .Surface), radius=12,
@@ -151,6 +155,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 					size=12, color=alicorn.style_color(ctx, .Danger))
 			}
 		}
+		if theme_scope.active { alicorn.style_environment_pop(ctx, theme_scope) }
 		alicorn.container_end(ctx)
 	}
 }

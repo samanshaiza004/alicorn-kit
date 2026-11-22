@@ -171,6 +171,10 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 				color=alicorn.style_color(ctx, .Muted_Text))
 		}
 		rebuild_projection(app)
+		theme_scope := alicorn.Style_Environment_Scope{}
+		if app.theme_id != 0 {
+			theme_scope = alicorn.style_environment_push(ctx, alicorn.Style_Environment{theme=app.theme_id})
+		}
 		if ui.panel(ctx, key=alicorn.key_string("table-example-panel"), width=-1, height=-1,
 			grow=1, padding=8, fill=alicorn.style_color(ctx, .Surface), radius=10,
 			stroke=ui.border(1, alicorn.style_color(ctx, .Border), .Inside)) {
@@ -196,6 +200,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 					size=12, color=alicorn.style_color(ctx, .Danger))
 			}
 		}
+		if theme_scope.active { alicorn.style_environment_pop(ctx, theme_scope) }
 		status := "Activate a cell with Return, Space, or the pointer."
 		if app.status_row != 0 {
 			status = fmt.tprintf("Activated row %d, column %d", app.status_row, app.status_col)
