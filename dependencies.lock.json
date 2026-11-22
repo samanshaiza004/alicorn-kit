@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "alicorn": {
-    "repository": "https://github.com/samanshaiza004/alicorn.git",
+    "repository": "https://github.com/Carnival-Science/Alicorn.git",
     "ref": "master",
-    "revision": "54ba6d2be71d6c8f742605fcea82c7ce00731e4b"
+    "revision": "47c9d4a7cd1f637876190fec899daeeac00a30ae"
   },
   "accesskit_binding": {
     "repository": "https://github.com/samanshaiza004/odin-accesskit.git",

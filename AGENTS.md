@@ -16,6 +16,11 @@ storage.
 - For tree integrations, follow [`docs/tree-view.md`](docs/tree-view.md) and
   [`examples/tree_view`](examples/tree_view/main.odin); keep the visible-row
   projection, expansion/loading policy, and item actions in the application.
+- For copyable composites, follow [`docs/icon-picker.md`](docs/icon-picker.md)
+  and [`examples/icon_picker`](examples/icon_picker/main.odin). Copy the source,
+  keep named parts, change drawing locally, and express bespoke behavior as
+  ordinary application state plus scoped input. Do not add a component
+  framework or a second focus/overlay policy.
 - Preserve caller-owned state and stable item identities. Check the API guide
   for borrowed-value lifetimes before retaining data.
 - Keep Alicorn and AccessKit at the exact revisions in
@@ -23,10 +28,17 @@ storage.
 
 ## Validation
 
-Run `./tools/test.ps1 -Odin odin` on Windows. It checks the model, retained
-component behavior, and canonical native example against the pinned
-dependencies. Headless tests do not validate operating-system IME candidate
-windows; describe that limitation when relevant.
+Run `./tools/test.ps1 -Odin odin` on Windows. It checks the models, retained
+component behavior, canonical native examples, the parts-based palette, the
+icon picker (including the `alicorn:testui` modal pattern check), the v0.3
+radio/progress/notices/sidebar/table suites, the sidebar's `.Roving_List`
+pattern, and a copied-source build against the pinned dependencies. Headless
+tests do not validate operating-system IME candidate windows, physical
+screen-reader sessions, or pixels; describe that limitation when relevant.
+Run the matching `./out/<component>_example.exe --smoke` for native SDL_GPU
+smoke coverage.
 
 Update the catalog and component guide when public packages or ownership
-contracts change. Keep examples compiling and focused on real consumer code.
+contracts change. Record measured decisions and core requirements in
+[`docs/research/issue-003-parts-pilot.md`](docs/research/issue-003-parts-pilot.md)
+or a successor record.
