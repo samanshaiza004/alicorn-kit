@@ -212,6 +212,15 @@ try {
     & $OdinPath @TableExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native table example failed to compile.' }
 
+    $PalettePartsExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\palette_parts'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'palette_parts_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @PalettePartsExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native palette parts example failed to compile.' }
+
     $IconPickerExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\icon_picker'),
         $AlicornCollection,

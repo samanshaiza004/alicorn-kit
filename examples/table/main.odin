@@ -154,8 +154,10 @@ less :: proc(app: ^App, left, right: table.Row) -> bool {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=alicorn.key_string("table-example-root"), width=-1, height=-1,
-		padding=24, gap=12) {
+	if alicorn.container_begin(ctx, .Container, label="table-example-root",
+		key=alicorn.key_string("table-example-root"),
+		style=alicorn.layout_style(.Column, width=-1, height=-1, grow=1, padding=24, gap=12),
+		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
 		_ = ui.text(ctx, "Table", size=26)
 		_ = ui.text(ctx, "Application-owned filtering and sorting; virtualized rows; nested table semantics.",
 			size=13, color=alicorn.style_color(ctx, .Muted_Text))
@@ -199,6 +201,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 			status = fmt.tprintf("Activated row %d, column %d", app.status_row, app.status_col)
 		}
 		_ = ui.text(ctx, status, size=13, color=alicorn.style_color(ctx, .Muted_Text))
+		alicorn.container_end(ctx)
 	}
 }
 

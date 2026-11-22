@@ -60,56 +60,79 @@ tick :: proc(app: ^App, rt: ^alicorn.Runtime) {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=alicorn.key_string("progress-example-root"), width=-1, height=-1,
-		padding=28, gap=16, align=.Center) {
+	if alicorn.container_begin(ctx, .Container, label="progress-example-root",
+		key=alicorn.key_string("progress-example-root"),
+		style=alicorn.layout_style(.Column, width=-1, height=-1, grow=1, padding=28, gap=16, align=.Center),
+		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
 		_ = ui.text(ctx, "Progress", size=26)
 		_ = ui.text(ctx, "Determinate values publish a numeric range; indeterminate work has no value.",
 			size=13, color=alicorn.style_color(ctx, .Muted_Text))
-		if ui.panel(ctx, key=alicorn.key_string("progress-example-card"), width=540,
-			height=alicorn.LAYOUT_SIZE_FIT_CONTENT, padding=20, gap=16,
-			fill=alicorn.style_color(ctx, .Surface), radius=12,
-			stroke=ui.border(1, alicorn.style_color(ctx, .Border), .Inside)) {
+		theme_scope := alicorn.Style_Environment_Scope{}
+		if app.theme_id != 0 {
+			theme_scope = alicorn.style_environment_push(ctx, alicorn.Style_Environment{theme=app.theme_id})
+		}
+		if alicorn.container_begin(ctx, .Container, label="progress-example-card",
+			key=alicorn.key_string("progress-example-card"),
+			style=alicorn.layout_style(.Column, width=540, height=330, padding=20, gap=16),
+			color=alicorn.style_color(ctx, .Surface)) != 0 {
 			values := [4]f64{0, 25, 60, 100}
 			for value, index in values {
+				// Each progress instance owns a keyed parent so repeated
+				// component-internal keys stay in distinct scopes.
+				if alicorn.container_begin(ctx, .Container,
+					key=ui.key_pair(0x50524F47, u64(index+1)),
+					style=alicorn.layout_style(.Row, width=-1,
+						height=alicorn.LAYOUT_SIZE_FIT_CONTENT)) != 0 {
+					progress.progress(
+						ctx,
+						&app.bars[index],
+						value,
+						0,
+						100,
+						progress.Options{
+							accessible_label=fmt.tprintf("Download %d", index+1),
+							width=480,
+						},
+						key=ui.key_pair(0x50524F47, u64(index+1)),
+						instance_id=u64(4200+index),
+						recipe=app.recipe,
+					)
+					alicorn.container_end(ctx)
+				}
+			}
+			if alicorn.container_begin(ctx, .Container,
+				key=alicorn.key_string("progress-example-loading-scope"),
+				style=alicorn.layout_style(.Row, width=-1,
+					height=alicorn.LAYOUT_SIZE_FIT_CONTENT)) != 0 {
 				progress.progress(
 					ctx,
-					&app.bars[index],
-					value,
+					&app.loading,
 					0,
-					100,
+					0,
+					1,
 					progress.Options{
-						accessible_label=fmt.tprintf("Download %d", index+1),
+						accessible_label="Loading workspace",
 						width=480,
+						indeterminate=true,
+						indeterminate_phase=app.phase,
+						pulse=true,
 					},
-					key=ui.key_pair(0x50524F47, u64(index+1)),
-					instance_id=u64(4200+index),
+					key=alicorn.key_string("progress-example-loading"),
+					instance_id=4205,
 					recipe=app.recipe,
 				)
+				alicorn.container_end(ctx)
 			}
-			progress.progress(
-				ctx,
-				&app.loading,
-				0,
-				0,
-				1,
-				progress.Options{
-					accessible_label="Loading workspace",
-					width=480,
-					indeterminate=true,
-					indeterminate_phase=app.phase,
-					pulse=true,
-				},
-				key=alicorn.key_string("progress-example-loading"),
-				instance_id=4205,
-				recipe=app.recipe,
-			)
 			_ = ui.checkbox(ctx, "Animate indeterminate phase", &app.animate,
 				key=alicorn.key_string("progress-example-animate"), width=240, height=28)
 			if app.theme_error {
 				_ = ui.text(ctx, "Optional progress theme roles are incomplete; core roles are in use.",
 					size=12, color=alicorn.style_color(ctx, .Danger))
 			}
+			alicorn.container_end(ctx)
 		}
+		if theme_scope.active { alicorn.style_environment_pop(ctx, theme_scope) }
+		alicorn.container_end(ctx)
 	}
 }
 

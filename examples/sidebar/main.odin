@@ -71,8 +71,12 @@ selected_route :: proc(app: ^App) -> sidebar.Item {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.row(ctx, key=alicorn.key_string("sidebar-example-root"), width=-1, height=-1,
-		padding=18, gap=18) {
+	if alicorn.container_begin(ctx, .Container, label="sidebar-example-root",
+		key=alicorn.key_string("sidebar-example-root"),
+		style=alicorn.layout_style(.Row, width=-1, height=-1, grow=1, padding=18, gap=18),
+		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
+		if ui.row(ctx, key=alicorn.key_string("sidebar-example-body"), width=-1, height=-1,
+			grow=1, gap=18) {
 		if event := sidebar.rail(
 			ctx,
 			&app.rail,
@@ -99,6 +103,8 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 					size=12, color=alicorn.style_color(ctx, .Danger))
 			}
 		}
+		}
+		alicorn.container_end(ctx)
 	}
 }
 

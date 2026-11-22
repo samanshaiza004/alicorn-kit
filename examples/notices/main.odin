@@ -102,8 +102,10 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 		}
 	}
 
-	if ui.column(ctx, key=alicorn.key_string("notices-example-root"), width=-1, height=-1,
-		padding=28, gap=16, align=.Center) {
+	if alicorn.container_begin(ctx, .Container, label="notices-example-root",
+		key=alicorn.key_string("notices-example-root"),
+		style=alicorn.layout_style(.Column, width=-1, height=-1, grow=1, padding=28, gap=16, align=.Center),
+		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
 		_ = ui.text(ctx, "Notices", size=26)
 		_ = ui.text(ctx, "Runtime toasts plus copyable inline card parts.",
 			size=13, color=alicorn.style_color(ctx, .Muted_Text))
@@ -149,6 +151,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 					size=12, color=alicorn.style_color(ctx, .Danger))
 			}
 		}
+		alicorn.container_end(ctx)
 	}
 }
 
