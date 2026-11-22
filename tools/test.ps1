@@ -89,6 +89,16 @@ try {
     & $OdinPath @NoticesTestArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit notices tests failed.' }
 
+    $SidebarTestArgs = @(
+        'test', 'sidebar',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'sidebar_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @SidebarTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit sidebar tests failed.' }
+
     $PaletteTestArgs = @(
         'test', 'command_palette',
         '-define:ODIN_TEST_THREADS=1',
@@ -173,6 +183,15 @@ try {
     ) + $CompilerArguments
     & $OdinPath @NoticesExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native notices example failed to compile.' }
+
+    $SidebarExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\sidebar'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'sidebar_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @SidebarExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native sidebar example failed to compile.' }
 
     $IconPickerExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\icon_picker'),

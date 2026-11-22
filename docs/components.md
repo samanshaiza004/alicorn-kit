@@ -17,6 +17,7 @@ store. This catalog describes the packages that exist today.
 | `alikit:radio_group` | A controlled radio group with `Radio_Group`/`Radio_Button` semantics, one Tab stop, roving arrows, disabled skipping, and keyboard/pointer/semantic activation parity | The application owns the selected value and mutual exclusion. The component owns ephemeral focus and one proposed selection event. |
 | `alikit:progress` | Determinate and indeterminate progress with `Progress` semantics, numeric range, track/fill/label parts, and optional caller-driven pulse | The application owns the value/range and indeterminate phase. The component owns presentation and semantic range projection. |
 | `alikit:notices` | Runtime toast helpers plus copyable card/stack parts for inline banners and application-hosted snackbars, with reveal/retire motion | Alicorn owns the notice queue, deadlines, actions, and built-in toast overlay. The application owns card items and resolution policy. |
+| `alikit:sidebar` | A flat navigation rail with expanded/collapsed presentations, `List_Box`/`List_Box_Option` semantics, roving focus, and one proposed route | The application owns accepted routes, content, router/history, badges, and disabled policy. |
 | `alikit:theme_contract` | Bounded setup-time validation for namespaced component theme roles | Components own their role names and core fallbacks; applications register and validate a theme once. |
 
 The command-palette example is the canonical starting point for a small
@@ -52,8 +53,9 @@ composite with two appearances and named parts,
 variant and its ownership boundary, [the radio group guide](radio-group.md)
 for a small controlled compound control with explicit radio semantics,
 [the progress guide](progress.md) for determinate and indeterminate progress
-with a published numeric range, and [the notices guide](notices.md) for runtime
-toast helpers and copyable inline card parts. The measured stock-vs-parts comparison,
+with a published numeric range, [the notices guide](notices.md) for runtime
+toast helpers and copyable inline card parts, and [the sidebar guide](sidebar.md)
+for the flat navigation rail and its collapsed presentation. The measured stock-vs-parts comparison,
 contract coverage, and core-requirement list live in
 [the issue 3 research record](research/issue-003-parts-pilot.md).
 

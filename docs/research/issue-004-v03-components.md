@@ -110,7 +110,21 @@ the retire-settle path.
 
 ## Sidebar / Navigation Rail
 
-(To be filled by the sidebar slice.)
+Package: `sidebar`. The P0 shape is a flat navigation rail: one focusable
+`List_Box`, non-focusable `List_Box_Option` rows with `Selected`/`Current`,
+roving Up/Down/Home/End navigation with disabled skipping, and a single
+route-selection proposal on Return/Space/pointer/semantic `Select`.
+
+Expanded and collapsed presentations share identities, selected state, and the
+focus owner; only width and visible label/badge emission change. The rail is
+the focus representative. Rows advertise `Focus` for the roving pattern but are
+not Tab stops; semantic row focus remains subject to the recorded realized-action
+eligibility gap.
+
+The `.Roving_List` pattern passes in the positive run (container focus, no wrap,
+disabled skip, selection activation). A tree-style sidebar with nested sections
+is explicitly a later variant. Tests also cover pointer/semantic parity,
+collapse identity, reorder identity, and the theme contract.
 
 ## Table
 
