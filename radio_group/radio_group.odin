@@ -35,6 +35,7 @@ package radio_group
 import "core:math"
 import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
+import sel "alikit:selection"
 import tc "alikit:theme_contract"
 
 RADIO_GROUP_NAMESPACE :: u64(0x524144494F475250) // "RADIOGRP"
@@ -56,7 +57,8 @@ Orientation :: enum { Horizontal, Vertical }
 // Selection_Mode controls whether arrow navigation proposes a selection
 // change. Follow_Focus is the platform radio convention. Activate keeps focus
 // movement separate and proposes only on Space/Return or pointer activation.
-Selection_Mode :: enum { Follow_Focus, Activate }
+// It is the shared alikit:selection mode.
+Selection_Mode :: sel.Mode
 
 Options :: struct {
 	accessible_label: string,
@@ -156,10 +158,10 @@ theme_contract_missing_required :: proc(contract: Theme_Contract, report: Theme_
 }
 
 State :: struct {
-	// active_value is the roving focus identity. It is component state, not
-	// selection; the selected value stays in the application.
-	active_value: u64,
-	active_index: int,
+	// active is the shared single-selection/focus identity model. active_key is
+	// the roving focus identity, not selection; the selected value stays in the
+	// application.
+	using active: sel.State,
 
 	root_node:             alicorn.Node_ID,
 	focus_pending:         bool,
@@ -321,16 +323,39 @@ index_of_value :: proc(options: []Option, value: u64) -> int {
 }
 
 @(private)
-first_enabled :: proc(options: []Option) -> int {
-	for option, index in options {
-		if option.value != 0 && !option.disabled { return index }
-	}
-	return -1
+Radio_Roving :: struct {
+	options: []Option,
+}
+
+// Selection_View adapts the caller's radio options to the shared pure
+// single-selection model without copying or allocating.
+@(private)
+Selection_View :: struct {
+	options: []Option,
 }
 
 @(private)
-Radio_Roving :: struct {
-	options: []Option,
+selection_key_at :: proc(data: rawptr, index: int) -> u64 {
+	ctx := cast(^Selection_View)data
+	if index < 0 || index >= len(ctx.options) { return 0 }
+	return ctx.options[index].value
+}
+
+@(private)
+selection_enabled_at :: proc(data: rawptr, index: int) -> bool {
+	ctx := cast(^Selection_View)data
+	return enabled_at(ctx.options, index)
+}
+
+@(private)
+selection_view :: proc(ctx: ^Selection_View, options: []Option) -> sel.View {
+	ctx.options = options
+	return sel.View{
+		count=len(options),
+		data=rawptr(ctx),
+		key_at=selection_key_at,
+		enabled_at=selection_enabled_at,
+	}
 }
 
 @(private)
@@ -352,42 +377,18 @@ radio_view :: proc(ctx: ^Radio_Roving, options: []Option, wrap: bool) -> alicorn
 
 @(private)
 set_active :: proc(state: ^State, options: []Option, index: int) {
-	if state == nil || index < 0 || index >= len(options) { return }
-	state.active_index = index
-	state.active_value = options[index].value
+	if state == nil { return }
+	ctx: Selection_View
+	view := selection_view(&ctx, options)
+	_ = sel.set_active(&state.active, view, index)
 }
 
 @(private)
 reconcile_active :: proc(state: ^State, options: []Option, selected_value: u64) {
 	if state == nil { return }
-	if len(options) == 0 {
-		state.active_index = -1
-		state.active_value = 0
-		return
-	}
-	index := index_of_value(options, state.active_value)
-	if index >= 0 && enabled_at(options, index) {
-		state.active_index = index
-		return
-	}
-	// Prefer the controlled selection the first time, then repair from the old
-	// position. A disabled selection is not focusable.
-	index = index_of_value(options, selected_value)
-	if index >= 0 && enabled_at(options, index) {
-		set_active(state, options, index)
-		return
-	}
-	ctx: Radio_Roving
-	view := radio_view(&ctx, options, true)
-	start := clamp(state.active_index, 0, len(options)-1)
-	index = alicorn.roving_nearest_enabled(view, start, 1)
-	if index < 0 { index = first_enabled(options) }
-	if index < 0 {
-		state.active_index = -1
-		state.active_value = 0
-		return
-	}
-	set_active(state, options, index)
+	ctx: Selection_View
+	view := selection_view(&ctx, options)
+	_ = sel.reconcile_active(&state.active, view, selected_value)
 }
 
 @(private)
@@ -406,9 +407,10 @@ apply_key :: proc(
 ) -> bool {
 	if state == nil || state.active_index < 0 || state.active_index >= len(options) { return false }
 	previous := state.active_index
+	selection_ctx: Selection_View
+	selection := selection_view(&selection_ctx, options)
 	if key == .Return || key == .Toggle {
-		value := state.active_value
-		if value != 0 && enabled_at(options, state.active_index) {
+		if value, ok := sel.propose_activation(selection, state.active_index); ok {
 			propose(state, value)
 		}
 		return true
@@ -420,8 +422,8 @@ apply_key :: proc(
 	view := radio_view(&ctx, options, !resolved.no_wrap)
 	if index := alicorn.roving_propose(view, state.active_index, move); index >= 0 {
 		set_active(state, options, index)
-		if resolved.selection_mode == .Follow_Focus {
-			propose(state, options[index].value)
+		if value, ok := sel.propose_focus(selection, index, resolved.selection_mode); ok {
+			propose(state, value)
 		}
 	}
 	return state.active_index != previous
@@ -535,7 +537,7 @@ group_begin :: proc(
 
 	selected_id := option_semantic_id(resolved_instance, selected_value)
 	if index_of_value(options, selected_value) < 0 { selected_id = {} }
-	current_id := option_semantic_id(resolved_instance, state.active_value)
+	current_id := option_semantic_id(resolved_instance, state.active_key)
 	collection := alicorn.semantic_collection_begin(
 		ctx,
 		root,

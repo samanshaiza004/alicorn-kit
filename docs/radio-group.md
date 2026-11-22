@@ -57,7 +57,10 @@ parts, so the two paths share one interaction and semantic contract.
 
 The parts keep no application selection. `selected_value` is an input. `State`
 contains only ephemeral interaction state: the active roving identity, a focus
-request, and one pending proposal.
+request, and one pending proposal. Selection proposals use the shared
+`alikit:selection` model; Alicorn roving owns focus movement, and the selection
+model owns the focused-key proposal rule, disabled/at-most-one publication, and
+focus repair.
 
 The default wrapper draws this shape:
 
@@ -130,7 +133,7 @@ Checked identity follows the stable `Option.value`, not the row index. Reorderin
 keeps `Checked`, `Selected`, and the active identity attached to the same value.
 Removing the active value repairs focus with Alicorn's pure roving model:
 selected value first, else the nearest enabled option, else the first enabled
-option. `State.active_value` is presentation state; do not persist it as the
+option. `State.active_key` is presentation state; do not persist it as the
 application's selection.
 
 ## Custom rendering examples
@@ -149,7 +152,9 @@ if visible {
 			radio.item_end(ctx, item)
 		}
 	}
-	app.selected = accept(radio.group_end(ctx, &group), app.selected)
+	if event := radio.group_end(ctx, &group); event.kind == .Selection_Proposed {
+		app.selected = event.value
+	}
 }
 ```
 
@@ -179,13 +184,13 @@ if visible {
 
 		// Any ordinary Alicorn layout is allowed here.
 		if ui.row(ctx, key=ui.key_u64(1), width=-1, height=-1, gap=12) {
-			ui.icon(ctx, plan.icon, key=ui.key_u64(2), size=28)
-			ui.column(ctx, key=ui.key_u64(3), grow=1) {
-				ui.text(ctx, plan.option.label, key=ui.key_u64(4), size=16)
-				ui.text(ctx, plan.option.description, key=ui.key_u64(5), size=12)
+			_ = ui.icon(ctx, plan.icon, key=ui.key_u64(2), size=28)
+			if ui.column(ctx, key=ui.key_u64(3), grow=1) {
+				_ = ui.text(ctx, plan.option.label, key=ui.key_u64(4), size=16)
+				_ = ui.text(ctx, plan.option.description, key=ui.key_u64(5), size=12)
 			}
-			ui.text(ctx, plan.price, key=ui.key_u64(6))
-			if item.checked { ui.icon(ctx, .Check, key=ui.key_u64(7), size=18) }
+			_ = ui.text(ctx, plan.price, key=ui.key_u64(6))
+			if item.checked { _ = ui.icon(ctx, .Check, key=ui.key_u64(7), size=18) }
 		}
 		radio.item_end(ctx, item)
 	}
@@ -232,10 +237,10 @@ interaction contract.
 | --- | --- |
 | `Option` | `value`, `label`, `description`, `disabled`. |
 | `Orientation` | `.Horizontal` or `.Vertical`. |
-| `Selection_Mode` | `.Follow_Focus` or `.Activate`. |
+| `Selection_Mode` | Alias of `alikit:selection.Mode`: `.Follow_Focus` or `.Activate`. |
 | `Options` | Accessible label, orientation, selection mode, item geometry, label size, `no_wrap`. |
 | `Recipe` / `Style` | Optional namespaced surface roles and visual geometry. |
-| `State` | Active roving value/index, focus request, and pending proposal. |
+| `State` | Active roving key/index, focus request, and pending proposal. |
 | `Event` / `Event_Kind` | One-shot `Selection_Proposed` carrying `value`. |
 | `Group` | Per-description group context returned by `group_begin`. |
 | `Item` | Per-description item context with checked/focused/disabled/position state. |
@@ -325,7 +330,7 @@ pattern that does not exist.
   use any text layout inside the item owner.
 - The pinned revision elides more aggressively in some narrow fit-content rows;
   give the item a definite width when exact label truncation matters.
-- `State.active_value` is presentation state. Do not persist it as the
+- `State.active_key` is presentation state. Do not persist it as the
   application's selection.
 
 Source map:
