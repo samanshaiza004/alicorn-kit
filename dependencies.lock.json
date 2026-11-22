@@ -1,9 +1,9 @@
 {
   "schema": 1,
   "alicorn": {
-    "repository": "https://github.com/samanshaiza004/alicorn.git",
-    "ref": "codex/issue-225-roving-focus",
-    "revision": "5f6fe8ec7bd4bf5e87a2a27cdf71980b03b48b9c"
+    "repository": "https://github.com/Carnival-Science/Alicorn.git",
+    "ref": "v0.2.3",
+    "revision": "28cc7f92fb47fce676d59d84c0f6ccb42be33d58"
   },
   "accesskit_binding": {
     "repository": "https://github.com/samanshaiza004/odin-accesskit.git",
