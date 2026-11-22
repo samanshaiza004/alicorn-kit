@@ -14,8 +14,10 @@ store. This catalog describes the packages that exist today.
 | `alikit:tree_view` | Accessible virtualized tree rows, indentation, focus reveal, keyboard navigation, and optional row-anchored context menus | The application owns expansion/loading policy, mutation, activation, selection policy, and context-menu actions. |
 | `alikit:palette_parts` | A copyable, parts-based palette result list: retained virtual rows, published `List_Box` semantics, enabled-row navigation, reveal, and one activation event | The application owns the query, matching/ranking, commands, modal shell, dismissal, and focus restoration. |
 | `alikit:icon_picker` | A complete copyable custom composite: icon search, virtualized grid or list, roving focus, selection proposal, two appearances, and one application-authored focus interaction | The application owns choices, accepted selection, commands, and any surrounding dialog. |
-| `alikit:radio_group` | A controlled radio group with `Radio_Group`/`Radio_Button` semantics, one Tab stop, roving arrows, disabled skipping, and keyboard/pointer/semantic activation parity | The application owns the selected value and mutual exclusion. The component owns ephemeral focus and one proposed selection event. |
-| `alikit:progress` | Determinate and indeterminate progress with `Progress` semantics, numeric range, track/fill/label parts, and optional caller-driven pulse | The application owns the value/range and indeterminate phase. The component owns presentation and semantic range projection. |
+| `alikit:radio_group` | Composable radio parts and a wrapper: `Radio_Group`/`Radio_Button` semantics, one Tab stop, roving arrows, disabled skipping, keyboard/pointer/semantic activation parity, and replaceable item rendering | The application owns the selected value and mutual exclusion. The component owns ephemeral focus and one proposed selection event. |
+| `alikit:progress` | Composable determinate and indeterminate progress with `Progress` semantics, numeric range, linear or ring parts, and optional caller-driven pulse | The application owns the value/range and indeterminate phase. The component owns presentation and semantic range projection. |
+| `alikit:segmented` | Single selection over equal-width segments with `Tab_List`/`Tab` semantics, one Tab stop, roving arrows, a moving indicator, and reduced-motion snapping | The application owns the selected view/mode and content. The component owns ephemeral focus, indicator motion, and one proposed value. |
+| `alikit:selection` | Pure, allocation-free single-selection policy over a borrowed keyed item set | The application owns the item set and accepted selection. The helper owns focus repair, disabled skipping, at-most-one publication, and mode proposals. |
 | `alikit:notices` | Runtime toast helpers plus copyable card/stack parts for inline banners and application-hosted snackbars, with reveal/retire motion | Alicorn owns the notice queue, deadlines, actions, and built-in toast overlay. The application owns card items and resolution policy. |
 | `alikit:sidebar` | A flat navigation rail with expanded/collapsed presentations, `List_Box`/`List_Box_Option` semantics, roving focus, and one proposed route | The application owns accepted routes, content, router/history, badges, and disabled policy. |
 | `alikit:table` | A static, non-spanned presentation table with intrinsic wrapped row heights, inline detail/icon formatting, headers, and optional fixed-row virtualization | The application owns columns, rows, stable keys, sorting, filtering, formatting, and data lifetime. The table owns no focus, selection, or activation. |
@@ -56,14 +58,16 @@ See [the icon picker guide](icon-picker.md) for a complete copyable custom
 composite with two appearances and named parts,
 [the palette-parts guide](palette-parts.md) for the parts-based result-list
 variant and its ownership boundary, [the radio group guide](radio-group.md)
-for a small controlled compound control with explicit radio semantics,
-[the progress guide](progress.md) for determinate and indeterminate progress
-with a published numeric range, [the notices guide](notices.md) for runtime
+for a small controlled compound control with explicit radio semantics and
+composable item rendering, [the progress guide](progress.md) for determinate and
+indeterminate progress with a published numeric range and linear/ring parts,
+[the segmented guide](segmented.md) for the shared single-selection behavior's
+second consumer and its moving indicator, [the notices guide](notices.md) for runtime
 toast helpers and copyable inline card parts, [the sidebar guide](sidebar.md)
 for the flat navigation rail and its collapsed presentation, and
 [the table guide](table.md) for the static presentation table, [the data grid guide](data-grid.md) for the interactive dataset grid, [the dialog guide](dialog.md) for modal contracts, [the menu guide](menu.md) for anchored dropdowns, and [the scroll area guide](scroll-area.md) for bounded scrolling. The measured stock-vs-parts comparison,
 contract coverage, and core-requirement list live in
-[the issue 3 research record](research/issue-003-parts-pilot.md).
+[the issue 3 research record](research/issue-003-parts-pilot.md) and\n[the issue 5 shared-behavior record](research/issue-005-selection-and-shared-behaviors.md).
 
 ## Published catalog
 
