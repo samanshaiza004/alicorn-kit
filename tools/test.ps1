@@ -218,6 +218,24 @@ try {
     & $OdinPath @ExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native example failed to compile.' }
 
+    $CommandPalettePartsExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\command_palette_parts'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'command_palette_parts_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @CommandPalettePartsExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native command palette parts example failed to compile.' }
+
+    $CommandPaletteCompositionExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\command_palette_composition'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'command_palette_composition_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @CommandPaletteCompositionExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native command palette composition example failed to compile.' }
+
     $TreeExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\tree_view'),
         $AlicornCollection,
@@ -308,6 +326,24 @@ try {
     & $OdinPath @SidebarExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native sidebar example failed to compile.' }
 
+    $SidebarPartsExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\sidebar_parts'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'sidebar_parts_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @SidebarPartsExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native sidebar parts example failed to compile.' }
+
+    $SidebarCompositionExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\sidebar_composition'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'sidebar_composition_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @SidebarCompositionExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native sidebar composition example failed to compile.' }
+
     $TableExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\table'),
         $AlicornCollection,
@@ -344,6 +380,24 @@ try {
     & $OdinPath @MenuExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native menu example failed to compile.' }
 
+    $MenuPartsExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\menu_parts'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'menu_parts_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @MenuPartsExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native menu parts example failed to compile.' }
+
+    $MenuCompositionExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\menu_composition'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'menu_composition_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @MenuCompositionExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native menu composition example failed to compile.' }
+
     $DialogExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\dialog'),
         $AlicornCollection,
@@ -369,6 +423,24 @@ try {
     ) + $CompilerArguments
     & $OdinPath @IconPickerExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native icon picker example failed to compile.' }
+
+    $IconPickerPartsExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\icon_picker_parts'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'icon_picker_parts_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @IconPickerPartsExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native icon picker parts example failed to compile.' }
+
+    $IconPickerCompositionExampleArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\icon_picker_composition'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'icon_picker_composition_example.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @IconPickerCompositionExampleArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit native icon picker composition example failed to compile.' }
 
     # Prove the composite is copyable source: copy the package beside a tiny
     # consumer and compile with only the Alicorn collection (no `alikit`

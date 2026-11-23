@@ -25,6 +25,7 @@ Parts_App :: struct {
 }
 
 parts_render :: proc(app: ^Parts_App, ctx: ^ui.UI) {
+	if !ui.key_scope(ctx, alicorn.key_string("icon-picker-parts-scope")) { return }
 	root := alicorn.container_begin(
 		ctx,
 		.Container,

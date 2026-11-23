@@ -75,10 +75,19 @@ rail. The next description focuses the rail after layout.
 
 | Part | Identity | What can be omitted or replaced |
 | --- | --- | --- |
-| Rail | `rail_semantic_id(instance_id)` | Always present; the one Tab stop and `List_Box` collection. |
-| Route row | `item_semantic_id(instance_id, key)` | Application supplies the item slice. Removing an item keeps remaining identities. |
-| Icon / label / badge | stable child keys under the row owner | Collapsed presentation omits visible label/badge; the accessible label remains. |
-| Selected indicator | `.Selected_Indicator` | Replace drawing; keep selected state and `Selected` semantics. |
+| Rail | `rail_semantic_id(instance_id)` | `rail_begin`/`rail_end`; always present, one Tab stop and `List_Box` collection. |
+| Route row | `item_semantic_id(instance_id, key)` | `item_begin`/`item_end` owns `List_Box_Option`, Selected/Current/Disabled, and roving participation. |
+| Row surface | stable child key | `row_surface` is optional; custom rows draw their own background. |
+| Icon / label / badge | stable child keys under the row owner | Optional default parts. Collapsed presentation omits visible label/badge; the accessible label remains. |
+| Selected indicator | `.Selected_Indicator` | `indicator` is optional; replace drawing and keep selected state. |
+
+`rail()` is a convenience wrapper over the exact public parts. A custom row can omit every visual
+part and draw any ordinary Alicorn layout inside the semantic Button owner. `Rail_Item` exposes
+`item`, `index`, `count`, `selected`, `focused`, `focus_visible`, `disabled`, and `visible`.
+
+Three examples cover the paths: the default themed rail (`examples/sidebar`), custom rows
+(`examples/sidebar_parts`), and a rail + Segmented settings shell
+(`examples/sidebar_composition`).
 
 Route key `0`, zero instance ID, and duplicate keys are invalid. Selected and Current identity
 follow the stable key across reorder. Removing the active key repairs focus with the selected key
@@ -159,12 +168,15 @@ Alicorn's own `testui` fixture; this package does not duplicate the core fixture
 | `Options` | Collapsed state, widths, item height, gap, padding, icon/label size, `wrap`. |
 | `Recipe` / `Style` | Optional namespaced surface roles and visual geometry. |
 | `State` | Active roving key, focus request, pending proposal. |
+| `Rail` / `Rail_Item` | Per-description rail and row contexts. |
 | `Event` / `Event_Kind` | One-shot `Selection_Proposed` carrying `key`. |
-| `rail` | Describe the rail and return a route proposal. |
+| `rail_begin`, `item_begin`, `item_end`, `rail_end` | Public parts. |
+| `row_surface`, `indicator`, `icon`, `label`, `badge` | Optional default visuals. |
+| `rail` | Convenience wrapper built from the parts. |
 | `request_focus` | Focus the rail after layout. |
 | `recipe_default`, `style_default` | Core-role defaults. |
 | `theme_contract_default`, `theme_contract_check` | Setup-time validation. |
-| `rail_semantic_id`, `item_semantic_id` | Stable semantic identities. |
+| `rail_semantic_id`, `item_semantic_id`, `instance_from_key` | Stable semantic identities. |
 
 ## Limits
 
@@ -186,6 +198,9 @@ Alicorn's own `testui` fixture; this package does not duplicate the core fixture
 
 - [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/sidebar/sidebar.odin)
 - [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/sidebar/sidebar_test.odin)
+- [Parts tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/sidebar/sidebar_parts_test.odin)
 - [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/sidebar/main.odin)
+- [Parts example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/sidebar_parts/main.odin)
+- [Composition example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/sidebar_composition/main.odin)
 - [Theme JSON](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/sidebar/theme.json)
 - [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/sidebar.md)

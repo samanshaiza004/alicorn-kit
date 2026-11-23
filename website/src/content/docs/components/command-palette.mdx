@@ -15,8 +15,8 @@ dispatch; AliKit owns the palette interaction, presentation, and focus restorati
 
 <Capture src="captures/command-palette.png" alt="Native command palette window showing the Example Actions modal, a query field, and four results" caption="Native SDL_GPU capture of examples/command_palette at Alicorn 47c9d4a. The host command-palette shortcut or the example button opens the modal." />
 
-<div class="preview-note">Interactive WebGPU preview is a later catalog step. This page ships the
-genuine native capture and the copyable source; it does not recreate the component in JavaScript.</div>
+<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture uses the
+shared public result parts (leading tile, title/description, selection check).</div>
 
 ## Responsibility split
 
@@ -94,9 +94,20 @@ cannot grow, the old buffer remains valid and the modal shows
 | Modal overlay | `State.overlay_node` | Backdrop color, padding, and panel appearance through `Options.appearance`. |
 | Panel | `State.panel_node` | Shape, material, physical height, fill, and gap. |
 | Title and query | stable child keys | Title visibility, prefix, height, and text style. |
-| Result list | stable list key | Virtual row height and maximum height. |
-| Result row | stable `Item_ID` | Row visuals are component-owned; the stable ID survives filtering and reorder. |
+| Query input | `input` part | Controlled query field with an accessible name. |
+| Result list | `list_begin`/`list_end` | Virtual list height, row height, and accessible name (`results_accessible_name`). |
+| Result row | stable `Item_ID` | `item_begin`/`item_end` owns `List_Box_Option`; the author may draw custom content. |
+| Groups | `group_begin`/`group_end` | Optional single-level semantic group for short, fully realized result sets. |
+| Empty | `empty` | Configurable empty message. |
 | Footer | stable footer key | Footer label text. |
+
+`build` is now a shell over the same public parts as `alikit:palette_parts`:
+`input`, `list_begin`, `item_begin`, `item_end`, `empty`, `group_begin`, and
+`list_end`. The application can own its own modal/shell and still use those
+parts, or call `build` for the complete modal. Three examples cover the paths:
+the default modal (`examples/command_palette`), an application-owned shell with
+custom rows and groups (`examples/command_palette_parts`), and a palette +
+Segmented search scope (`examples/command_palette_composition`).
 
 Selection is retained by `Item_ID`, not row index. If the selected item disappears, becomes
 disabled, or stops matching, selection moves to the first enabled result. Disabled items stay
@@ -176,6 +187,8 @@ frame.
 | `init` / `destroy` | Allocate and release the query and match buffer. |
 | `open_palette` / `close_palette` | Controlled open/close with focus capture and restoration. |
 | `build` | Describe the modal; call from `render_overlays` after the ordinary root. |
+| `input`, `list_begin`, `item_begin`, `item_end`, `empty`, `group_begin`, `group_end`, `list_end` | Public result/shell parts. |
+| `Result_List`, `Result_Row`, `Result_Group`, `result_row_key` | Result contexts and retained row key. |
 | `handle_key`, `text_change`, `pointer`, `after_frame` | Lower-level host path when not using `ui.run` scoping. |
 | `set_query`, `query_text` | Controlled query value for caller-filtered ranking. |
 
@@ -198,6 +211,10 @@ frame.
 
 - [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/command_palette/command_palette.odin)
 - [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/command_palette/command_palette_test.odin)
+- [Parts tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/command_palette/command_palette_parts_test.odin)
 - [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette/main.odin)
+- [Parts example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette_parts/main.odin)
+- [Composition example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette_composition/main.odin)
 - [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/command-palette.md)
 - [Palette model](https://github.com/samanshaiza004/alicorn-kit/blob/main/palette_model/model.odin)
+- [Palette parts](https://github.com/samanshaiza004/alicorn-kit/blob/main/palette_parts/parts.odin)

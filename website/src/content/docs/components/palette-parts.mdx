@@ -86,12 +86,18 @@ after-frame focus of the list.
 
 | Part | Identity | What can be replaced |
 | --- | --- | --- |
-| Virtual list | `State.list_node` | Row height, maximum height, and focus-on-pointer policy. |
-| Row owner | stable `Item_ID` | `row_build` is the part to copy and edit. |
-| Leading icon | stable child key | Replace the 16-unit accent box with an icon or swatch. |
-| Label / content | stable child keys | Restyle title and description without changing identity. |
-| Selected indicator | stable child key | Replace the check glyph; keep the selected state. |
+| Virtual list | `list_begin`/`list_end` | Row height, maximum height, and accessible name. |
+| Row owner | stable `Item_ID` | `item_begin`/`item_end` owns `List_Box_Option`; draw any compatible subtree. |
+| Leading icon | `icon` part | Replace the accent tile with an icon or swatch. |
+| Label / description | `label` / `description` parts | Restyle without changing identity. |
+| Selected indicator | `indicator` part | Replace the check glyph; keep the selected state. |
+| Group | `group_begin`/`group_end` | Single-level semantic group for shorts lists where all rows are realized. |
+| Empty | `empty` | No-results label. |
 | List collection | `list_semantic_id(namespace)` | The `List_Box` identity and logical count. |
+
+`results` is a convenience wrapper over `list_begin`, `item_begin`, the optional visual parts,
+`item_end`, and `list_end`. `command_palette` uses the same public parts for its modal result list,
+so the two paths share one contract.
 
 Each realized row is a `button_begin(presentation=.Custom)` owner with a `List_Box_Option`
 semantic record. Rows expose `Selected`, `Current`, `Disabled`, and `Select`/`Focus` actions. The
@@ -125,7 +131,8 @@ navigation; the list remains a single Tab stop with non-focusable rows.
 
 ## Conformance tests
 
-`palette_parts/parts_test.odin` and `palette_parts/pilot_test.odin` cover:
+`palette_parts/parts_test.odin` covers the list part; the stock-versus-parts pilot now lives in
+`command_palette/pilot_test.odin` because the palette consumes this package:
 
 - retained virtual rows, published `List_Box`/`List_Box_Option` semantics, and logical count;
 - Up/Down wrapping, disabled skipping, Home/End, and Return activation;
@@ -150,11 +157,15 @@ focus owner model.
 | `Event` / `Event_Kind` | One `Activated` event carrying `item_id`. |
 | `Options` | Accessible label, empty label, row height, maximum list height, namespace, pointer focus. |
 | `State` | Selection, derived visible index, list owner, namespace, reveal/focus flags. |
-| `results` | Describe the list and return an activation event. |
+| `List`, `Row`, `Group` | Per-description contexts. |
+| `results` | Describe the default list and return an activation event. |
+| `list_begin`, `list_end`, `item_begin`, `item_end` | Public list/row parts. |
+| `row_surface`, `icon`, `label`, `description`, `indicator` | Optional default visuals. |
+| `empty`, `group_begin`, `group_end` | Empty and single-level group parts. |
 | `handle_key` | Navigation when the query field owns focus. |
 | `request_focus` | Ask for one after-frame focus of the list. |
 | `selection_visible_index` | Report the selected row's current visible position without retained state. |
-| `item_semantic_id`, `list_semantic_id` | Stable identities for explicit semantic actions. |
+| `item_semantic_id`, `list_semantic_id`, `group_semantic_id`, `row_key` | Stable identities and retained keys. |
 
 ## Limits
 
@@ -176,7 +187,7 @@ focus owner model.
 
 - [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/palette_parts/parts.odin)
 - [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/palette_parts/parts_test.odin)
-- [Pilot test](https://github.com/samanshaiza004/alicorn-kit/blob/main/palette_parts/pilot_test.odin)
+- [Pilot test](https://github.com/samanshaiza004/alicorn-kit/blob/main/command_palette/pilot_test.odin)
 - [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/palette_parts/main.odin)
 - [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/palette-parts.md)
 - [Research record](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/issue-003-parts-pilot.md)

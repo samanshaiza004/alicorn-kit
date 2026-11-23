@@ -245,7 +245,9 @@ $components = @(
     @{ Name='segmented'; Exe='segmented_example.exe' },
     @{ Name='notices'; Exe='notices_example.exe' },
     @{ Name='sidebar'; Exe='sidebar_example.exe'; ClickButton='Collapse rail' },
-    @{ Name='table'; Exe='table_example.exe' }
+    @{ Name='menu'; Exe='menu_example.exe' },
+    @{ Name='table'; Exe='table_example.exe' },
+    @{ Name='data-grid'; Exe='data_grid_example.exe' }
 )
 foreach ($component in $components) {
     if ($Only -ne '' -and $component.Name -ne $Only) { continue }

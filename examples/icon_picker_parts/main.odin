@@ -49,6 +49,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 			key=alicorn.key_string("icon-picker-parts-example-list"), width=170, height=28)
 		app.appearance = .List if app.list_mode else .Grid
 
+		if !ui.key_scope(ctx, alicorn.key_string("icon-picker-parts-example-scope")) { return }
 		root := alicorn.container_begin(ctx, .Container, label="icon-picker-parts-example-body",
 			key=alicorn.key_string("icon-picker-parts-example-body"),
 			style=ui.layout_style(.Column, width=460, height=alicorn.LAYOUT_SIZE_FIT_CONTENT, gap=8))
