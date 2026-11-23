@@ -31,9 +31,31 @@ The capture predates the parts examples; re-capture is pending.</div>
 `selected_value` is an input. `State` contains only ephemeral interaction state: the active roving
 identity, a focus request, and one pending proposal.
 
+## Installation
+
+Import the package through the AliKit collection:
+
+```odin
+import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
+import radio "alikit:radio_group"
+```
+
+Build with `-collection:alikit=<alicorn-kit checkout>`. No init or destroy is required; the
+component allocates nothing.
+
+To copy the source, copy `radio_group/radio_group.odin` plus its two intra-AliKit dependencies,
+`selection/selection.odin` and `theme_contract/contract.odin` (declared under `copy` in
+`components.json`). Put them in sibling packages and rewrite the two imports in the copied radio
+package to `import sel "../selection"` and `import tc "../theme_contract"`. The copy then builds
+with only `-collection:alicorn=<alicorn>`. Copying `radio_group.odin` alone does not compile. This
+exact copy path is compiled and smoked from a generated external consumer by
+`tools/validate_external_consumer.ps1`.
+
 ## Copyable implementation
 
-Files: `radio_group/radio_group.odin`, `radio_group/radio_group_test.odin`,
+Files: `radio_group/radio_group.odin`, `selection/selection.odin`,
+`theme_contract/contract.odin`, `radio_group/radio_group_test.odin`,
 `examples/radio_group/main.odin`, `examples/radio_group/theme.json`.
 
 ```odin

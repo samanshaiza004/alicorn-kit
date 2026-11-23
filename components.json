@@ -15,6 +15,7 @@
   "validation": {
     "native": "./tools/test.ps1 -Odin odin",
     "captures": "./tools/capture_catalog.ps1 -BinDir out -OutDir website/public/captures",
+    "externalConsumer": "./tools/validate_external_consumer.ps1 -Odin odin",
     "website": "cd website && npm ci && npm run build"
   },
   "components": [
@@ -247,6 +248,14 @@
         "alicorn:runtime",
         "alicorn:ui"
       ],
+      "copy": {
+        "sources": [
+          "icon_picker/icon_picker.odin"
+        ],
+        "importRewrites": {},
+        "collectionRequired": false,
+        "note": "Copy the package directory beside the application; it has no intra-AliKit imports."
+      },
       "ownedState": "State (query buffer, filtered matches, active key)",
       "applicationOwns": [
         "choices",
@@ -353,7 +362,7 @@
       ],
       "tests": [
         "palette_parts/parts_test.odin",
-        "palette_parts/pilot_test.odin"
+        "command_palette/pilot_test.odin"
       ],
       "example": "examples/palette_parts/main.odin",
       "capture": "website/public/captures/palette-parts.png",
@@ -362,6 +371,17 @@
         "alicorn:runtime",
         "alicorn:ui"
       ],
+      "copy": {
+        "sources": [
+          "palette_parts/parts.odin",
+          "palette_model/model.odin"
+        ],
+        "importRewrites": {
+          "alikit:palette_model": "../palette_model"
+        },
+        "collectionRequired": false,
+        "note": "Copy palette_parts beside palette_model and rewrite the palette_model import to the local package."
+      },
       "ownedState": "State (selection, list owner, reveal/focus request)",
       "applicationOwns": [
         "query",
@@ -470,6 +490,19 @@
         "alicorn:ui",
         "alikit:theme_contract"
       ],
+      "copy": {
+        "sources": [
+          "radio_group/radio_group.odin",
+          "selection/selection.odin",
+          "theme_contract/contract.odin"
+        ],
+        "importRewrites": {
+          "alikit:selection": "../selection",
+          "alikit:theme_contract": "../theme_contract"
+        },
+        "collectionRequired": false,
+        "note": "Copy radio_group beside selection and theme_contract and rewrite both intra-AliKit imports. Copying radio_group.odin alone does not compile."
+      },
       "ownedState": "State (active roving value, focus request, pending proposal)",
       "applicationOwns": [
         "selected value",
@@ -529,6 +562,8 @@
         "style_default",
         "theme_contract_default",
         "theme_contract_check",
+        "theme_contract_satisfied",
+        "theme_contract_missing_required",
         "group_semantic_id",
         "option_semantic_id",
         "instance_from_key"
@@ -619,7 +654,9 @@
         "ring_segment_shape",
         "recipe_default",
         "theme_contract_default",
-        "theme_contract_check"
+        "theme_contract_check",
+        "theme_contract_satisfied",
+        "theme_contract_missing_required"
       ],
       "limits": [
         "Definite default track width required",
@@ -696,6 +733,8 @@
         "style_default",
         "theme_contract_default",
         "theme_contract_check",
+        "theme_contract_satisfied",
+        "theme_contract_missing_required",
         "control_semantic_id",
         "segment_semantic_id"
       ],
@@ -775,7 +814,10 @@
         "advance",
         "card",
         "stack",
-        "theme_contract_default"
+        "theme_contract_default",
+        "theme_contract_check",
+        "theme_contract_satisfied",
+        "theme_contract_missing_required"
       ],
       "limits": [
         "No second notice queue",
@@ -801,6 +843,7 @@
       "example": "examples/sidebar/main.odin",
       "capture": "website/public/captures/sidebar.png",
       "dependencies": [
+        "alikit:selection",
         "alicorn:runtime",
         "alicorn:ui",
         "alikit:theme_contract"
@@ -957,6 +1000,8 @@
         "style_default",
         "theme_contract_default",
         "theme_contract_check",
+        "theme_contract_satisfied",
+        "theme_contract_missing_required",
         "table_semantic_id",
         "header_row_semantic_id",
         "header_cell_semantic_id",
@@ -1067,6 +1112,8 @@
         "style_default",
         "theme_contract_default",
         "theme_contract_check",
+        "theme_contract_satisfied",
+        "theme_contract_missing_required",
         "menu_semantic_id",
         "item_semantic_id",
         "group_semantic_id"
@@ -1158,6 +1205,8 @@
         "style_default",
         "theme_contract_default",
         "theme_contract_check",
+        "theme_contract_satisfied",
+        "theme_contract_missing_required",
         "grid_semantic_id",
         "header_row_semantic_id",
         "header_cell_semantic_id",
@@ -1184,7 +1233,8 @@
       ],
       "tests": [
         "palette_model/model_test.odin"
-      ]
+      ],
+      "dependencies": []
     },
     {
       "id": "tree-model",
@@ -1196,7 +1246,8 @@
       ],
       "tests": [
         "tree_model/model_test.odin"
-      ]
+      ],
+      "dependencies": []
     },
     {
       "id": "selection",
@@ -1208,7 +1259,8 @@
       ],
       "tests": [
         "selection/selection_test.odin"
-      ]
+      ],
+      "dependencies": []
     },
     {
       "id": "theme-contract",
@@ -1220,6 +1272,9 @@
       ],
       "tests": [
         "theme_contract/contract_test.odin"
+      ],
+      "dependencies": [
+        "alicorn:runtime"
       ]
     },
     {
@@ -1233,6 +1288,10 @@
       "tests": [
         "table/table_test.odin",
         "data_grid/data_grid_test.odin"
+      ],
+      "dependencies": [
+        "alicorn:runtime",
+        "alicorn:ui"
       ]
     }
   ]

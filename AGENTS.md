@@ -39,6 +39,13 @@ screen-reader sessions, or pixels; describe that limitation when relevant.
 Run the matching `./out/<component>_example.exe --smoke` for native SDL_GPU
 smoke coverage.
 
+Run `./tools/validate_external_consumer.ps1 -Odin odin` to build that suite's
+fixture from outside the repository: one consumer imports packages through the
+`alikit` collection, and one consumes a copied radio group plus its declared
+source dependencies with only the Alicorn collection. The harness audits
+`components.json` dependencies, test/example paths, and copy recipes as part of
+the run.
+
 Update the catalog and component guide when public packages or ownership
 contracts change. Record measured decisions and core requirements in
 [`docs/research/issue-003-parts-pilot.md`](docs/research/issue-003-parts-pilot.md)

@@ -41,6 +41,26 @@ contract, tests, API, and limits.
 The component pages state the exact split per component. When a behavior is application policy,
 AliKit exposes the event or callback instead of owning a second policy engine.
 
+## Installation and copying
+
+AliKit is source-level Odin with three authoring paths:
+
+1. **Complete component.** Import the package with the Alicorn and AliKit collections:
+   `-collection:alicorn=<alicorn> -collection:alikit=<alicorn-kit>`. The native host also needs
+   the pinned AccessKit SDK arguments from `alicorn/.deps/odin-accesskit/tools/bootstrap.ps1`.
+2. **Parts.** Use the same collections and compose the package's `*_begin` / part / `*_end`
+   procedures. The complete wrappers use the same parts.
+3. **Behaviors or copied source.** `alikit:selection` is a pure behavior package. A copied
+   component becomes application code: copy its declared `source` files plus any dependency files
+   listed under `copy` in `components.json`, then rewrite the intra-AliKit imports to local
+   relative packages. For example, a radio-group copy needs `selection/` and `theme_contract/`
+   beside it and compiles with only `-collection:alicorn=<alicorn>`; copying
+   `radio_group.odin` alone does not compile.
+
+`tools/validate_external_consumer.ps1` generates a standalone consumer outside the repository,
+builds the collection-import and copied-source paths, and runs native smokes. `components.json`
+records the audited copy recipes and exact package dependencies.
+
 ## Choosing a result-list path
 
 The command palette and Palette Parts intentionally overlap:

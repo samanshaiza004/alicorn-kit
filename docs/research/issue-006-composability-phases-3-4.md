@@ -1,5 +1,9 @@
 # Issue 6: composability phases 3-4
 
+Phase 6 (installation, source copying, and external-consumer composition) is
+recorded in
+[issue-006-phase-6-external-consumers.md](issue-006-phase-6-external-consumers.md).
+
 Date: 2026-11-23
 Branch: `codex/v03-parts-migration`
 Base: `origin/main` at `9d22fb2` (phases 1-2 merged)

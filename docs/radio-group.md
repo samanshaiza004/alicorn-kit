@@ -20,14 +20,7 @@ pending. The behavior, semantics, and source below are current.
 
 ## Installation
 
-Copy these files into an application or import the package with the AliKit
-collection:
-
-- `radio_group/radio_group.odin`
-- `radio_group/radio_group_test.odin` (conformance)
-- `examples/radio_group/main.odin` (default appearance)
-- `examples/radio_group_parts/main.odin` (custom cards)
-- `examples/radio_group_composition/main.odin` (dialog composition)
+Import the package through the AliKit collection:
 
 ```odin
 import alicorn "alicorn:runtime"
@@ -35,7 +28,31 @@ import ui "alicorn:ui"
 import radio "alikit:radio_group"
 ```
 
-No init or destroy is required. The component allocates nothing.
+Pass `-collection:alikit=<alicorn-kit checkout>` when building. No init or
+destroy is required; the component allocates nothing.
+
+To copy the source instead, copy the package file plus its two intra-AliKit
+dependencies (also declared under `copy` in [`components.json`](../components.json)):
+
+- `radio_group/radio_group.odin`
+- `selection/selection.odin`
+- `theme_contract/contract.odin`
+
+Put them in sibling packages, for example `vendor/radio_group`,
+`vendor/selection`, and `vendor/theme_contract`, and rewrite the two imports in
+the copied `radio_group.odin`:
+
+```odin
+import sel "../selection"
+import tc "../theme_contract"
+```
+
+The copy then builds with only `-collection:alicorn=<alicorn>`; no `alikit`
+collection is needed. Copying `radio_group.odin` alone does not compile. The
+conformance tests and examples stay in the AliKit repository.
+[`tools/validate_external_consumer.ps1`](../tools/validate_external_consumer.ps1)
+builds both the collection path and this copy path from a generated project
+outside the repository.
 
 ## Composition
 
