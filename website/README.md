@@ -51,15 +51,17 @@ so the registry download and the catalog cannot drift.
 
 ## GitHub Pages
 
-`.github/workflows/pages.yml` builds and deploys the site with the standard
-`configure-pages` / `upload-pages-artifact` / `deploy-pages` actions. It runs on pushes to `main`
-and manual dispatch. The workflow derives the Astro `base` from the Pages API, so it works for a
-project site under `/<repo>/` or a custom domain; `PUBLIC_BASE_PATH` and `PUBLIC_SITE_URL` are
-build-time only.
+The standalone catalog site is **retired**. The catalog is published in the Alicorn documentation
+site at <https://carnival-science.github.io/alicorn/components/>, which syncs these pages, the
+native captures, and `components.json` at a pinned revision.
 
-**Pages is not enabled by this change.** A repository administrator must choose GitHub Pages as
-the deployment source (GitHub Actions) in repository settings and run the workflow. Until then,
-the site is verified locally with `npm run build` and the link checker.
+`.github/workflows/pages.yml` now deploys only `website/redirect/`: an index page and a 404 page
+that forward the old URL — including per-component paths, `manifest/`, and `compatibility/` — to
+the consolidated site. The catalog source stays here because this repository remains the authoring
+home for component documentation; update a page here and then re-sync the Alicorn site.
+
+To preview the catalog locally, `npm run dev` still works. `npm run build` still emits the full
+standalone site in `dist/`; it is simply no longer what Pages serves.
 
 ## Content map
 
