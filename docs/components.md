@@ -28,6 +28,34 @@ store. This catalog describes the packages that exist today.
 | `alikit:table_core` | Shared presentation for Table and Data Grid: column/cell/row shapes, tracks, header parts, and cell semantic scaffolding | Components own their interaction layers; applications own data and policy. The shared package owns no focus, selection, or activation. |
 | `alikit:theme_contract` | Bounded setup-time validation for namespaced component theme roles | Components own their role names and core fallbacks; applications register and validate a theme once. |
 
+## Installation and copying
+
+AliKit is source-level Odin. Choose the authoring path that matches how much of
+the component you want to own:
+
+1. **Import the complete component.** Add the AliKit checkout as a collection
+   and import the package, for example
+   `odin build . -collection:alicorn=<alicorn> -collection:alikit=<alicorn-kit>`.
+   The native host also needs the pinned AccessKit SDK arguments described by
+   `alicorn/.deps/odin-accesskit/tools/bootstrap.ps1`.
+2. **Import and compose the parts.** Pass the same collections and call the
+   package's `*_begin` / part / `*_end` procedures. The complete wrappers are
+   built from those same parts.
+3. **Import behaviors or copy source.** `alikit:selection` is a pure behavior
+   package. A component whose source you copy becomes application code; copy its
+   declared `source` files and, when it imports another AliKit package, the
+   dependency files listed in `components.json` under `copy`. Rewrite those
+   intra-AliKit imports to local relative packages so the copy needs only the
+   Alicorn collection. A radio-group copy, for example, needs `selection/` and
+   `theme_contract/` beside it; copying `radio_group.odin` alone does not
+   compile.
+
+`components.json` records the copy recipe for audited copyable components and
+the exact package dependencies for every entry.
+[`tools/validate_external_consumer.ps1`](../tools/validate_external_consumer.ps1)
+generates a standalone project outside the repository, builds both the
+collection-import path and the radio-group copy path, and runs native smokes.
+
 The command-palette example is the canonical starting point for a small
 Alicorn application using AliKit. It shows application-owned actions, optional
 appearance settings, `ui.run` input routing, state initialization, and cleanup:

@@ -68,6 +68,8 @@ command services.
   choice, P0 component evidence, and core gaps.
 - [Issue 5 research record](docs/research/issue-005-selection-and-shared-behaviors.md)
   - shared selection behavior, two consumers, and deferred extraction candidates.
+- [Issue 6 phase 6 record](docs/research/issue-006-phase-6-external-consumers.md) -
+  external-consumer fixture, package imports, copy audit, and friction.
 - [Agent guidance](AGENTS.md) - project boundaries and validation steps.
 
 ## Repository layout
@@ -87,6 +89,7 @@ command services.
 - `sidebar/` - navigation rail.
 - `table/` - virtualized table.
 - `examples/` - native consumers for every component, including the parts-based palette.
+- `tests/` - the external-consumer fixture templates used by `tools/validate_external_consumer.ps1`.
 - `docs/` - component guides and research records.
 - `website/` - the Astro + Starlight component catalog with native captures.
 - `components.json` - machine-readable component registry seed.
@@ -107,6 +110,18 @@ and run:
 The script also copies `icon_picker/` beside a small consumer and compiles it
 with only the Alicorn collection, so copyable-source consumption does not depend
 on AliKit's package topology.
+
+The phase-6 external-consumer check generates a standalone project outside the
+repository, builds one application that imports packages through the `alikit`
+collection and one that uses a copied radio group plus its declared source
+dependencies, then runs both native smokes:
+
+```powershell
+./tools/validate_external_consumer.ps1 -Odin odin
+```
+
+The harness also audits `components.json` source dependencies, test/example
+paths, and copy recipes before building.
 
 ## Component catalog
 
