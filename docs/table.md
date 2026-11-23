@@ -17,11 +17,14 @@ invented here.
 | Layer | Responsibility |
 | --- | --- |
 | Alicorn | Layout, text shaping, semantic collections, table roles, virtual list, theme roles, pointer/focus primitives. |
-| `table` | Column sizing, header/body composition, nested table/row/cell collections, intrinsic row height measurement, wrapped cells, optional virtualization, theme contract. |
+| `table_core` | Shared `Column`/`Cell`/`Row`/`Alignment` shapes, column-track computation, header surface/row/cell scaffolding, cell semantic scaffolding, and core-role surface fallback. |
+| `table` | Static body composition, nested table/row/cell collections, intrinsic row height measurement, wrapped cells, optional virtualization, theme contract. |
 | Application | Columns, rows, stable keys, sorting/filtering, data lifetime, formatting, document navigation policy. |
 
 The component keeps no state and allocates nothing. It borrows `columns` and
-`rows` for the call.
+`rows` for the call. `alikit:table_core` is the shared presentation package also
+used by [Data Grid](data-grid.md); it owns no focus, selection, or activation
+policy.
 
 ## Copyable implementation
 
@@ -64,7 +67,9 @@ registration.
 
 Column keys and row keys must be nonzero and unique within one table. A body
 row at application index `i` is logical position `i+1` when a header exists.
-`MAX_COLUMNS` is 64; spans are not implemented.
+`MAX_COLUMNS` is 64; spans are not implemented. `Column`, `Cell`, `Row`, and
+`Alignment` are aliases of `alikit:table_core` shapes. `Column` also carries the
+shared optional `sortable`/`sort` fields; Table ignores them.
 
 The component publishes no `Selected`, `Current`, or `Focus`-driven cell state.
 Rows publish `Disabled` when the application marks them disabled.
@@ -147,6 +152,7 @@ drive assertions cover the contract.
 ## Source map
 
 - [Package](../table/table.odin)
+- [Shared presentation](../table_core/table_core.odin)
 - [Tests](../table/table_test.odin)
 - [Example](../examples/table/main.odin)
 - [Theme JSON](../examples/table/theme.json)

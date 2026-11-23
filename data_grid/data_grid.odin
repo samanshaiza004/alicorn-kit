@@ -19,49 +19,19 @@ package data_grid
 import "core:math"
 import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
+import core "alikit:table_core"
 import tc "alikit:theme_contract"
 
 GRID_NAMESPACE :: u64(0x4752494447524401) // "GRIDGRID"
 MAX_INSTANCE_ID :: u64(0x3FFFFFFFFFFFFFFF)
-MAX_COLUMNS :: 64
+MAX_COLUMNS :: core.MAX_COLUMNS
 CELL_KEY :: u64(0xA11C_6B01)
 
-Alignment :: enum { Start, Center, End }
-
-// Sort_State is presentation input only. The application owns the comparator
-// and the projected row order; the grid publishes the requested direction on
-// the column header and proposes a change when a sortable header activates.
-Sort_State :: enum { None, Ascending, Descending }
-
-Column :: struct {
-	// key is the stable application column identity. It must be nonzero and
-	// unique within one grid.
-	key:   u64,
-	label: string,
-	// width <= 0 requests an equal fraction of the remaining width. A positive
-	// value is a fixed logical-pixel track.
-	width: f32,
-	// min_width is optional; zero leaves the grid track unconstrained.
-	min_width: f32,
-	align: Alignment,
-	// sortable makes the header an activation target for application sorting.
-	sortable: bool,
-	// sort is the application's accepted direction for this column.
-	sort: Sort_State,
-}
-
-Cell :: struct {
-	text:   string,
-	detail: string,
-}
-
-Row :: struct {
-	// key is the stable application row identity. It must be nonzero and unique
-	// within one grid.
-	key:      u64,
-	cells:    []Cell,
-	disabled: bool,
-}
+Alignment :: core.Alignment
+Sort_State :: core.Sort_State
+Column :: core.Column
+Cell :: core.Cell
+Row :: core.Row
 
 Selection :: struct {
 	row_key:    u64,
@@ -432,143 +402,8 @@ table_after_frame :: proc(data: rawptr, rt: ^alicorn.Runtime) {
 }
 
 @(private)
-begin_surface :: proc(
-	ctx: ^ui.UI,
-	role: alicorn.Style_Extension_Color_Role_ID,
-	fallback: alicorn.Style_Color_Role,
-	key: ui.UI_Key,
-	style: alicorn.Layout_Style,
-	shape: alicorn.Surface_Shape,
-	stroke: alicorn.Paint_Stroke,
-	label: string,
-) -> alicorn.Node_ID {
-	if role != 0 {
-		if id := alicorn.surface_begin(ctx, alicorn.surface_extension_color_role(role),
-			key=key, style=style, shape=shape, stroke=stroke, label=label); id != 0 {
-			return id
-		}
-	}
-	return alicorn.surface_begin(ctx, alicorn.surface_core_color_role(fallback),
-		key=key, style=style, shape=shape, stroke=stroke, label=label)
-}
-
-@(private)
-grid_alignment :: proc(align: Alignment) -> alicorn.Grid_Item_Alignment {
-	switch align {
-	case .Start: return .Start
-	case .Center: return .Center
-	case .End: return .End
-	}
-	return .Stretch
-}
-
-@(private)
-row_justify :: proc(align: Alignment) -> alicorn.Main_Axis_Distribution {
-	switch align {
-	case .Start: return .Start
-	case .Center: return .Center
-	case .End: return .End
-	}
-	return .Start
-}
-
-@(private)
-cell_at :: proc(row: Row, column: int) -> Cell {
-	if column < 0 || column >= len(row.cells) { return {} }
-	return row.cells[column]
-}
-
-@(private)
-row_label :: proc(row: Row, row_header: bool) -> string {
-	if len(row.cells) == 0 { return "Row" }
-	if row_header { return row.cells[0].text }
-	return row.cells[0].text
-}
-
-@(private)
 tracks_for :: proc(columns: []Column, tracks: []alicorn.Grid_Track) -> int {
-	count := min(len(columns), len(tracks))
-	for column, index in columns[:count] {
-		if column.width > 0 && !math.is_nan(column.width) && !math.is_inf(column.width) {
-			tracks[index] = alicorn.grid_fixed(column.width)
-			if column.min_width > 0 {
-				tracks[index] = alicorn.grid_min_max(min(column.min_width, column.width), column.width)
-			}
-		} else {
-			tracks[index] = alicorn.grid_fraction(1)
-		}
-	}
-	return count
-}
-
-@(private)
-emit_header_cell :: proc(
-	ctx: ^ui.UI,
-	column: Column,
-	column_index: int,
-	collection: alicorn.Semantic_Collection_Handle,
-	instance_id: u64,
-	options: Options,
-) -> Event {
-	key := ui.key_pair(CELL_KEY+3, column.key)
-	owner: alicorn.Node_ID
-	activated := false
-	if column.sortable {
-		owner, activated = alicorn.button_begin(
-			ctx,
-			column.label,
-			key=key,
-			style=ui.layout_style(.Row, width=-1, height=options.header_height, padding=options.cell_padding,
-				justify=row_justify(column.align), align=.Center),
-			presentation=.Custom,
-			focusable=false,
-		)
-	} else {
-		owner = alicorn.container_begin(
-			ctx,
-			.Container,
-			label="grid-header-cell",
-			key=key,
-			style=ui.layout_style(.Row, width=-1, height=options.header_height, padding=options.cell_padding,
-				justify=row_justify(column.align), align=.Center),
-		)
-	}
-	if owner == 0 { return {} }
-	actions := alicorn.Semantic_Actions{}
-	description := ""
-	if column.sortable { actions = alicorn.semantic_actions_add(actions, .Press) }
-	#partial switch column.sort {
-	case .Ascending: description = "Sorted ascending"
-	case .Descending: description = "Sorted descending"
-	}
-	_ = alicorn.semantic_collection_item(ctx, collection, u64(column_index), alicorn.Semantic_Node_Description{
-		id=header_cell_semantic_id(instance_id, column.key),
-		role=.Table_Column_Header,
-		label=column.label,
-		description=description,
-		value=column.label,
-		actions=actions,
-		visual_node=owner,
-	})
-	label := ui.text(ctx, column.label,
-		key=ui.key_pair(CELL_KEY+4, column.key),
-		style=ui.layout_style(.Row),
-		size=options.header_text_size,
-		color=alicorn.style_color(ctx, .Muted_Text),
-		decorative=true,
-		text_style=alicorn.Text_Style{overflow=.Ellipsis, font_weight=alicorn.FONT_WEIGHT_SEMIBOLD},
-	)
-	_ = label
-	if column.sortable {
-		alicorn.button_end(ctx)
-	} else {
-		alicorn.container_end(ctx)
-	}
-	_ = alicorn.grid_cell(ctx, owner, 0, column_index, align_x=grid_alignment(column.align))
-	if activated {
-		return Event{kind=.Sort_Proposed, column_key=column.key}
-	}
-	return {}
+	return core.tracks_for(columns, tracks)
 }
 
 @(private)
@@ -582,49 +417,44 @@ emit_header_row :: proc(
 	style: Style,
 	recipe: Recipe,
 ) -> Event {
-	row_id := header_row_semantic_id(instance_id)
-	if row_id.namespace == 0 { return {} }
-	row_surface := begin_surface(
+	header, visible := core.header_begin(
 		ctx,
-		recipe.header_surface_role,
-		.Subtle_Surface,
-		key=ui.key_u64(0xA11C_6A10),
-		style=ui.layout_style(.Column, width=-1, height=options.header_height),
-		shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=style.corner_radius},
-		stroke={},
-		label="grid-header-row",
+		core.Header_Config{
+			layout=.Grid,
+			columns=columns,
+			tracks=tracks,
+			height=options.header_height,
+			column_gap=options.column_gap,
+			cell_padding=options.cell_padding,
+			text_size=options.header_text_size,
+			corner_radius=style.corner_radius,
+			row_label="Columns",
+			surface_role=recipe.header_surface_role,
+			row_key=ui.key_u64(0xA11C_6A10),
+			cells_key=ui.key_u64(0xA11C_6A11),
+		},
+		grid,
+		header_row_semantic_id(instance_id),
 	)
-	if row_surface == 0 { return {} }
-	collection := alicorn.semantic_collection_begin(
-		ctx,
-		row_surface,
-		row_id,
-		.Table_Row,
-		"Columns",
-		u64(len(columns)),
-		realized_first=0,
-		realized_last=u64(len(columns)),
-		parent=grid.id,
-	)
-	_ = alicorn.semantic_collection_item(ctx, grid, 0, alicorn.Semantic_Node_Description{
-		id=row_id,
-		role=.Table_Row,
-		label="Columns",
-		parent=grid.id,
-	})
-	auto_rows := [1]alicorn.Grid_Track{alicorn.grid_auto()}
-	grid_node := alicorn.grid_begin(ctx, ui.key_u64(0xA11C_6A11), tracks, auto_rows[:],
-		style=ui.layout_style(.Row, width=-1, height=options.header_height),
-		gap_x=options.column_gap, gap_y=0, label="grid-header-grid")
+	if !visible { return {} }
 	event := Event{}
-	if grid_node != 0 {
-		for column, index in columns {
-			header_event := emit_header_cell(ctx, column, index, collection, instance_id, options)
-			if header_event.kind != .None { event = header_event }
+	for column, index in columns {
+		description := ""
+		#partial switch column.sort {
+		case .Ascending: description = "Sorted ascending"
+		case .Descending: description = "Sorted descending"
 		}
-		alicorn.grid_end(ctx)
+		cell, cell_visible := core.header_cell_begin(ctx, &header, index,
+			header_cell_semantic_id(instance_id, column.key),
+			sortable=column.sortable, description=description)
+		if !cell_visible { continue }
+		core.header_cell_label(ctx, cell)
+		core.header_cell_end(ctx, cell)
+		if cell.activated {
+			event = Event{kind=.Sort_Proposed, column_key=column.key}
+		}
 	}
-	alicorn.surface_end(ctx)
+	core.header_end(ctx, &header)
 	return event
 }
 
@@ -650,7 +480,7 @@ emit_row :: proc(
 	fill_role := recipe.row_surface_role
 	fallback := alicorn.Style_Color_Role.Surface
 	if row_selected { fill_role = recipe.selected_row_surface_role; fallback = .Selection }
-	row_surface := begin_surface(
+	row_surface := core.begin_surface(
 		ctx,
 		fill_role,
 		fallback,
@@ -685,7 +515,7 @@ emit_row :: proc(
 	_ = alicorn.semantic_collection_item(ctx, grid, u64(row_position), alicorn.Semantic_Node_Description{
 		id=row_id,
 		role=.Table_Row,
-		label=row_label(row, options.row_header),
+		label=core.row_label(row),
 		states=row_states,
 		parent=grid.id,
 		visual_node=row_surface,
@@ -697,7 +527,7 @@ emit_row :: proc(
 	if grid_node == 0 { alicorn.surface_end(ctx); return {} }
 	event := Event{}
 	for column, column_index in columns {
-		cell := cell_at(row, column_index)
+		cell := core.cell_at(row, column_index)
 		selected := row_selected && column.key == selection.column_key
 		active := row.key == state.active_row_key && column.key == state.active_column_key
 		owner, activated := alicorn.button_begin(
@@ -714,21 +544,19 @@ emit_row :: proc(
 		if row.disabled { states = alicorn.semantic_states_add(states, .Disabled) }
 		if selected { states = alicorn.semantic_states_add(states, .Selected) }
 		if active { states = alicorn.semantic_states_add(states, .Current) }
-		role := alicorn.Semantic_Role.Table_Cell
-		if column_index == 0 && options.row_header { role = .Table_Row_Header }
-		_ = alicorn.semantic_collection_item(ctx, collection, u64(column_index), alicorn.Semantic_Node_Description{
-			id=cell_semantic_id(instance_id, row.key, column.key),
-			role=role,
-			label=cell.text,
-			description=cell.detail,
-			value=cell.text,
-			states=states,
-			visual_node=owner,
-		})
+		_ = alicorn.semantic_collection_item(ctx, collection, u64(column_index),
+			core.cell_description(
+				cell_semantic_id(instance_id, row.key, column.key),
+				core.body_cell_role(column_index, options.row_header),
+				cell.text,
+				cell.detail,
+				states,
+				visual_node=owner,
+			))
 		cell_style := ui.layout_style(.Row, width=-1, height=-1, padding=options.cell_padding,
-			justify=row_justify(column.align), align=.Center)
+			justify=core.row_justify(column.align), align=.Center)
 		if selected {
-			selected_surface := begin_surface(
+			selected_surface := core.begin_surface(
 				ctx,
 				recipe.selected_cell_surface_role,
 				.Selection,
@@ -745,13 +573,13 @@ emit_row :: proc(
 				alicorn.surface_end(ctx)
 			}
 		} else if ui.row(ctx, key=ui.key_u64(1), width=-1, height=-1,
-			padding=options.cell_padding, justify=row_justify(column.align), align=.Center) {
+			padding=options.cell_padding, justify=core.row_justify(column.align), align=.Center) {
 			_ = ui.text(ctx, cell.text, key=ui.key_u64(2), size=options.cell_text_size,
 				decorative=true, text_style=alicorn.Text_Style{overflow=.Ellipsis},
 				color=alicorn.style_color(ctx, .Muted_Text if row.disabled else .Text))
 		}
 		alicorn.button_end(ctx)
-		_ = alicorn.grid_cell(ctx, owner, 0, column_index, align_x=grid_alignment(column.align))
+		_ = alicorn.grid_cell(ctx, owner, 0, column_index, align_x=core.grid_alignment(column.align))
 		if activated && !row.disabled {
 			propose(state, row.key, column.key)
 			event = Event{kind=.Activated, row_key=row.key, column_key=column.key}
@@ -879,7 +707,7 @@ data_grid :: proc(
 					u64(index+header_count), alicorn.Semantic_Node_Description{
 						id=row_semantic_id(instance_id, row.key),
 						role=.Table_Row,
-						label=row_label(row, resolved.row_header),
+						label=core.row_label(row),
 						states=virtual_states,
 						parent=table_id,
 					})

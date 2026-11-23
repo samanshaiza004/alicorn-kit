@@ -1,4 +1,4 @@
-package palette_parts
+package command_palette
 
 // GO/NO-GO measurement for AliKit issue 3. Run with:
 //   odin test palette_parts -define:ODIN_TEST_THREADS=1
@@ -15,15 +15,15 @@ import "core:mem"
 import "core:testing"
 import "core:time"
 import alicorn "alicorn:runtime"
-import command_palette "alikit:command_palette"
 import testui "alicorn:testui"
 import ui "alicorn:ui"
 import palette "alikit:palette_model"
+import parts "alikit:palette_parts"
 
 PILOT_ITEM_COUNT :: 12
 
 Pilot_Item :: struct {
-	id:       Item_ID,
+	id:       parts.Item_ID,
 	title:    string,
 	disabled: bool,
 }
@@ -35,18 +35,18 @@ pilot_items :: proc() -> [PILOT_ITEM_COUNT]Pilot_Item {
 	}
 	items: [PILOT_ITEM_COUNT]Pilot_Item
 	for label, index in labels {
-		items[index] = Pilot_Item{id=Item_ID(index+1), title=label, disabled=index == 7}
+		items[index] = Pilot_Item{id=parts.Item_ID(index+1), title=label, disabled=index == 7}
 	}
 	return items
 }
 
-pilot_palette_item :: proc(source: Pilot_Item) -> Item {
-	return Item{id=source.id, title=source.title, disabled=source.disabled}
+pilot_palette_item :: proc(source: Pilot_Item) -> parts.Item {
+	return parts.Item{id=source.id, title=source.title, disabled=source.disabled}
 }
 
 // A caller-owned filter and ranking policy shared by both fixtures. It keeps
 // source order and applies substrings to the visible label.
-pilot_filter :: proc(items: []Pilot_Item, query: string, output: []Item) -> int {
+pilot_filter :: proc(items: []Pilot_Item, query: string, output: []parts.Item) -> int {
 	count := 0
 	for item in items {
 		candidate := pilot_palette_item(item)
@@ -157,12 +157,12 @@ pilot_percentile :: proc(values: []u64, fraction: f64) -> u64 {
 // Stock fixture: the existing AliKit command palette.
 
 Pilot_Stock_App :: struct {
-	state:    command_palette.State,
+	state:    State,
 	items:    [PILOT_ITEM_COUNT]Pilot_Item,
-	filtered: [PILOT_ITEM_COUNT]Item,
+	filtered: [PILOT_ITEM_COUNT]parts.Item,
 	count:    int,
 	activations: int,
-	last_id:  Item_ID,
+	last_id:  parts.Item_ID,
 }
 
 pilot_stock_build :: proc(state: rawptr, rt: ^alicorn.Runtime, width, height: int, scale: f32) -> alicorn.Node_ID {
@@ -172,15 +172,15 @@ pilot_stock_build :: proc(state: rawptr, rt: ^alicorn.Runtime, width, height: in
 	root := alicorn.container_begin(&ctx, .Root, label="pilot-stock-root",
 		key=alicorn.key_string("pilot-stock-root"),
 		style=alicorn.layout_style(.Column, width=-1, height=-1, padding=18))
-	app.count = pilot_filter(app.items[:], command_palette.query_text(&app.state), app.filtered[:])
+	app.count = pilot_filter(app.items[:], query_text(&app.state), app.filtered[:])
 	_ = ui.text(&ctx, "Commands", size=18)
 	alicorn.container_end(&ctx)
-	event := command_palette.build(
+	event := build(
 		&ctx,
 		&app.state,
 		app.filtered[:app.count],
 		key=alicorn.key_string("pilot-stock-palette"),
-		options=command_palette.Options{hide_title=true},
+		options=Options{hide_title=true},
 	)
 	if event.kind == .Activated {
 		app.activations += 1
@@ -193,12 +193,12 @@ pilot_stock_build :: proc(state: rawptr, rt: ^alicorn.Runtime, width, height: in
 pilot_stock_initialize :: proc(state: rawptr, rt: ^alicorn.Runtime) {
 	app := cast(^Pilot_Stock_App)state
 	app.items = pilot_items()
-	_ = command_palette.open_palette(&app.state, rt, .Caller_Filtered)
+	_ = open_palette(&app.state, rt, .Caller_Filtered)
 }
 
 pilot_stock_key :: proc(state: rawptr, rt: ^alicorn.Runtime, key: alicorn.Application_Key) -> bool {
 	app := cast(^Pilot_Stock_App)state
-	handled, event := command_palette.handle_key(&app.state, rt, app.filtered[:app.count], key)
+	handled, event := handle_key(&app.state, rt, app.filtered[:app.count], key)
 	if event.kind == .Activated {
 		app.activations += 1
 		app.last_id = event.item_id
@@ -209,8 +209,8 @@ pilot_stock_key :: proc(state: rawptr, rt: ^alicorn.Runtime, key: alicorn.Applic
 pilot_run_stock :: proc(metrics: ^Pilot_Metrics, allocation: ^Pilot_Allocation_State) -> bool {
 	app := Pilot_Stock_App{items=pilot_items()}
 	allocator := mem.Allocator{procedure=pilot_allocator_proc, data=allocation}
-	if !command_palette.init(&app.state, allocator) { return false }
-	defer command_palette.destroy(&app.state)
+	if !init(&app.state, allocator) { return false }
+	defer destroy(&app.state)
 	handle, status := testui.open(
 		&app,
 		width=640,
@@ -241,7 +241,7 @@ pilot_run_stock :: proc(metrics: ^Pilot_Metrics, allocation: ^Pilot_Allocation_S
 	if handle.runtime.invalidated || alicorn.presentation_needs_frame(handle.runtime) { metrics.idle_wakes += 1 }
 	metrics.allocations = allocation.allocations
 	metrics.allocated_bytes = allocation.bytes
-	if app.last_id != Item_ID(6) { fmt.println("PILOT stock activation was", app.last_id, "count", app.count); return false }
+	if app.last_id != parts.Item_ID(6) { fmt.println("PILOT stock activation was", app.last_id, "count", app.count); return false }
 	return true
 }
 
@@ -250,15 +250,15 @@ pilot_run_stock :: proc(metrics: ^Pilot_Metrics, allocation: ^Pilot_Allocation_S
 
 Pilot_Parts_App :: struct {
 	items:     [PILOT_ITEM_COUNT]Pilot_Item,
-	filtered:  [PILOT_ITEM_COUNT]Item,
-	matches:   [PILOT_ITEM_COUNT]Match,
+	filtered:  [PILOT_ITEM_COUNT]parts.Item,
+	matches:   [PILOT_ITEM_COUNT]parts.Match,
 	count:     int,
 	query:     ui.Text_Buffer,
-	state:     State,
+	state:     parts.State,
 	query_node: alicorn.Node_ID,
 	focus_query_pending: bool,
 	activations: int,
-	last_id:   Item_ID,
+	last_id:   parts.Item_ID,
 }
 
 pilot_parts_focus_query :: proc(data: rawptr, rt: ^alicorn.Runtime) {
@@ -288,13 +288,13 @@ pilot_parts_build :: proc(state: rawptr, rt: ^alicorn.Runtime, width, height: in
 	if field.node != 0 { _ = alicorn.semantic_text_field_label(&ctx, "Search commands") }
 	app.count = pilot_filter(app.items[:], app.query.text, app.filtered[:])
 	_, _ = palette.index_all(app.filtered[:app.count], app.matches[:])
-	event := results(
+	event := parts.results(
 		&ctx,
 		&app.state,
 		app.filtered[:app.count],
 		app.matches[:app.count],
 		key=alicorn.key_string("pilot-parts-results"),
-		options=Options{accessible_label="Commands", list_max_height=360},
+		options=parts.Options{accessible_label="Commands", list_max_height=360},
 	)
 	if event.kind == .Activated {
 		app.activations += 1
@@ -315,7 +315,7 @@ pilot_parts_initialize :: proc(state: rawptr, rt: ^alicorn.Runtime) {
 
 pilot_parts_key :: proc(state: rawptr, rt: ^alicorn.Runtime, key: alicorn.Application_Key) -> bool {
 	app := cast(^Pilot_Parts_App)state
-	handled, event := handle_key(&app.state, rt, app.filtered[:app.count], app.matches[:app.count], key)
+	handled, event := parts.handle_key(&app.state, rt, app.filtered[:app.count], app.matches[:app.count], key)
 	if event.kind == .Activated {
 		app.activations += 1
 		app.last_id = event.item_id
@@ -358,7 +358,7 @@ pilot_run_parts :: proc(metrics: ^Pilot_Metrics, allocation: ^Pilot_Allocation_S
 	if handle.runtime.invalidated || alicorn.presentation_needs_frame(handle.runtime) { metrics.idle_wakes += 1 }
 	metrics.allocations = allocation.allocations
 	metrics.allocated_bytes = allocation.bytes
-	if app.last_id != Item_ID(6) {
+	if app.last_id != parts.Item_ID(6) {
 		fmt.println("PILOT parts activation was", app.last_id, "count", app.count)
 		return false
 	}

@@ -12,16 +12,19 @@ contract, tests, API, and limits.
 
 | Package | Use it for | Native preview |
 | --- | --- | --- |
-| [`alikit:command_palette`](command-palette/) | An accessible modal palette with a controlled query, selection, keyboard navigation, virtualized results, and focus restoration. | [Command Palette](command-palette/) |
+| [`alikit:command_palette`](command-palette/) | An accessible modal palette with a controlled query, selection, keyboard navigation, virtualized results, public result parts, and focus restoration. | [Command Palette](command-palette/) |
 | [`alikit:tree_view`](tree-view/) | Accessible virtualized tree rows, indentation, focus reveal, keyboard navigation, and optional row-anchored context menus. | [Tree View](tree-view/) |
-| [`alikit:icon_picker`](icon-picker/) | A complete copyable icon composite: search, virtualized grid or list, roving focus, selection proposal, and two appearances. | [Icon Picker](icon-picker/) |
+| [`alikit:icon_picker`](icon-picker/) | A complete copyable icon composite built from search/grid/choice parts: virtualized grid or list, roving focus, selection proposal, and two appearances. | [Icon Picker](icon-picker/) |
 | [`alikit:palette_parts`](palette-parts/) | A copyable parts-based palette result list: virtual rows, `List_Box` semantics, enabled-row navigation, and one activation event. | [Palette Parts](palette-parts/) |
 | [`alikit:radio_group`](radio-group/) | Controlled radio group parts: `Radio_Group`/`Radio_Button` semantics, one Tab stop, roving arrows, activation parity, and replaceable item rendering. | [Radio Group](radio-group/) |
 | [`alikit:progress`](progress/) | Composable determinate/indeterminate progress with `Progress` semantics, numeric range, linear or ring presentations, and optional caller-driven pulse. | [Progress](progress/) |
 | [`alikit:segmented`](segmented/) | Single selection over equal-width segments with `Tab_List`/`Tab` semantics, one Tab stop, roving arrows, and a moving indicator. | [Segmented Control](segmented/) |
 | [`alikit:notices`](notices/) | Runtime toast helpers plus copyable card/stack parts for inline banners and application-hosted snackbars. | [Notices](notices/) |
-| [`alikit:sidebar`](sidebar/) | A flat navigation rail with expanded/collapsed presentations, `List_Box`/`List_Box_Option` semantics, roving focus, and one proposed route. | [Sidebar](sidebar/) |
-| [`alikit:table`](table/) | A virtualized, non-spanned table with shared Grid column tracks, nested table/row/cell collections, and roving cell coordinates. | [Table](table/) |
+| [`alikit:sidebar`](sidebar/) | A flat navigation rail built from rail/item parts with expanded/collapsed presentations, `List_Box` semantics, roving focus, custom rows, and one proposed route. | [Sidebar](sidebar/) |
+| [`alikit:menu`](menu/) | An anchored dropdown built from trigger/popup/row/separator/group parts with custom row rendering and one chosen command. | [Menu](menu/) |
+| [`alikit:table`](table/) | A static, non-spanned presentation table with shared column tracks, headers, cell scaffolding, intrinsic wrapped rows, and optional virtualization. | [Table](table/) |
+| [`alikit:data_grid`](data-grid/) | An interactive dataset grid with one Tab stop, roving cell focus, selection publication, sort proposals, and essential virtualization. | [Data Grid](data-grid/) |
+| [`alikit:table_core`](../manifest/) | Shared presentation for Table and Data Grid: column/cell/row shapes, tracks, headers, and cell semantics. | Support package |
 | [`alikit:palette_model`](../manifest/) | Filtering and navigating a caller-owned list without UI dependencies. | Model package |
 | [`alikit:tree_model`](../manifest/) | UI-independent tree-row validation, keyboard navigation, stable focus/selection, and paged-window reconciliation. | Model package |
 | [`alikit:selection`](../manifest/) | Pure, allocation-free single-selection policy over a borrowed keyed item set. | Behavior package |
@@ -46,7 +49,7 @@ The command palette and Palette Parts intentionally overlap:
   substring filtering, query field, focus restoration, and a virtualized result list.
 - Use `alikit:palette_parts` when the application already owns the query field, matching,
   ranking, modal shell, dismissal, and focus restoration, and only wants the reusable result
-  list part.
+  list part. The modal palette now uses these same public result parts internally.
 - Use `alikit:palette_model` alone when the application wants the filtering and selection rules
   without Alicorn presentation.
 

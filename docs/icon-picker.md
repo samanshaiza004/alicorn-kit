@@ -1,11 +1,11 @@
 # Icon Picker
 
-`alikit:icon_picker` is a complete custom composite: search, a virtualized grid
-or list of icon choices, roving keyboard focus, semantic selection, one
-activation event, and two appearances that share one behavior contract. It is
-ordinary copyable Odin source built only on Alicorn's public UI and runtime
-APIs; there is no runtime registration, second UI tree, state store, or
-component lifecycle.
+`alikit:icon_picker` is a complete custom composite built from public parts:
+search, a virtualized grid or list of icon choices, roving keyboard focus,
+stable selection, semantics, one activation event, and two appearances that
+share one behavior contract. It is ordinary copyable Odin source built only on
+Alicorn's public UI and runtime APIs; there is no runtime registration, second
+UI tree, state store, or component lifecycle.
 
 Use it when an application needs a small icon chooser. Copy
 [`icon_picker/icon_picker.odin`](../icon_picker/icon_picker.odin) into the
@@ -14,12 +14,78 @@ complete consumer is
 [`examples/icon_picker/main.odin`](../examples/icon_picker/main.odin); it imports
 the package by relative path and builds with only `-collection:alicorn=...`.
 
-## Ready-made usage
+## Preview
+
+The default grid paints square icon cells; the list paints full-width rows with
+an icon, label, and detail. The parts example replaces both with application
+visuals (letter tiles or custom rows). The composition example hosts the picker
+inside a dialog and uses a Segmented control for the appearance.
+
+## Installation
+
+Copy these files into an application or import the package with the AliKit
+collection:
+
+- `icon_picker/icon_picker.odin`
+- `icon_picker/icon_picker_test.odin` (default composite)
+- `icon_picker/icon_picker_parts_test.odin` (public parts)
+- `examples/icon_picker/main.odin` (default composite)
+- `examples/icon_picker_parts/main.odin` (custom cells/rows)
+- `examples/icon_picker_composition/main.odin` (dialog + segmented host)
 
 ```odin
 import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
 import picker "alikit:icon_picker" // or a relative copy
+```
 
+Initialize once and destroy once:
+
+```odin
+if !picker.init(&app.icon) { return }
+defer picker.destroy(&app.icon)
+app.icon.selected_key = app.selected_key
+```
+
+## Composition
+
+There are three supported authoring paths:
+
+1. Import the complete component and call `picker.picker`.
+2. Import the parts and compose search, grid, and items:
+   `search`, `grid_begin`, `item_begin`, optional `cell`/`row`, `item_end`,
+   `grid_end`, and `empty`.
+3. Import the parts, copy the source, and write any visual subtree between
+   `item_begin` and `item_end`.
+
+| Layer | Responsibility |
+| --- | --- |
+| Alicorn | Layout, focus, pointer hit testing, Button activation, text field, virtual list, semantics, and rendering. |
+| `icon_picker` | Query buffer, filtering policy, stable match projection, roving grid/list navigation, selection proposal, reveal, semantics, and default visuals. |
+| Application | Choices, accepted selection, commands, surrounding dialog, naming, and any ranking override. |
+
+`State` owns the query buffer, filtered match indexes, active roving identity,
+focus/reveal requests, the last appearance, and one activation proposal. The
+application owns `selected_key`; the component never mutates it. An
+`Event{kind=.Activated, key=...}` is a proposal.
+
+The default wrapper draws this shape:
+
+```text
+picker
+  root container + one keyboard scope
+    search              -> controlled text field part
+    grid_begin          -> virtual grid/list + List_Box collection
+      item_begin        -> one List_Box_Option Button owner
+        cell / row      -> optional default visual
+      item_end
+    grid_end            -> one Activated event
+  empty                 -> no-results label part
+```
+
+## Ready-made usage
+
+```odin
 App :: struct {
 	icon: picker.State,
 	choices: [2]picker.Choice,
@@ -45,33 +111,66 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 }
 ```
 
-Initialize once and destroy once:
+## Custom rendering examples
+
+The parts own the semantics and navigation; the author owns the cell or row:
 
 ```odin
-if !picker.init(&app.icon) { return }
-defer picker.destroy(&app.icon)
-app.icon.selected_key = app.selected_key
+root := alicorn.container_begin(ctx, .Container, label="icons",
+	key=alicorn.key_string("icons-root"),
+	style=ui.layout_style(.Column, width=-1, height=alicorn.LAYOUT_SIZE_FIT_CONTENT, gap=8))
+_ = ui.interaction_scope(ctx, root, rawptr(&app.icon), alicorn.Interaction_Scope_Options{
+	keys={.Up, .Down, .Left, .Right, .Home, .End, .Page_Up, .Page_Down, .Return, .Toggle},
+	composition_yield_keys={.Up, .Down, .Left, .Right, .Home, .End, .Page_Up, .Page_Down, .Return, .Toggle},
+	text_preempt_keys={.Up, .Down, .Left, .Right, .Home, .End, .Page_Up, .Page_Down, .Toggle},
+})
+_, _ = picker.search(ctx, &app.icon, options, key=alicorn.key_string("icons-search"))
+
+grid, visible := picker.grid_begin(ctx, &app.icon, choices, options,
+	key=alicorn.key_string("icons-grid"), instance_id=1, scope_owner=root)
+if !visible {
+	_ = picker.empty(ctx, &app.icon, options)
+} else {
+	for index := grid.first; index < grid.last; index += 1 {
+		item, item_visible := picker.item_begin(ctx, &grid, index)
+		if !item_visible { continue }
+		// Draw any ordinary Alicorn layout inside the semantic Button owner.
+		if ui.panel(ctx, key=ui.key_u64(1), width=-1, height=-1, padding=4,
+			align=.Center, justify=.Center,
+			fill=alicorn.style_color(ctx, .Selection if item.selected else .Subtle_Surface),
+			radius=12) {
+			_ = ui.text(ctx, item.choice.label[:1], key=ui.key_u64(2), size=18)
+		}
+		picker.item_end(ctx, &grid, item)
+	}
+	if event := picker.grid_end(ctx, &grid); event.kind == .Activated {
+		app.selected_key = event.key
+	}
+}
+alicorn.container_end(ctx)
 ```
 
-`state.selected_key` is controlled by the application. `picker` never mutates
-it; an `Event{kind=.Activated, key=...}` is a proposal. Keyboard, pointer, and
-semantic activation all produce that same event.
+`Grid_Item` exposes the state a custom cell/row needs:
 
-## Named parts
+| Field | Meaning |
+| --- | --- |
+| `choice` | The caller-owned choice being rendered. |
+| `index`, `count` | Position in the filtered match set. |
+| `selected` | Controlled `selected_key` equality. |
+| `active` | This choice owns the roving focus. |
+| `disabled` | The choice's disabled policy. |
+| `visible` | `false` means skip the subtree and do not call `item_end`. |
+| `owner` | The semantic Button owner. |
 
-| Part | Public surface | Owned by |
-|---|---|---|
-| Search | `Options.hide_search`, `Options.search_accessible_name`, `state.query` | picker; `set_query`/`query_text` are the public value controls |
-| Grid/list collection | `Options.accessible_label`, `Options.appearance`, `Options.columns`, `cell_size`, `row_height`, `max_visible_rows` | picker layout; one retained virtual list |
-| Cell/row | `Choice{key,label,icon,keywords,detail,disabled}`, `cell_emit`, `row_emit` | application data; drawing is copyable source |
-| Stable identity | `choice_semantic_id(instance_id,key)`, `collection_semantic_id(instance_id)` | application-provided `instance_id` plus stable choice keys |
-| Activation | `Event`, `state.proposed` | picker proposes; application accepts |
-| Focus requests | `request_search_focus`, `request_grid_focus` | application input/state calls them; picker schedules an after-frame focus |
-| Theme | Alicorn core color roles only | no component theme contract is required |
+`grid_begin` owns the virtual list and the `List_Box` collection. In Grid
+appearance it opens one row container automatically as items are emitted in
+ascending realized order, so a custom author only needs to emit cells. The
+author can pass zero for `scope_owner` and drive navigation with the public
+`handle_key` instead.
 
-`Choice.keywords` contributes to search but is not announced. `Choice.detail`
-is announced in both appearances; the grid does not paint it. `Choice.label` is
-always the accessible name, even when the grid paints only an icon.
+`cell` and `row` are the default visuals. Omit them, or use them with your own
+choice data. `search` can be omitted with `Options.hide_search` when the
+application supplies its own query UI.
 
 ## Two appearances, one contract
 
@@ -81,14 +180,10 @@ the drawing procedure:
 
 - the same choices, filter, stable keys, semantic IDs, states, and actions;
 - the same `Up`/`Down` step (one row in the grid, one item in the list);
-- the same `Left`/`Right` grid step, `Home`/`End` row bounds, `Page_Up`/`Page_Down`
-  page stride, disabled skipping, and boundary clamping;
+- the same `Left`/`Right` grid step, `Home`/`End` row bounds,
+  `Page_Up`/`Page_Down` page stride, disabled skipping, and boundary clamping;
 - the same proposed activation and controlled selection;
 - focus stays on the collection when the appearance changes.
-
-The tests switch one mounted instance from grid to list and assert that the cell
-semantic identity, accessible name, bounds change, selection, and behavior
-survive.
 
 ## Behavior
 
@@ -110,16 +205,15 @@ survive.
 While the search field is focused, `Up`/`Down`/`Left`/`Right`, `Home`/`End`,
 `Page_Up`/`Page_Down`, and `Space` drive the grid. Characters, Backspace,
 Delete, and IME composition stay with the field. This is Alicorn's
-scope-owned `text_preempt_keys` policy on the picker's single root scope; there
-is no per-component key routing.
+scope-owned `text_preempt_keys` policy on the picker's single root scope; the
+complete wrapper registers it. A custom shell that passes a `scope_owner` owns
+the same scope configuration.
 
 The navigation index math comes from `alicorn:runtime`'s pure `Roving_View`
 model. The picker projects its filtered match order, columns, page size, and
 row-scoped Home/End into a value view, then applies the proposed index to its
-own active key. Disabled skipping, grid stride, boundary stops, and row bounds
-are shared with other roving consumers instead of maintained here. The picker
-still owns filtering, active identity, reveal, activation, and selection; the
-model carries no state and does not publish semantics.
+own active key. The picker owns filtering, active identity, reveal, activation,
+and selection; the model carries no state and publishes no semantics.
 
 The collection publishes `List_Box` + `List_Box_Option` semantics with logical
 count, realized range, `Selected`, `Current`, `Disabled`, and `Select`/`Focus`
@@ -139,8 +233,8 @@ case .Find:
 	}
 ```
 
-A copied package can be changed the same way: replace `cell_emit`/`row_emit`,
-add a `Choice` field (for example a colour swatch), omit the search part with
+A copied package can be changed the same way: replace `cell`/`row`, add a
+`Choice` field (for example a colour swatch), omit the search part with
 `hide_search`, or add a bespoke key through the application's own
 `ui.interaction_scope` / `on_key`. Keep focus, IME, modal, and semantic rules in
 Alicorn's existing facilities.
@@ -149,20 +243,44 @@ Alicorn's existing facilities.
 
 The picker is an inline composite. A modal host owns Escape, outside-click
 dismissal, nested overlays, and focus restoration; see
-[`examples/icon_picker/main.odin`](../examples/icon_picker/main.odin). The modal
-pattern check in `icon_picker_test.odin` verifies pointer opening, focus inside,
-traversal wrap, containment, Escape, and focus restoration against pinned
-`alicorn:testui`.
+[`examples/icon_picker/main.odin`](../examples/icon_picker/main.odin) and
+[`examples/icon_picker_composition/main.odin`](../examples/icon_picker_composition/main.odin).
+The modal pattern check in `icon_picker_test.odin` verifies pointer opening,
+focus inside, traversal wrap, containment, Escape, and focus restoration against
+pinned `alicorn:testui`.
+
+## API reference
+
+| Declaration | Notes |
+| --- | --- |
+| `Choice` | `key`, `label`, `icon`, `keywords`, `detail`, `disabled`. |
+| `Options` | Labels, appearance, columns, cell/row/icon geometry, max visible rows, `hide_search`. |
+| `State` | Query buffer, matches, active identity, focus/reveal requests, last appearance, proposal. |
+| `Grid` | Per-description grid/list context: realized match range, collection, row model. |
+| `Grid_Item` | Per-description cell/row context. |
+| `init` / `destroy` | Allocate and release the query and match buffer. |
+| `search` | Controlled search field part. |
+| `grid_begin` / `grid_end` | Open/close the virtual grid/list and collection; `grid_end` returns the proposal. |
+| `item_begin` / `item_end` | Open/close one semantic choice Button. |
+| `cell` / `row` | Optional default visuals. |
+| `empty` | No-results label part. |
+| `sync` | Refresh matches and repair the active identity. |
+| `handle_key` | Public navigation/activation path for an application-owned scope. |
+| `picker` | Complete composite wrapper. |
+| `set_query`, `query_text`, `active_key`, `match_count` | Value and diagnostic helpers. |
+| `request_search_focus`, `request_grid_focus` | After-frame focus requests. |
+| `choice_semantic_id`, `collection_semantic_id` | Stable semantic identities. |
 
 ## Tests and limits
 
 `odin test icon_picker -collection:alicorn=/path/to/alicorn -collection:alikit=.`
-runs 11 external-package tests: token matching, identity, keyboard/pointer/
-semantic activation parity, focus versus selection, disabled skipping, removal
-and reorder reconciliation, appearance identity, filtering and IME yield,
-search-focus key yield (arrows and Space), 200-choice virtualization and
-reveal, the `.Modal_Dialog` pattern check, Escape/outside-click/nested overlay
-dismissal, teardown idle, and an application Ctrl+F focus interaction.
+runs 14 external-package tests: token matching, identity,
+keyboard/pointer/semantic activation parity, focus versus selection, disabled
+skipping, removal and reorder reconciliation, appearance identity, filtering and
+IME yield, search-focus key yield (arrows and Space), 200-choice virtualization
+and reveal, the `.Modal_Dialog` pattern check, Escape/outside-click/nested
+overlay dismissal, teardown idle, an application Ctrl+F focus interaction, and
+the public parts with custom grid cells and list rows.
 
 Known limits:
 
@@ -173,4 +291,13 @@ Known limits:
 - Filtering is local ASCII case-insensitive substring matching. Replace
   `matches` with application ranking when ranking is domain-specific.
 - Headless tests do not exercise OS IME candidate windows, native accessibility
-  bridges, or pixels. The native demo is validated separately with `--smoke`.
+  bridges, or pixels. The native demos are validated separately with `--smoke`.
+
+## Source map
+
+- [Package](../icon_picker/icon_picker.odin)
+- [Default tests](../icon_picker/icon_picker_test.odin)
+- [Parts tests](../icon_picker/icon_picker_parts_test.odin)
+- [Default example](../examples/icon_picker/main.odin)
+- [Parts example](../examples/icon_picker_parts/main.odin)
+- [Composition example](../examples/icon_picker_composition/main.odin)

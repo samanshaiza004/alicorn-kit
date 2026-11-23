@@ -14,11 +14,17 @@ rows and ordinary document navigation.
 | Layer | Responsibility |
 | --- | --- |
 | Alicorn | Grid tracks, virtual list, semantic collections, table roles, focus traversal, pointer hit testing, `semantic_collection_virtual_item`. |
-| `data_grid` | Column tracks, header/body composition, nested row/cell collections, roving cell coordinates, row reveal, sort-header proposals, one activation proposal, theme contract. |
+| `table_core` | Shared `Column`/`Cell`/`Row`/`Alignment`/`Sort_State` shapes, column tracks, header surface/row/cell scaffolding, cell semantics, and surface fallback. |
+| `data_grid` | Interactive body composition, nested row/cell collections, roving cell coordinates, row reveal, sort-header proposals, one activation proposal, theme contract. |
 | Application | Columns, rows, stable keys, comparators, filters, accepted selection, dispatch, editing policy. |
 
 The component retains only ephemeral focus/proposal state. It publishes
 `Selected`/`Current` from caller values and never mutates selection.
+
+`alikit:table_core` is the shared presentation layer used by both this grid and
+[Table](table.md). It owns the common data shapes, column tracks, header parts,
+and cell semantic scaffolding; `data_grid` keeps its distinct managed-focus,
+roving, reveal, and proposal layer.
 
 ## Copyable implementation
 
@@ -60,7 +66,8 @@ Call `data_grid.request_focus(&state)` to focus the single Tab stop.
 | Body row | `row_semantic_id(instance_id, row_key)` | Nested `Table_Row`. |
 | Body cell | `cell_semantic_id(instance_id, row_key, column_key)` | `Table_Cell` / `Table_Row_Header`; selected/current states. |
 
-`Column.sort` is presentation input only: the application changes its
+`Column`, `Cell`, `Row`, `Alignment`, and `Sort_State` are aliases of
+`alikit:table_core` shapes. `Column.sort` is presentation input only: the application changes its
 projection and the accepted direction. Separator rows do not exist here; the
 grid is a dataset.
 
@@ -135,6 +142,7 @@ used until the `.Data_Grid` pattern addition lands.
 ## Source map
 
 - [Package](../data_grid/data_grid.odin)
+- [Shared presentation](../table_core/table_core.odin)
 - [Tests](../data_grid/data_grid_test.odin)
 - [Example](../examples/data_grid/main.odin)
 - [Theme JSON](../examples/data_grid/theme.json)

@@ -6,6 +6,7 @@ import "core:mem"
 import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import palette "alikit:palette_model"
+import parts "alikit:palette_parts"
 
 Item_ID :: palette.Item_ID
 Item :: palette.Item
@@ -28,6 +29,13 @@ Event :: struct {
 	item_id: Item_ID,
 }
 
+// Result_List, Result_Row, and Result_Group alias the public result-list parts
+// used by build. Applications that own their own modal/query shell can compose
+// those parts directly; the aliases keep one result contract.
+Result_List :: parts.List
+Result_Row :: parts.Row
+Result_Group :: parts.Group
+
 State :: struct {
 	query:          ui.Text_Buffer,
 	allocator:      mem.Allocator,
@@ -35,6 +43,9 @@ State :: struct {
 	matches_capacity: int,
 	match_count:    int,
 	selection:      palette.Selection,
+	// results is the retained parts-based result list (virtual list owner,
+	// reveal/focus requests, and selection mirrored with `selection`).
+	results:        parts.State,
 	search_mode:    Search_Mode,
 	last_status:    Status,
 	query_node:     alicorn.Node_ID,
@@ -52,6 +63,7 @@ State :: struct {
 Options :: struct {
 	title:                 string,
 	query_accessible_name: string,
+	results_accessible_name: string,
 	empty_message:         string,
 	allocation_error_message: string,
 	footer_label:          string,
@@ -83,6 +95,7 @@ Appearance :: struct {
 DEFAULT_OPTIONS :: Options{
 	title="Commands",
 	query_accessible_name="Search commands",
+	results_accessible_name="Results",
 	empty_message="No matching commands",
 	allocation_error_message="Results temporarily unavailable",
 	footer_label="actions  ·  ↑/↓ navigate  ·  Enter run  ·  Esc close",
@@ -97,6 +110,7 @@ options_resolve :: proc(options: Options) -> Options {
 	result := options
 	if result.title == "" { result.title = DEFAULT_OPTIONS.title }
 	if result.query_accessible_name == "" { result.query_accessible_name = DEFAULT_OPTIONS.query_accessible_name }
+	if result.results_accessible_name == "" { result.results_accessible_name = DEFAULT_OPTIONS.results_accessible_name }
 	if result.empty_message == "" { result.empty_message = DEFAULT_OPTIONS.empty_message }
 	if result.allocation_error_message == "" { result.allocation_error_message = DEFAULT_OPTIONS.allocation_error_message }
 	if result.footer_label == "" { result.footer_label = DEFAULT_OPTIONS.footer_label }
@@ -175,6 +189,7 @@ open_palette :: proc(
 	state.panel_node = 0
 	state.results_node = 0
 	state.selection = {}
+	state.results = {}
 	state.search_mode = search_mode
 	palette_schedule_after_frame(state, rt)
 	alicorn.invalidate_root(rt, "AliKit command palette opened")
@@ -189,6 +204,7 @@ close_palette :: proc(state: ^State, rt: ^alicorn.Runtime, restore_focus := true
 	state.query_node = 0
 	state.panel_node = 0
 	state.results_node = 0
+	state.results.list_node = 0
 	if rt != nil {
 		if restore_focus { palette_schedule_after_frame(state, rt) }
 		alicorn.invalidate_root(rt, "AliKit command palette closed")
@@ -360,6 +376,109 @@ pointer :: proc(state: ^State, rt: ^alicorn.Runtime, event: alicorn.Pointer_Even
 	return true
 }
 
+@(private)
+parts_options :: proc(options: Options) -> parts.Options {
+	return parts.Options{
+		accessible_label=options.results_accessible_name,
+		empty_label=options.empty_message,
+		row_height=options.row_height,
+		list_max_height=options.list_max_height,
+	}
+}
+
+// input describes the controlled query field used by the modal shell. It is a
+// public part for applications that compose their own overlay but want the
+// same controlled text and accessible label. Call it inside the shell's key
+// scope; the modal scope already owns IME/text routing.
+input :: proc(
+	ctx: ^ui.UI,
+	state: ^State,
+	options: Options = {},
+	key: ui.UI_Key,
+) -> (node: alicorn.Node_ID, visible: bool) {
+	if ctx == nil || ctx.runtime == nil || state == nil || !state.initialized { return }
+	resolved := options_resolve(options)
+	field := alicorn.text_field_controlled(
+		ctx,
+		&state.query,
+		key=key,
+		style=ui.layout_style(.Row, grow=1, height=resolved.query_height-4),
+		text_style=resolved.query_text_style,
+	)
+	state.query_node = field.node
+	if field.node == 0 { return }
+	_ = alicorn.semantic_text_field_label(ctx, resolved.query_accessible_name)
+	return field.node, true
+}
+
+// list_begin opens the public parts-based result list. The application owns
+// filtering/ranking and passes a fresh visible slice. Selection is mirrored
+// between the palette state and the result part.
+list_begin :: proc(
+	ctx: ^ui.UI,
+	state: ^State,
+	items: []Item,
+	visible: []palette.Match,
+	key: ui.UI_Key,
+	options: Options = {},
+) -> (list: Result_List, opened: bool) {
+	if ctx == nil || ctx.runtime == nil || state == nil || !state.initialized { return }
+	resolved := options_resolve(options)
+	state.results.selection = state.selection
+	list, opened = parts.list_begin(ctx, &state.results, items, visible, key, parts_options(resolved))
+	if opened { state.results_node = list.node }
+	return
+}
+
+// result_row_key returns the retained Button key for one stable result ID.
+result_row_key :: proc(id: Item_ID) -> ui.UI_Key {
+	return parts.row_key(id)
+}
+
+item_begin :: proc(ctx: ^ui.UI, list: ^Result_List, index: int) -> (row: Result_Row, visible: bool) {
+	return parts.item_begin(ctx, list, index)
+}
+
+item_end :: proc(ctx: ^ui.UI, state: ^State, list: ^Result_List, row: Result_Row) -> bool {
+	activated := parts.item_end(ctx, list, row)
+	if state != nil {
+		state.selection = state.results.selection
+		if activated { state.results_node = 0 }
+	}
+	return activated
+}
+
+list_end :: proc(ctx: ^ui.UI, state: ^State, list: ^Result_List) -> (event: Event) {
+	result := parts.list_end(ctx, list)
+	if state != nil {
+		state.selection = state.results.selection
+		state.results_node = 0
+	}
+	if result.kind == .Activated { return Event{kind=.Activated, item_id=result.item_id} }
+	return
+}
+
+empty :: proc(ctx: ^ui.UI, options: Options = {}, key: ui.UI_Key = {}) -> alicorn.Node_ID {
+	resolved := options_resolve(options)
+	return parts.empty(ctx, parts_options(resolved), key=key)
+}
+
+group_begin :: proc(ctx: ^ui.UI, list: ^Result_List, label: string, key: ui.UI_Key = {}) -> (Result_Group, bool) {
+	return parts.group_begin(ctx, list, label, key)
+}
+
+group_end :: proc(ctx: ^ui.UI, group: ^Result_Group) {
+	parts.group_end(ctx, group)
+}
+
+@(private)
+activate_result :: proc(state: ^State, rt: ^alicorn.Runtime, id: Item_ID) -> Event {
+	if state == nil { return {} }
+	state.selection.id = id
+	close_palette(state, rt, true)
+	return Event{kind=.Activated, item_id=id}
+}
+
 // build draws an accessible, themed command palette as a modal overlay. The
 // caller describes its ordinary root first, then invokes build. Item strings
 // and the slice are borrowed through this call; IDs must be nonzero and unique.
@@ -450,62 +569,37 @@ build :: proc(
 					style=ui.layout_style(.Row, width=16, height=resolved_options.query_height-4),
 					text_style=alicorn.Text_Style{font_weight=alicorn.FONT_WEIGHT_SEMIBOLD})
 			}
-			query := alicorn.text_field_controlled(
-				ctx,
-				&state.query,
-				key=alicorn.key_string("alikit-command-palette-query"),
-				style=ui.layout_style(.Row, grow=1, height=resolved_options.query_height-4),
-				text_style=resolved_options.query_text_style,
-			)
-			state.query_node = query.node
-			if query.node != 0 { _ = alicorn.semantic_text_field_label(ctx, resolved_options.query_accessible_name) }
+			_, _ = input(ctx, state, resolved_options,
+				key=alicorn.key_string("alikit-command-palette-query"))
 		}
 
 		if state.last_status == .Match_Buffer_Allocation_Failed {
 			_ = ui.text(ctx, resolved_options.allocation_error_message, key=alicorn.key_string("alikit-command-palette-allocation-error"))
 		} else if state.match_count == 0 {
-			_ = ui.text(ctx, resolved_options.empty_message, key=alicorn.key_string("alikit-command-palette-empty"))
+			_ = empty(ctx, resolved_options,
+				key=alicorn.key_string("alikit-command-palette-empty"))
 		} else {
-			list := alicorn.virtual_list_begin(
-				ctx,
-				state.match_count,
-				resolved_options.row_height,
+			list, opened := list_begin(ctx, state, items, state.matches[:state.match_count],
 				key=alicorn.key_string("alikit-command-palette-results"),
-				style=ui.layout_style(.Column, height=alicorn.LAYOUT_SIZE_FIT_CONTENT,
-					max_height=resolved_options.list_max_height, grow=1, clip=true),
-				label="alikit-command-palette-results",
-			)
-			state.results_node = list.scroll.id
-			if list.scroll.id != 0 {
-				for index := list.first; index < list.last; index += 1 {
-					match := state.matches[index]
-					if match.item_index < 0 || match.item_index >= len(items) { continue }
-					item := items[match.item_index]
-					label := item.title
-					if item.description != "" { label = fmt.tprintf("%s  ·  %s", item.title, item.description) }
-					if ui.button(
-						ctx,
-						label,
-						key=ui.key_pair(0xA11C_0001, palette.item_id_value(item.id)),
-						style=ui.layout_style(.Row, height=resolved_options.row_height),
-						state=ui.Button_State{selected=item.id == state.selection.id, disabled=item.disabled},
-						text_style=alicorn.Text_Style{overflow=.Ellipsis},
-						content_style=alicorn.button_content_style(horizontal=.Start, vertical=.Center, padding_x=10, padding_y=4),
-						variant=.Quiet,
-					) {
-						palette_schedule_after_frame(state, ctx.runtime)
-						state.selection.id = item.id
-						state.open = false
-						state.focus_pending = false
-						state.restore_focus = true
-						state.query_node = 0
-						state.panel_node = 0
-						state.results_node = 0
-						event = Event{kind=.Activated, item_id=item.id}
-						alicorn.invalidate_root(ctx.runtime, "AliKit command palette item activated")
+				options=resolved_options)
+			if opened {
+				for index in list.first..<list.last {
+					row, row_visible := item_begin(ctx, &list, index)
+					if !row_visible { continue }
+					if surface := parts.row_surface(ctx, row); surface != 0 {
+						parts.icon(ctx, row)
+						parts.label(ctx, row)
+						parts.description(ctx, row)
+						parts.indicator(ctx, row)
+						alicorn.surface_end(ctx)
+					}
+					if item_end(ctx, state, &list, row) {
+						event = activate_result(state, ctx.runtime, row.item.id)
 					}
 				}
-				alicorn.virtual_list_end(ctx, list)
+				if list_event := list_end(ctx, state, &list); list_event.kind == .Activated {
+					event = list_event
+				}
 			}
 		}
 		_ = ui.text(ctx, fmt.tprintf("%d %s", state.match_count, resolved_options.footer_label),

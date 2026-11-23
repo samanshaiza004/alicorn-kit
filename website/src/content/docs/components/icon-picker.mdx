@@ -6,10 +6,12 @@ description: A complete copyable icon chooser with search, two appearances, rovi
 import Capture from '../../../components/Capture.astro';
 
 <div class="lede">
-<code>alikit:icon_picker</code> is a complete custom composite: search, a virtualized grid or list
+<code>alikit:icon_picker</code> is a complete composite built from public parts: search, a virtualized grid or list
 of icon choices, roving keyboard focus, semantic selection, one activation event, and two
 appearances that share one behavior contract. It is ordinary copyable Odin source built only on
-Alicorn's public UI and runtime APIs.
+Alicorn's public UI and runtime APIs. <code>picker()</code> is a convenience wrapper over
+<code>search</code>, <code>grid_begin</code>, <code>item_begin</code>, <code>cell</code>/<code>row</code>,
+<code>item_end</code>, and <code>grid_end</code>.
 </div>
 
 ## Preview
@@ -84,13 +86,18 @@ pointer, and semantic activation all produce the same `Event{kind=.Activated, ke
 
 | Part | Public surface | What can be omitted or replaced |
 | --- | --- | --- |
-| Search | `Options.hide_search`, `search_accessible_name`, `state.query` | Use `set_query`/`query_text` or provide your own query field. |
-| Collection | `Options.accessible_label`, `appearance`, `columns`, `cell_size`, `row_height`, `max_visible_rows` | Grid or list layout. |
-| Cell/row | `Choice{key,label,icon,keywords,detail,disabled}`, `cell_emit`, `row_emit` | Replace drawing while keeping stable keys and semantics. |
+| Search | `search`, `Options.hide_search`, `search_accessible_name`, `state.query` | Use `set_query`/`query_text` or provide your own query field. |
+| Collection | `grid_begin`/`grid_end`, `Options.accessible_label`, `appearance`, `columns`, `cell_size`, `row_height`, `max_visible_rows` | Grid or list layout; pass a `scope_owner` for the shared keyboard scope. |
+| Cell/row | `item_begin`/`item_end`, `Grid_Item`, `cell`, `row` | Replace drawing while keeping stable keys and semantics. |
 | Identity | `choice_semantic_id`, `collection_semantic_id` | Stable application keys and one `instance_id`. |
-| Activation | `Event`, `state.proposed` | The picker proposes; the application accepts. |
+| Activation | `Event`, `grid_end` | The picker proposes; the application accepts. |
+| Navigation | `handle_key` | Drive navigation from an application-owned query field. |
 | Focus | `request_search_focus`, `request_grid_focus` | Application input decides when to request focus. |
 | Theme | Alicorn core color roles only | No component theme contract is required. |
+
+Three examples cover the paths: the default composite (`examples/icon_picker`), custom cells and
+rows (`examples/icon_picker_parts`), and a dialog + Segmented appearance host
+(`examples/icon_picker_composition`).
 
 `Choice.keywords` contributes to search but is not announced. `Choice.detail` is announced in both
 appearances; the grid does not paint it. `Choice.label` is always the accessible name.
@@ -158,8 +165,11 @@ Headless tests do not exercise OS IME candidate windows, native accessibility br
 | `Choice` | `key`, `label`, `icon`, `keywords`, `detail`, `disabled`. |
 | `Options` | Labels, appearance, columns, cell/row geometry, visible rows, icon size, `hide_search`. |
 | `Appearance` | `.Grid` or `.List`. |
+| `Grid` / `Grid_Item` | Per-description collection and cell/row contexts. |
 | `Event` / `Event_Kind` | One-shot `Activated` proposal carrying `key`. |
 | `picker` | Describe the composite and return an activation event. |
+| `search`, `grid_begin`, `grid_end`, `item_begin`, `item_end`, `cell`, `row`, `empty` | Public parts. |
+| `sync`, `handle_key` | Refresh matches and drive navigation from an application-owned scope. |
 | `set_query`, `query_text`, `active_key`, `match_count` | Controlled query and diagnostics. |
 | `request_search_focus`, `request_grid_focus` | Request an after-frame focus. |
 | `choice_semantic_id`, `collection_semantic_id` | Stable semantic identities. |
@@ -182,5 +192,8 @@ Headless tests do not exercise OS IME candidate windows, native accessibility br
 
 - [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/icon_picker/icon_picker.odin)
 - [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/icon_picker/icon_picker_test.odin)
+- [Parts tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/icon_picker/icon_picker_parts_test.odin)
 - [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker/main.odin)
+- [Parts example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker_parts/main.odin)
+- [Composition example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker_composition/main.odin)
 - [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/icon-picker.md)

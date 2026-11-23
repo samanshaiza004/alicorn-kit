@@ -105,7 +105,7 @@ test_pointer_activation_restores_focus_after_modal_tree_retires :: proc(t: ^test
 	testing.expect(t, root != 0 && editor_found && alicorn.focus(&rt, editor), "the editor should be the focus owner before opening")
 	if !open_palette(&state, &rt) { return }
 	_ = palette_test_describe(&rt, &state, items[:])
-	button_key := alicorn.key_pair(0xA11C_0001, u64(items[0].id))
+	button_key := result_row_key(items[0].id)
 	button, button_found := alicorn.node_by_key(&rt, button_key, .Button)
 	button_info, info_found := alicorn.node_info(&rt, button)
 	if !button_found || !info_found {

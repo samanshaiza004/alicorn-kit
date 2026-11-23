@@ -17,47 +17,18 @@ package table
 import "core:math"
 import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
+import core "alikit:table_core"
 import tc "alikit:theme_contract"
 
 TABLE_NAMESPACE :: u64(0x5441424C45303101) // "TABLE01"
 MAX_INSTANCE_ID :: u64(0x3FFFFFFFFFFFFFFF)
-MAX_COLUMNS :: 64
+MAX_COLUMNS :: core.MAX_COLUMNS
 CELL_KEY :: u64(0xA11C_6A01)
 
-Alignment :: enum { Start, Center, End }
-
-Column :: struct {
-	// key is the stable application column identity. It must be nonzero and
-	// unique within one table.
-	key:   u64,
-	label: string,
-	// width <= 0 requests an equal fraction of the remaining width. A positive
-	// value is a fixed logical-pixel track.
-	width:     f32,
-	// min_width is optional; zero leaves the grid track unconstrained.
-	min_width: f32,
-	align:     Alignment,
-}
-
-Cell :: struct {
-	text:   string,
-	// detail is an optional secondary line. It participates in intrinsic row
-	// height and is published as the cell's semantic description.
-	detail: string,
-	// icon is optional inline formatting before the text. Zero omits it.
-	icon: Maybe(alicorn.Icon_ID),
-	// color_role overrides the primary text color for this cell. Zero uses the
-	// row default (Text, or Muted_Text for a disabled row).
-	color_role: alicorn.Style_Color_Role,
-}
-
-Row :: struct {
-	// key is the stable application row identity. It must be nonzero and
-	// unique within one table.
-	key:      u64,
-	cells:    []Cell,
-	disabled: bool,
-}
+Alignment :: core.Alignment
+Column :: core.Column
+Cell :: core.Cell
+Row :: core.Row
 
 Options :: struct {
 	accessible_label: string,
@@ -245,96 +216,8 @@ style_resolve :: proc(style: Style) -> Style {
 }
 
 @(private)
-begin_surface :: proc(
-	ctx: ^ui.UI,
-	role: alicorn.Style_Extension_Color_Role_ID,
-	fallback: alicorn.Style_Color_Role,
-	key: ui.UI_Key,
-	style: alicorn.Layout_Style,
-	shape: alicorn.Surface_Shape,
-	stroke: alicorn.Paint_Stroke,
-	label: string,
-) -> alicorn.Node_ID {
-	if role != 0 {
-		if id := alicorn.surface_begin(ctx, alicorn.surface_extension_color_role(role),
-			key=key, style=style, shape=shape, stroke=stroke, label=label); id != 0 {
-			return id
-		}
-	}
-	return alicorn.surface_begin(ctx, alicorn.surface_core_color_role(fallback),
-		key=key, style=style, shape=shape, stroke=stroke, label=label)
-}
-
-@(private)
-grid_alignment :: proc(align: Alignment) -> alicorn.Grid_Item_Alignment {
-	switch align {
-	case .Start: return .Start
-	case .Center: return .Center
-	case .End: return .End
-	}
-	return .Start
-}
-
-@(private)
-row_justify :: proc(align: Alignment) -> alicorn.Main_Axis_Distribution {
-	switch align {
-	case .Start: return .Start
-	case .Center: return .Center
-	case .End: return .End
-	}
-	return .Start
-}
-
-@(private)
-cell_at :: proc(row: Row, column: int) -> Cell {
-	if column < 0 || column >= len(row.cells) { return {} }
-	return row.cells[column]
-}
-
-@(private)
-row_label :: proc(row: Row) -> string {
-	if len(row.cells) == 0 { return "Row" }
-	return row.cells[0].text
-}
-
-@(private)
 tracks_for :: proc(columns: []Column, tracks: []alicorn.Grid_Track) -> int {
-	count := min(len(columns), len(tracks))
-	for column, index in columns[:count] {
-		if column.width > 0 && !math.is_nan(column.width) && !math.is_inf(column.width) {
-			tracks[index] = alicorn.grid_fixed(column.width)
-			if column.min_width > 0 {
-				tracks[index] = alicorn.grid_min_max(min(column.min_width, column.width), column.width)
-			}
-		} else {
-			tracks[index] = alicorn.grid_fraction(1)
-		}
-	}
-	return count
-}
-
-@(private)
-column_align :: proc(align: Alignment) -> alicorn.Align {
-	switch align {
-	case .Start: return .Start
-	case .Center: return .Center
-	case .End: return .End
-	}
-	return .Start
-}
-
-@(private)
-cell_layout :: proc(column: Column, padding: f32, height: f32) -> alicorn.Layout_Style {
-	flexible := !(column.width > 0 && !math.is_nan(column.width) && !math.is_inf(column.width))
-	return ui.layout_style(.Column,
-		width=(f32(-1) if flexible else column.width),
-		height=height,
-		grow=(f32(1) if flexible else f32(0)),
-		padding=padding,
-		gap=2,
-		justify=.Center,
-		align=column_align(column.align),
-	)
+	return core.tracks_for(columns, tracks)
 }
 
 @(private)
@@ -384,7 +267,7 @@ row_intrinsic_height :: proc(
 	flex_width := flex_measure_width(columns, options)
 	height := options.row_min_height
 	for column, index in columns {
-		cell := cell_at(row, index)
+		cell := core.cell_at(row, index)
 		cell_width := column_measure_width(column, flex_width)-2*options.cell_padding
 		content: f32 = 0
 		if _, has_icon := cell.icon.?; has_icon { content = max(content, options.cell_text_size+3) }
@@ -398,41 +281,6 @@ row_intrinsic_height :: proc(
 }
 
 @(private)
-emit_header_cell :: proc(
-	ctx: ^ui.UI,
-	column: Column,
-	column_index: int,
-	collection: alicorn.Semantic_Collection_Handle,
-	instance_id: u64,
-	options: Options,
-) {
-	key := ui.key_pair(CELL_KEY+3, column.key)
-	cell := alicorn.container_begin(
-		ctx,
-		.Container,
-		label="table-header-cell",
-		key=key,
-		style=cell_layout(column, options.cell_padding, -1),
-	)
-	if cell == 0 { return }
-	_ = alicorn.semantic_collection_item(ctx, collection, u64(column_index), alicorn.Semantic_Node_Description{
-		id=header_cell_semantic_id(instance_id, column.key),
-		role=.Table_Column_Header,
-		label=column.label,
-		value=column.label,
-	})
-	_ = ui.text(ctx, column.label,
-		key=ui.key_pair(CELL_KEY+4, column.key),
-		style=ui.layout_style(.Column),
-		size=options.header_text_size,
-		color=alicorn.style_color(ctx, .Muted_Text),
-		decorative=true,
-		text_style=alicorn.Text_Style{overflow=.Ellipsis, font_weight=alicorn.FONT_WEIGHT_SEMIBOLD},
-	)
-	alicorn.container_end(ctx)
-}
-
-@(private)
 emit_header_row :: proc(
 	ctx: ^ui.UI,
 	columns: []Column,
@@ -442,43 +290,33 @@ emit_header_row :: proc(
 	style: Style,
 	recipe: Recipe,
 ) {
-	row_id := header_row_semantic_id(instance_id)
-	if row_id.namespace == 0 { return }
-	row_surface := begin_surface(
+	header, visible := core.header_begin(
 		ctx,
-		recipe.header_surface_role,
-		.Subtle_Surface,
-		key=ui.key_u64(0xA11C_6A10),
-		style=ui.layout_style(.Column, width=-1, height=options.header_height),
-		shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=style.corner_radius},
-		stroke={},
-		label="table-header-row",
+		core.Header_Config{
+			layout=.Flow,
+			columns=columns,
+			height=options.header_height,
+			column_gap=options.column_gap,
+			cell_padding=options.cell_padding,
+			text_size=options.header_text_size,
+			corner_radius=style.corner_radius,
+			row_label="Columns",
+			surface_role=recipe.header_surface_role,
+			row_key=ui.key_u64(0xA11C_6A10),
+			cells_key=ui.key_u64(0xA11C_6A11),
+		},
+		table,
+		header_row_semantic_id(instance_id),
 	)
-	if row_surface == 0 { return }
-	collection := alicorn.semantic_collection_begin(
-		ctx,
-		row_surface,
-		row_id,
-		.Table_Row,
-		"Columns",
-		u64(len(columns)),
-		realized_first=0,
-		realized_last=u64(len(columns)),
-		parent=table.id,
-	)
-	_ = alicorn.semantic_collection_item(ctx, table, 0, alicorn.Semantic_Node_Description{
-		id=row_id,
-		role=.Table_Row,
-		label="Columns",
-		parent=table.id,
-	})
-	if ui.row(ctx, key=ui.key_u64(0xA11C_6A11), width=-1, height=-1, gap=options.column_gap,
-		align=.Stretch, label="table-header-row-cells") {
-		for column, index in columns {
-			emit_header_cell(ctx, column, index, collection, instance_id, options)
-		}
+	if !visible { return }
+	for column, index in columns {
+		cell, cell_visible := core.header_cell_begin(ctx, &header, index,
+			header_cell_semantic_id(instance_id, column.key))
+		if !cell_visible { continue }
+		core.header_cell_label(ctx, cell)
+		core.header_cell_end(ctx, cell)
 	}
-	alicorn.surface_end(ctx)
+	core.header_end(ctx, &header)
 }
 
 @(private)
@@ -498,22 +336,20 @@ emit_cell :: proc(
 		.Container,
 		label="table-cell",
 		key=cell_key,
-		style=cell_layout(column, options.cell_padding, -1),
+		style=core.column_cell_layout(column, options.cell_padding, -1),
 	)
 	if container == 0 { return }
-	role := alicorn.Semantic_Role.Table_Cell
-	if column_index == 0 && options.row_header { role = .Table_Row_Header }
 	states := alicorn.Semantic_States{}
 	if row.disabled { states = alicorn.semantic_states_add(states, .Disabled) }
-	_ = alicorn.semantic_collection_item(ctx, collection, u64(column_index), alicorn.Semantic_Node_Description{
-		id=cell_semantic_id(instance_id, row.key, column.key),
-		role=role,
-		label=cell.text,
-		description=cell.detail,
-		value=cell.text,
-		states=states,
-		visual_node=container,
-	})
+	_ = alicorn.semantic_collection_item(ctx, collection, u64(column_index),
+		core.cell_description(
+			cell_semantic_id(instance_id, row.key, column.key),
+			core.body_cell_role(column_index, options.row_header),
+			cell.text,
+			cell.detail,
+			states,
+			visual_node=container,
+		))
 	text_style := alicorn.Text_Style{overflow=.Ellipsis}
 	text_width := f32(-1)
 	if column.width > 0 { text_width = max(column.width-2*options.cell_padding, 1) }
@@ -603,7 +439,7 @@ emit_row :: proc(
 	_ = alicorn.semantic_collection_item(ctx, table, u64(row_position), alicorn.Semantic_Node_Description{
 		id=row_id,
 		role=.Table_Row,
-		label=row_label(row),
+		label=core.row_label(row),
 		states=row_states,
 		parent=table.id,
 		visual_node=row_surface,
@@ -611,7 +447,7 @@ emit_row :: proc(
 	if ui.row(ctx, key=ui.key_pair(CELL_KEY+1, row.key), width=-1, height=resolved_height,
 		gap=options.column_gap, align=.Stretch, label="table-row-cells") {
 		for column, column_index in columns {
-			cell := cell_at(row, column_index)
+			cell := core.cell_at(row, column_index)
 			emit_cell(ctx, cell, column, column_index, row, options, collection, instance_id)
 		}
 	}
@@ -641,7 +477,7 @@ table :: proc(
 	if !ui.key_scope(ctx, key) { return }
 
 	tracks: [MAX_COLUMNS]alicorn.Grid_Track
-	track_count := tracks_for(columns, tracks[:])
+	track_count := core.tracks_for(columns, tracks[:])
 	if track_count == 0 { return }
 	tracks_slice := tracks[:track_count]
 	_ = tracks_slice
@@ -702,7 +538,7 @@ table :: proc(
 					u64(index+header_count), alicorn.Semantic_Node_Description{
 						id=row_semantic_id(instance_id, row.key),
 						role=.Table_Row,
-						label=row_label(row),
+						label=core.row_label(row),
 						states=virtual_states,
 						parent=table_id,
 					})
