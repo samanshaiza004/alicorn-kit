@@ -7,16 +7,16 @@
     <title>AliKit has moved — Alicorn components</title>
     <script>
       // Preserve catalog deep links: /alicorn-kit/components/radio-group/ ->
-      // /Alicorn/components/radio-group/. Reference pages moved under /docs/reference/.
+      // /alicorn-website/components/radio-group/. Reference pages moved under /docs/reference/.
       (function () {
-        var target = 'https://carnival-science.github.io/Alicorn/components/';
+        var target = 'https://carnival-science.github.io/alicorn-website/components/';
         var path = window.location.pathname.replace(/^\/alicorn-kit\/?/, '');
         if (path.indexOf('components/') === 0) {
-          target = 'https://carnival-science.github.io/Alicorn/' + path;
+          target = 'https://carnival-science.github.io/alicorn-website/' + path;
         } else if (path.indexOf('manifest') === 0) {
-          target = 'https://carnival-science.github.io/Alicorn/docs/reference/manifest/';
+          target = 'https://carnival-science.github.io/alicorn-website/docs/reference/manifest/';
         } else if (path.indexOf('compatibility') === 0) {
-          target = 'https://carnival-science.github.io/Alicorn/docs/reference/compatibility/';
+          target = 'https://carnival-science.github.io/alicorn-website/docs/reference/compatibility/';
         }
         window.location.replace(target + window.location.hash);
       })();
@@ -42,7 +42,7 @@
       <h1>AliKit now lives with Alicorn.</h1>
       <p>
         This page moved to the consolidated Alicorn documentation site.
-        <a href="https://carnival-science.github.io/Alicorn/components/">Continue to the component catalog</a>.
+        <a href="https://carnival-science.github.io/alicorn-website/components/">Continue to the component catalog</a>.
       </p>
     </main>
   </body>
