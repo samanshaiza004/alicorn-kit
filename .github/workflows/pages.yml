@@ -1,7 +1,7 @@
 name: Retired AliKit catalog redirect
 
 # The AliKit catalog is published in the Alicorn documentation site:
-# https://carnival-science.github.io/alicorn/components/
+# https://carnival-science.github.io/Alicorn/components/
 #
 # This workflow keeps the old Pages URL alive as a redirect. The catalog source
 # (website/src/content/docs, website/public/captures) still lives in this

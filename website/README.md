@@ -52,7 +52,7 @@ so the registry download and the catalog cannot drift.
 ## GitHub Pages
 
 The standalone catalog site is **retired**. The catalog is published in the Alicorn documentation
-site at <https://carnival-science.github.io/alicorn/components/>, which syncs these pages, the
+site at <https://carnival-science.github.io/Alicorn/components/>, which syncs these pages, the
 native captures, and `components.json` at a pinned revision.
 
 `.github/workflows/pages.yml` now deploys only `website/redirect/`: an index page and a 404 page
