@@ -66,6 +66,27 @@ Style :: struct {
 
 DEFAULT_STYLE :: Style{focus_width=2}
 
+// Item_Visual describes a segment inside its existing Button owner. Child
+// visuals must fit within its width and height.
+Item_Visual :: struct {
+	item:          Item,
+	owner:         alicorn.Node_ID,
+	width, height: f32,
+	selected:      bool,
+	active:        bool,
+	group_focused: bool,
+}
+
+// Draw_Item_Proc runs during control's description. Emit only decorative
+// descendants of the existing Button owner. data is borrowed for control.
+Draw_Item_Proc :: proc(data: rawptr, ctx: ^ui.UI, visual: Item_Visual)
+
+Presentation :: struct {
+	data:                  rawptr,
+	draw_item:             Draw_Item_Proc,
+	omit_moving_indicator: bool,
+}
+
 Theme_Contract :: tc.Contract
 Theme_Contract_Report :: tc.Report
 
@@ -344,6 +365,7 @@ control :: proc(
 	instance_id: u64,
 	recipe: Recipe = {},
 	style: Style = {},
+	presentation: Presentation = {},
 ) -> (event: Event) {
 	if ctx == nil || ctx.runtime == nil || state == nil || instance_id == 0 ||
 	   instance_id > MAX_INSTANCE_ID {
@@ -425,32 +447,10 @@ control :: proc(
 	if track != 0 {
 		// A moving indicator surface behind the segment labels. Equal segment
 		// widths let the paint-only translation express selection changes.
-		indicator := alicorn.surface_begin(
-			ctx,
-			surface_role(recipe.indicator_surface_role, .Selection),
-			key=ui.key_u64(INDICATOR_KEY),
-			style=ui.layout_style(.Row, width=segment_width, height=inner_height),
-			shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle,
-				corner_radius=max(corner_radius-resolved.padding, 0)},
-			stroke={},
-			label="segmented-indicator",
-		)
-		if indicator != 0 {
-			alicorn.surface_end(ctx)
-			if alicorn.position_child(ctx, indicator, alicorn.positioned(0, 0)) {
-				target_x := f32(max(state.active_index, 0))*segment_width
-				state.last_indicator_x = target_x
-				state.last_reduced_motion = reduced_motion(ctx.runtime)
-				intent := alicorn.Motion_Intent.Settle
-				if state.last_reduced_motion || !state.indicator_initialized {
-					intent = .Snap
-				}
-				_ = ui.motion(ctx, indicator, alicorn.Motion_Target{
-					translation=alicorn.Motion_Vector2{x=f64(target_x), y=0},
-					has_translation=true,
-				}, intent)
-				if !state.indicator_initialized { state.indicator_initialized = true }
-			}
+		if presentation.omit_moving_indicator {
+			state.indicator_initialized = false
+		} else {
+			draw_moving_indicator(ctx, state, recipe, segment_width, inner_height, max(corner_radius-resolved.padding, 0))
 		}
 
 		shown := min(len(items), int(collection.logical_count))
@@ -489,15 +489,22 @@ control :: proc(
 					actions=actions,
 					visual_node=owner,
 				})
-			color := alicorn.style_color(ctx, .Text)
-			if item.disabled { color = alicorn.style_color(ctx, .Muted_Text) }
-			_ = ui.text(ctx, item.label,
-				key=ui.key_u64(2),
-				size=resolved.label_size,
-				color=color,
-				decorative=true,
-				text_style=alicorn.Text_Style{overflow=.Ellipsis},
-			)
+			if presentation.draw_item != nil {
+				presentation.draw_item(presentation.data, ctx, Item_Visual{
+					item=item, owner=owner, width=segment_width, height=inner_height,
+					selected=checked, active=active, group_focused=root_focused,
+				})
+			} else {
+				color := alicorn.style_color(ctx, .Text)
+				if item.disabled { color = alicorn.style_color(ctx, .Muted_Text) }
+				_ = ui.text(ctx, item.label,
+					key=ui.key_u64(2),
+					size=resolved.label_size,
+					color=color,
+					decorative=true,
+					text_style=alicorn.Text_Style{overflow=.Ellipsis},
+				)
+			}
 			alicorn.button_end(ctx)
 			if activated && !item.disabled { propose(state, item.value) }
 		}
@@ -511,4 +518,34 @@ control :: proc(
 	}
 	if state.focus_pending { schedule_after_frame(state, ctx.runtime) }
 	return
+}
+
+@(private)
+draw_moving_indicator :: proc(
+	ctx: ^ui.UI, state: ^State, recipe: Recipe, width, height, radius: f32,
+) {
+	indicator := alicorn.surface_begin(
+		ctx,
+		surface_role(recipe.indicator_surface_role, .Selection),
+		key=ui.key_u64(INDICATOR_KEY),
+		style=ui.layout_style(.Row, width=width, height=height),
+		shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=radius},
+		label="segmented-indicator",
+	)
+	if indicator == 0 { return }
+	alicorn.surface_end(ctx)
+	if !alicorn.position_child(ctx, indicator, alicorn.positioned(0, 0)) { return }
+
+	target_x := f32(max(state.active_index, 0))*width
+	state.last_indicator_x = target_x
+	state.last_reduced_motion = reduced_motion(ctx.runtime)
+	intent := alicorn.Motion_Intent.Settle
+	if state.last_reduced_motion || !state.indicator_initialized {
+		intent = .Snap
+	}
+	_ = ui.motion(ctx, indicator, alicorn.Motion_Target{
+		translation=alicorn.Motion_Vector2{x=f64(target_x), y=0},
+		has_translation=true,
+	}, intent)
+	state.indicator_initialized = true
 }

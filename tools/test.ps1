@@ -99,6 +99,16 @@ try {
     & $OdinPath @SegmentedTestArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit segmented tests failed.' }
 
+    $SelectionStylesTestArgs = @(
+        'test', 'examples/selection_styles',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'selection_styles_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @SelectionStylesTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit selection styles tests failed.' }
+
     $NoticesTestArgs = @(
         'test', 'notices',
         '-define:ODIN_TEST_THREADS=1',

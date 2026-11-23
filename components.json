@@ -699,7 +699,8 @@
         "track",
         "moving selected indicator",
         "segment Button owner",
-        "segment label"
+        "segment label",
+        "optional custom decorative item content"
       ],
       "keyboard": [
         "Tab reaches the control once",
@@ -736,7 +737,10 @@
         "theme_contract_satisfied",
         "theme_contract_missing_required",
         "control_semantic_id",
-        "segment_semantic_id"
+        "segment_semantic_id",
+        "Presentation",
+        "Item_Visual",
+        "Draw_Item_Proc"
       ],
       "limits": [
         "Equal-width segments only",

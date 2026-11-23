@@ -40,9 +40,21 @@ No init or destroy is required. The component allocates nothing.
 
 ## Composition
 
-Segmented is a complete component, not a parts package. It is built on the
-shared `alikit:selection` behavior and composes with any surrounding container,
-dialog, card, or form.
+Segmented is a complete component built on the shared `alikit:selection`
+behavior. It composes with any surrounding container, dialog, card, or form.
+The experimental `Presentation` argument lets a caller replace the label
+presentation inside each existing segment owner. Supply a `draw_item`
+procedure and optional borrowed `data`. The procedure receives the item, its
+owner, available logical size, and selected and active states. Describe
+decorative descendants with no independent input or semantics, and keep them
+inside the supplied bounds. The component still supplies the accessible
+label and Tab roles and accepts pointer, keyboard, and semantic actions.
+
+`omit_moving_indicator` lets the item presentation supply its own selection
+cue. When omitting it, distinguish the selected value from the active item
+while the group has focus, including in `Activate` mode. An omitted
+`Presentation` uses the standard label and moving indicator. See the
+[selection styles pilot](../examples/selection_styles/README.md).
 
 | Layer | Responsibility |
 | --- | --- |
