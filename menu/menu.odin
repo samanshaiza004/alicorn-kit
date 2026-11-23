@@ -1,30 +1,54 @@
 package menu
 
-// Menu is a reusable, anchored, component-level dropdown menu. It composes a
-// trigger, an overlay popup, `Menu`/`Menu_Item` semantics, single-level items
-// (label, shortcut, checked, disabled, separator), roving Up/Down/Home/End
-// navigation, Escape and outside-click dismissal, and focus restoration to the
-// trigger.
+// Menu is a reusable, anchored, component-level dropdown menu. It is built from
+// public parts: a trigger, an overlay popup, Menu_Item row owners, separators,
+// optional ad-hoc Menu groups, and optional default row visuals.
+//
+// Authors can use the complete `item` helper or compose the parts:
+//
+//	visible, chosen := menu.popup_begin(ctx, &state, items, options, key, instance)
+//	if visible {
+//		for item, index in items {
+//			row, row_visible := menu.item_begin(ctx, &state, item, index)
+//			if row_visible {
+//				menu.check(ctx, row)    // optional default check slot
+//				menu.label(ctx, row)    // optional default label
+//				menu.shortcut(ctx, row) // optional shortcut text
+//				menu.item_end(ctx, row)
+//			}
+//		}
+//		menu.popup_end(ctx, &state)
+//	}
+//
+// Everything between item_begin and item_end belongs to the author: keep the
+// default parts, omit them, or replace the inside of the Button owner with any
+// ordinary Alicorn layout (label/detail/shortcut/checked or custom content).
+// The parts retain Menu_Item semantics, checked/disabled/current publication,
+// keyboard navigation, activation parity, Escape/outside dismissal, and focus
+// restoration. The application still owns command identity and dispatch.
 //
 // It is intentionally distinct from Alicorn's runtime context menu:
 // `alicorn.context_menu_*` remains the native-integration path (application
 // target, runtime-owned popup state, native menu commands). This package is the
-// in-app composition path with caller-owned state and parts. Submenus are not
-// implemented; nest a second `State` when that behavior is needed, or wait for
-// a recorded component extension.
+// in-app composition path with caller-owned state and parts.
 //
-// The popup is described through `popup_begin`/`item`/`popup_end` in the host's
-// `render_overlays` hook after the ordinary root closes.
+// Submenus are not implemented in v1: the single popup, overlay, row scroll,
+// and focus-restoration machinery is intentionally one level. Compose a second
+// menu `State` anchored to a row when nested menus are required. The recorded
+// `.Menu` collection gap is unchanged at the pinned revision; groups publish
+// ad-hoc nested Menu semantics without a composite collection.
 
 import "core:math"
 import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
+import sel "alikit:selection"
 import tc "alikit:theme_contract"
 
 MENU_NAMESPACE :: u64(0x4D454E554D454E01) // "MENUMEN"
 MAX_INSTANCE_ID :: u64(0x3FFFFFFFFFFFFFFF)
 MAX_ITEMS :: 128
 ITEM_KEY :: u64(0xA11C_6D01)
+GROUP_KEY :: u64(0xA11C_6D30)
 
 Item_Kind :: enum { Item, Separator }
 
@@ -94,15 +118,40 @@ State :: struct {
 	row_viewport:  f32,
 	row_content:   f32,
 
-	active_key:    u64,
-	active_index:  int,
+	// active is the shared single-selection/focus identity model. Menu rows
+	// propose focus, not persistent selection; the checked state stays in the
+	// application.
+	using active: sel.State,
+
 	instance_id:   u64,
 
 	focus_pending:          bool,
 	restore_pending:        bool,
 	after_frame_registered: bool,
 
+	// item_count is the number of logical rows in the most recent popup.
+	item_count: int,
+
 	chosen_key: u64,
+}
+
+// MenuItem is the per-description row context returned by item_begin. Its
+// public fields expose the caller-owned item, stable position, checked /
+// disabled / current state, and the Button owner.
+MenuItem :: struct {
+	state:     ^State,
+	item:      Item,
+	index:     int,
+	count:     int,
+	owner:     alicorn.Node_ID,
+	selected:   bool,
+	checked:    bool,
+	disabled:   bool,
+	keep_open:  bool,
+	check_color: alicorn.Style_Color_Role,
+	check_slot: f32,
+	visible:    bool,
+	activated:  bool,
 }
 
 recipe_default :: proc() -> Recipe { return {} }
@@ -160,6 +209,11 @@ item_semantic_id :: proc(instance_id, key: u64) -> alicorn.Semantic_ID {
 	return alicorn.Semantic_ID{namespace=MENU_NAMESPACE, value=mix(instance_id, key)}
 }
 
+group_semantic_id :: proc(instance_id, key: u64) -> alicorn.Semantic_ID {
+	if instance_id == 0 || instance_id > MAX_INSTANCE_ID || key == 0 { return {} }
+	return alicorn.Semantic_ID{namespace=MENU_NAMESPACE, value=mix(instance_id, key ~ 0x475250)}
+}
+
 @(private)
 options_resolve :: proc(options: Options) -> Options {
 	result := options
@@ -203,34 +257,6 @@ item_enabled :: proc(items: []Item, index: int) -> bool {
 }
 
 @(private)
-first_enabled :: proc(items: []Item) -> int {
-	for item, index in items {
-		if item_enabled(items, index) { return index }
-	}
-	return -1
-}
-
-@(private)
-last_enabled :: proc(items: []Item) -> int {
-	for index := len(items)-1; index >= 0; index -= 1 {
-		if item_enabled(items, index) { return index }
-	}
-	return -1
-}
-
-@(private)
-step_enabled :: proc(items: []Item, from, delta: int) -> int {
-	index := from
-	for _ in 0..<len(items) {
-		index += delta
-		if index < 0 { index = len(items)-1 }
-		if index >= len(items) { index = 0 }
-		if item_enabled(items, index) { return index }
-	}
-	return -1
-}
-
-@(private)
 index_of_key :: proc(items: []Item, key: u64) -> int {
 	if key == 0 { return -1 }
 	for item, index in items {
@@ -240,21 +266,65 @@ index_of_key :: proc(items: []Item, key: u64) -> int {
 }
 
 @(private)
+Selection_View :: struct {
+	items: []Item,
+}
+
+@(private)
+selection_key_at :: proc(data: rawptr, index: int) -> u64 {
+	ctx := cast(^Selection_View)data
+	if index < 0 || index >= len(ctx.items) { return 0 }
+	if ctx.items[index].kind != .Item { return 0 }
+	return ctx.items[index].key
+}
+
+@(private)
+selection_enabled_at :: proc(data: rawptr, index: int) -> bool {
+	ctx := cast(^Selection_View)data
+	return item_enabled(ctx.items, index)
+}
+
+@(private)
+selection_view :: proc(ctx: ^Selection_View, items: []Item) -> sel.View {
+	ctx.items = items
+	return sel.View{
+		count=len(items),
+		data=rawptr(ctx),
+		key_at=selection_key_at,
+		enabled_at=selection_enabled_at,
+	}
+}
+
+@(private)
 set_active :: proc(state: ^State, items: []Item, index: int) {
-	if state == nil || index < 0 || index >= len(items) { return }
-	state.active_index = index
-	state.active_key = items[index].key
+	if state == nil { return }
+	ctx: Selection_View
+	_ = sel.set_active(&state.active, selection_view(&ctx, items), index)
 }
 
 @(private)
 reconcile_active :: proc(state: ^State, items: []Item) {
-	index := index_of_key(items, state.active_key)
-	if index >= 0 && item_enabled(items, index) {
-		state.active_index = index
-		return
-	}
-	index = first_enabled(items)
-	if index >= 0 { set_active(state, items, index) }
+	if state == nil { return }
+	ctx: Selection_View
+	_ = sel.reconcile_active(&state.active, selection_view(&ctx, items), 0)
+}
+
+@(private)
+first_enabled :: proc(items: []Item) -> int {
+	ctx: Selection_View
+	return sel.first_enabled(selection_view(&ctx, items))
+}
+
+@(private)
+last_enabled :: proc(items: []Item) -> int {
+	ctx: Selection_View
+	return sel.last_enabled(selection_view(&ctx, items))
+}
+
+@(private)
+step_enabled :: proc(items: []Item, from, delta: int) -> int {
+	ctx: Selection_View
+	return sel.move(selection_view(&ctx, items), from, delta, true)
 }
 
 // open_from_node opens the menu anchored to an existing retained trigger.
@@ -390,7 +460,7 @@ content_height :: proc(items: []Item, options: Options) -> f32 {
 }
 
 // popup_begin describes the anchored popup. Call it from render_overlays after
-// the ordinary root closes, then emit `item` parts and call `popup_end`. The
+// the ordinary root closes, then emit row parts and call popup_end. The
 // returned chosen key is nonzero when keyboard activation (Return/Space)
 // selected an item during this description.
 popup_begin :: proc(
@@ -418,6 +488,7 @@ popup_begin :: proc(
 		state.row_scroll = 0
 	}
 	state.instance_id = instance_id
+	state.item_count = len(items)
 
 	if state.overlay_node != 0 {
 		for {
@@ -553,6 +624,7 @@ popup_begin :: proc(
 				// Alicorn's semantic_collection_begin does not accept .Menu at
 				// the pinned revision, so the menu publishes a flat Menu group
 				// with Menu_Item children instead of a composite collection.
+				// Groups add ad-hoc nested Menu semantics through group_begin.
 				_ = alicorn.semantic_description(ctx, .Menu, resolved.accessible_label,
 					description="Menu")
 				_ = alicorn.semantic_bind(ctx, menu_semantic_id(instance_id))
@@ -589,10 +661,33 @@ popup_begin :: proc(
 	return true, 0
 }
 
-// item describes one menu row. Separators are visual rows and publish no
-// actionable item. Returns true when pointer or semantic activation selected
-// the row; keyboard activation is reported by popup_begin's chosen_key.
-item :: proc(
+// separator draws one visual separator row. It publishes no actionable item
+// and does not participate in roving navigation.
+separator :: proc(ctx: ^ui.UI, index: int, options: Options = {}) {
+	if ctx == nil || ctx.runtime == nil || index < 0 { return }
+	resolved := options_resolve(options)
+	if ui.row(ctx, key=ui.key_u64(0xA11C_6D20+u64(index)), width=-1,
+		height=resolved.item_height, align=.Center, label="menu-separator-row") {
+		_ = alicorn.surface_begin(
+			ctx,
+			alicorn.surface_core_color_role(.Border),
+			key=ui.key_u64(0xA11C_6D21+u64(index)),
+			style=ui.layout_style(.Row, width=-1, height=1),
+			label="menu-separator",
+		)
+		alicorn.surface_end(ctx)
+	}
+}
+
+// item_begin opens one row's Button owner and publishes its Menu_Item semantic
+// item. It returns visible=false for an invalid state, a separator, an unknown
+// or zero key, or a failed Button owner; in that case the author skips the
+// visual subtree and must not call item_end. Use `separator` for separators.
+//
+// The default row visuals are `check`, `label`, `shortcut`, and `detail`.
+// Call any subset of them, or draw a completely custom subtree inside the
+// Button owner. The Button owner remains the semantic and hit owner.
+item_begin :: proc(
 	ctx: ^ui.UI,
 	state: ^State,
 	value: Item,
@@ -600,24 +695,11 @@ item :: proc(
 	options: Options = {},
 	recipe: Recipe = {},
 	style: Style = {},
-) -> bool {
-	if ctx == nil || ctx.runtime == nil || state == nil || index < 0 { return false }
+) -> (row: MenuItem, visible: bool) {
+	if ctx == nil || ctx.runtime == nil || state == nil || index < 0 { return }
+	if value.kind == .Separator || value.key == 0 { return }
 	resolved := options_resolve(options)
 	resolved_style := style_resolve(style)
-	if value.kind == .Separator {
-		if ui.row(ctx, key=ui.key_u64(0xA11C_6D20+u64(index)), width=-1,
-			height=resolved.item_height, align=.Center, label="menu-separator-row") {
-			_ = alicorn.surface_begin(
-				ctx,
-				alicorn.surface_core_color_role(.Border),
-				key=ui.key_u64(0xA11C_6D21+u64(index)),
-				style=ui.layout_style(.Row, width=-1, height=1),
-				label="menu-separator",
-			)
-			alicorn.surface_end(ctx)
-		}
-		return false
-	}
 	selected := state.active_index == index
 	owner, activated := alicorn.button_begin(
 		ctx,
@@ -628,7 +710,8 @@ item :: proc(
 		presentation=.Custom,
 		focusable=false,
 	)
-	if owner == 0 { return false }
+	if owner == 0 { return }
+
 	states := alicorn.Semantic_States{}
 	actions := alicorn.Semantic_Actions{}
 	if value.disabled {
@@ -644,46 +727,186 @@ item :: proc(
 		description=value.detail, value=value.label, states=states, actions=actions)
 	_ = alicorn.semantic_bind(ctx, item_semantic_id(state.instance_id, value.key))
 
+	check_color := recipe.check_color
+	if check_color == .Text { check_color = .Accent }
+	row = MenuItem{
+		state=state,
+		item=value,
+		index=index,
+		count=state.item_count,
+		owner=owner,
+		selected=selected,
+		checked=value.checked,
+		disabled=value.disabled,
+		keep_open=resolved.keep_open_on_select,
+		check_color=check_color,
+		check_slot=resolved_style.check_slot,
+		visible=true,
+		activated=activated,
+	}
+	return row, true
+}
+
+// check draws the default check slot and checkmark. It is optional; omit it
+// for a custom leading area and reuse `row.checked` in your own drawing.
+check :: proc(ctx: ^ui.UI, row: MenuItem, style: Style = {}) -> alicorn.Node_ID {
+	if ctx == nil || ctx.runtime == nil || !row.visible { return 0 }
+	resolved_style := style_resolve(style)
+	check_color := row.check_color
+	if check_color == .Text { check_color = .Accent }
+	slot := row.check_slot
+	if slot <= 0 { slot = resolved_style.check_slot }
+	check := ui.text(ctx, "\u2713" if row.checked else "",
+		key=ui.key_pair(ITEM_KEY+2, row.item.key),
+		style=ui.layout_style(.Row, width=slot),
+		size=0, color=alicorn.style_color(ctx, check_color), decorative=true)
+	if check != 0 { _ = alicorn.visual_part_attach(ctx, check, row.owner, alicorn.visual_part_core(.Indicator)) }
+	return check
+}
+
+// label draws the default label. Omit it for a custom title/detail layout.
+label :: proc(ctx: ^ui.UI, row: MenuItem, text: string = "") -> alicorn.Node_ID {
+	if ctx == nil || ctx.runtime == nil || !row.visible { return 0 }
+	value := text
+	if value == "" { value = row.item.label }
+	label := ui.text(ctx, value, key=ui.key_pair(ITEM_KEY+3, row.item.key),
+		style=ui.layout_style(.Row, grow=1),
+		size=0, decorative=true,
+		color=alicorn.style_color(ctx, .Muted_Text if row.disabled else .Text))
+	if label != 0 { _ = alicorn.visual_part_attach(ctx, label, row.owner, alicorn.visual_part_core(.Label)) }
+	return label
+}
+
+// shortcut draws the default shortcut hint. It is visual only; the semantic
+// description continues to come from the application-owned item detail.
+shortcut :: proc(ctx: ^ui.UI, row: MenuItem, text: string = "") -> alicorn.Node_ID {
+	if ctx == nil || ctx.runtime == nil || !row.visible { return 0 }
+	value := text
+	if value == "" { value = row.item.shortcut }
+	if value == "" { return 0 }
+	shortcut := ui.text(ctx, value, key=ui.key_pair(ITEM_KEY+4, row.item.key),
+		size=11, color=alicorn.style_color(ctx, .Muted_Text), decorative=true)
+	if shortcut != 0 { _ = alicorn.visual_part_attach(ctx, shortcut, row.owner, alicorn.visual_part_core(.Content)) }
+	return shortcut
+}
+
+// detail draws an optional secondary line. It is not part of the default row;
+// it exists for custom menus that want to make the semantic detail visible.
+detail :: proc(ctx: ^ui.UI, row: MenuItem, text: string = "") -> alicorn.Node_ID {
+	if ctx == nil || ctx.runtime == nil || !row.visible { return 0 }
+	value := text
+	if value == "" { value = row.item.detail }
+	if value == "" { return 0 }
+	detail := ui.text(ctx, value, key=ui.key_pair(ITEM_KEY+5, row.item.key),
+		size=11, color=alicorn.style_color(ctx, .Muted_Text), decorative=true,
+		text_style=alicorn.Text_Style{overflow=.Ellipsis})
+	if detail != 0 { _ = alicorn.visual_part_attach(ctx, detail, row.owner, alicorn.visual_part_core(.Content)) }
+	return detail
+}
+
+// row_surface draws the default rounded row background and active fill. It is
+// optional; custom rows may draw any surface composition. Close it with
+// alicorn.surface_end after the row content.
+row_surface :: proc(ctx: ^ui.UI, row: MenuItem, options: Options = {}, recipe: Recipe = {}, style: Style = {}) -> alicorn.Node_ID {
+	if ctx == nil || ctx.runtime == nil || !row.visible { return 0 }
+	resolved := options_resolve(options)
+	resolved_style := style_resolve(style)
 	fill_role := recipe.item_surface_role
 	fallback := alicorn.Style_Color_Role.Surface
-	if selected { fill_role = recipe.active_surface_role; fallback = .Selection }
-	row := begin_surface(
+	if row.selected { fill_role = recipe.active_surface_role; fallback = .Selection }
+	surface := begin_surface(
 		ctx,
 		fill_role,
 		fallback,
-		key=ui.key_pair(ITEM_KEY+1, value.key),
+		key=ui.key_pair(ITEM_KEY+1, row.item.key),
 		layout=ui.layout_style(.Row, width=-1, height=-1, padding=6, gap=8, align=.Center),
-		shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=max(resolved_style.corner_radius-3, 2)},
+		shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle,
+			corner_radius=max(resolved_style.corner_radius-3, 2)},
 		stroke={},
 		label="menu-item-surface",
 	)
-	if row == 0 { alicorn.button_end(ctx); return false }
-	_ = alicorn.visual_part_attach(ctx, row, owner, alicorn.visual_part_core(.Surface))
-	check_color := recipe.check_color
-	if check_color == .Text { check_color = .Accent }
-	check := ui.text(ctx, "\u2713" if value.checked else "", key=ui.key_pair(ITEM_KEY+2, value.key),
-		style=ui.layout_style(.Row, width=resolved_style.check_slot),
-		size=0, color=alicorn.style_color(ctx, check_color), decorative=true)
-	if check != 0 { _ = alicorn.visual_part_attach(ctx, check, owner, alicorn.visual_part_core(.Indicator)) }
-	label := ui.text(ctx, value.label, key=ui.key_pair(ITEM_KEY+3, value.key),
-		style=ui.layout_style(.Row, grow=1),
-		size=0, decorative=true,
-		color=alicorn.style_color(ctx, .Muted_Text if value.disabled else .Text))
-	if label != 0 { _ = alicorn.visual_part_attach(ctx, label, owner, alicorn.visual_part_core(.Label)) }
-	if value.shortcut != "" {
-		shortcut := ui.text(ctx, value.shortcut, key=ui.key_pair(ITEM_KEY+4, value.key),
-			size=11, color=alicorn.style_color(ctx, .Muted_Text), decorative=true)
-		if shortcut != 0 { _ = alicorn.visual_part_attach(ctx, shortcut, owner, alicorn.visual_part_core(.Content)) }
-	}
-	alicorn.surface_end(ctx)
-	alicorn.button_end(ctx)
+	_ = resolved
+	if surface != 0 { _ = alicorn.visual_part_attach(ctx, surface, row.owner, alicorn.visual_part_core(.Surface)) }
+	return surface
+}
 
-	if activated && !value.disabled {
-		state.chosen_key = value.key
-		if !resolved.keep_open_on_select { close(state) }
+// item_end closes the row's Button owner and applies the menu's one-shot
+// activation policy. It returns true when pointer or semantic activation chose
+// the row. Call it only when item_begin returned visible=true.
+item_end :: proc(ctx: ^ui.UI, row: MenuItem) -> bool {
+	if ctx == nil || !row.visible { return false }
+	alicorn.button_end(ctx)
+	if row.activated && !row.disabled && row.state != nil {
+		row.state.chosen_key = row.item.key
+		if !row.keep_open { close(row.state) }
 		return true
 	}
 	return false
+}
+
+// item describes one menu row with the default visuals. It is the convenience
+// wrapper over item_begin, row_surface, check, label, shortcut, and item_end.
+// Separators are visual rows and publish no actionable item. Returns true when
+// pointer or semantic activation selected the row; keyboard activation is
+// reported by popup_begin's chosen_key.
+item :: proc(
+	ctx: ^ui.UI,
+	state: ^State,
+	value: Item,
+	index: int,
+	options: Options = {},
+	recipe: Recipe = {},
+	style: Style = {},
+) -> bool {
+	if ctx == nil || ctx.runtime == nil || state == nil || index < 0 { return false }
+	if value.kind == .Separator {
+		separator(ctx, index, options)
+		return false
+	}
+	row, visible := item_begin(ctx, state, value, index, options, recipe, style)
+	if !visible { return false }
+	if surface := row_surface(ctx, row, options, recipe, style); surface != 0 {
+		check(ctx, row, style)
+		label(ctx, row)
+		shortcut(ctx, row)
+		alicorn.surface_end(ctx)
+	}
+	return item_end(ctx, row)
+}
+
+// group_begin opens an optional ad-hoc semantic Menu group for a labeled
+// section of rows. Alicorn's collection validation still rejects .Menu at the
+// pinned revision, so this is a nested Menu description, not a composite
+// collection: it has no logical count or selected identity. Close it with
+// group_end. Group headers are not focusable and do not change row indexes.
+group_begin :: proc(ctx: ^ui.UI, state: ^State, label: string, key: ui.UI_Key = {}) -> bool {
+	if ctx == nil || ctx.runtime == nil || state == nil || state.instance_id == 0 { return false }
+	group_key := mix(state.instance_id, 0x47524F5550)
+	switch value in key {
+	case u64: group_key = mix(group_key, value)
+	case alicorn.UI_Key_Pair: group_key = mix(group_key, value.first ~ value.second)
+	case string:
+		hash := u64(0xCBF29CE484222325)
+		for byte in value { hash = (hash ~ u64(byte))*0x100000001B3 }
+		group_key = mix(group_key, hash)
+	case alicorn.UI_Unkeyed:
+	}
+	container := alicorn.container_begin(
+		ctx,
+		.Container,
+		label=label,
+		key=ui.key_pair(GROUP_KEY, group_key),
+		style=ui.layout_style(.Column, width=-1, height=alicorn.LAYOUT_SIZE_FIT_CONTENT, gap=0),
+	)
+	if container == 0 { return false }
+	_ = alicorn.semantic_description(ctx, .Menu, label, description="Menu group")
+	_ = alicorn.semantic_bind(ctx, group_semantic_id(state.instance_id, group_key))
+	return true
+}
+
+group_end :: proc(ctx: ^ui.UI) {
+	if ctx == nil { return }
+	alicorn.container_end(ctx)
 }
 
 // take_chosen consumes the pending chosen key. Applications that dispatch from

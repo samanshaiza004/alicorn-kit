@@ -1,10 +1,10 @@
 # Menu
 
-`alikit:menu` is a reusable, anchored, component-level dropdown menu. It composes
-a trigger, a transparent modal overlay popup, `Menu`/`Menu_Item` semantics,
-single-level rows (label, shortcut, checked, disabled, separator), roving
-Up/Down/Home/End navigation, Escape and outside-click dismissal, and focus
-restoration to the trigger.
+`alikit:menu` is a reusable, anchored, component-level dropdown menu. It is
+built from public parts: a trigger, an overlay popup, `Menu_Item` row owners,
+separators, optional grouped sections, and optional default row visuals. It
+publishes `Menu`/`Menu_Item` semantics, roving Up/Down/Home/End navigation,
+Escape and outside-click dismissal, and focus restoration to the trigger.
 
 It is deliberately distinct from Alicorn's runtime context menu:
 
@@ -12,38 +12,101 @@ It is deliberately distinct from Alicorn's runtime context menu:
 | --- | --- | --- |
 | Owner | Runtime popup state | Caller-owned component state |
 | Use | Native integration, application target, native menu commands | In-app composed controls |
-| Contents | Runtime items and separators | Caller-owned item parts |
-| Semantics | Runtime menu popup | `Menu` group + `Menu_Item` |
+| Contents | Runtime items and separators | Caller-owned item parts and custom rows |
+| Semantics | Runtime menu popup | `Menu` group + `Menu_Item` (and ad-hoc nested groups) |
 
-Submenus are not implemented. Nest a second `State` or wait for a recorded
-component extension.
+## Preview
 
-## Responsibility split
+The default appearance is a compact panel of label/shortcut rows with a check
+slot, separators, and an active fill. The parts example replaces each row with
+an icon, two text lines, a custom checkmark, and a danger group. The composition
+example hosts a permission menu inside a share dialog.
+
+Native captures in the catalog predate the parts examples; re-capture is
+pending. The behavior, semantics, and source below are current.
+
+## Installation
+
+Copy these files into an application or import the package with the AliKit
+collection:
+
+- `menu/menu.odin`
+- `menu/menu_test.odin` (default conformance)
+- `menu/menu_parts_test.odin` (parts conformance)
+- `examples/menu/main.odin` (default appearance)
+- `examples/menu_parts/main.odin` (custom rows and groups)
+- `examples/menu_composition/main.odin` (menu inside a dialog)
+
+```odin
+import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
+import menu "alikit:menu"
+```
+
+No init or destroy is required. The component allocates nothing.
+
+## Composition
+
+There are three supported authoring paths:
+
+1. Import the complete component and call `trigger`, `popup_begin`, `item`, and
+   `popup_end`.
+2. Import the parts and compose the popup, groups, and rows: `popup_begin`,
+   `group_begin`, `item_begin`, optional visual parts, `item_end`, `group_end`,
+   `popup_end`.
+3. Import the parts, copy the source, and write any visual subtree between
+   `item_begin` and `item_end`.
 
 | Layer | Responsibility |
 | --- | --- |
 | Alicorn | Modal overlay containment, pointer/wheel/focus confinement, `context_menu_placement`, Menu/Menu_Item roles, scroll region, buttons, theme roles. |
-| `menu` | Trigger, anchored popup, placement, active-row navigation, reveal, outside/Escape dismissal, checked/disabled/separator presentation, focus restoration. |
-| Application | Items, command identity, dispatch, checked state, policy after activation. |
+| `menu` | Trigger, anchored popup, placement, active-row navigation, reveal, outside/Escape dismissal, checked/disabled/separator publication, group scaffolding, focus restoration, and one chosen-command result. |
+| Application | Items, command identity, dispatch, checked state, custom row content, and policy after activation. |
 
-## Copyable implementation
+`State` contains only ephemeral interaction state: open/anchor/panel nodes, the
+active roving key, focus/restoration requests, and one chosen command key. Row
+navigation uses Alicorn's pure roving model through the shared
+`alikit:selection` view; no application selection is stored.
 
-Files: `menu/menu.odin`, `menu/menu_test.odin`, `examples/menu/main.odin`.
+The default wrapper draws this shape:
+
+```text
+trigger            -> Button with Expanded/Collapse semantics
+popup_begin        -> transparent modal overlay, panel, Menu group, row scroll
+  group_begin      -> optional ad-hoc nested Menu group (not a collection)
+    item_begin     -> one Menu_Item Button owner; Checked/Disabled/Current
+      row_surface  -> optional default row background and active fill
+        check      -> optional default check slot
+        label      -> optional default label
+        shortcut   -> optional default shortcut hint
+    item_end       -> one chosen-command result on activation
+  group_end
+  separator        -> visual row with no identity and no navigation slot
+popup_end
+```
+
+## Minimal example
 
 ```odin
-// In the root:
+ITEMS: [3]menu.Item = {
+	{key=1, label="Rename", shortcut="F2"},
+	{key=2, label="Show grid", checked=true},
+	{key=3, kind=.Separator},
+}
+
+// In the ordinary root:
 _ = menu.trigger(ctx, &app.menu, "Actions", menu.Options{accessible_label="Actions"},
 	key=alicorn.key_string("actions-trigger"))
 
-// In render_overlays:
-visible, chosen := menu.popup_begin(ctx, &app.menu, app.items[:],
+// In render_overlays, after the ordinary root closes:
+visible, chosen := menu.popup_begin(ctx, &app.menu, ITEMS[:],
 	menu.Options{accessible_label="Actions"}, key=alicorn.key_string("actions-popup"),
 	instance_id=1)
 if !visible {
 	if chosen != 0 { app.run(chosen) }
 	return
 }
-for item, index in app.items {
+for item, index in ITEMS {
 	if menu.item(ctx, &app.menu, item, index) { app.run(item.key) }
 }
 menu.popup_end(ctx, &app.menu)
@@ -52,25 +115,91 @@ menu.popup_end(ctx, &app.menu)
 A custom trigger calls `open_from_node(&state, runtime, trigger_node)` instead
 of the stock `trigger`.
 
-## Parts and identities
+## Custom rendering examples
 
-| Part | Identity | Notes |
-| --- | --- | --- |
-| Trigger | Application key | Stock `trigger` draws a Button with Expanded/Collapse semantics. |
-| Popup | `menu_semantic_id(instance_id)` | Focusable Menu group inside the overlay. |
-| Row | `item_semantic_id(instance_id, item_key)` | `Menu_Item`; checked/disabled/current states. |
-| Separator | Visual row | Not actionable, no identity, not counted as an item. |
+The default appearance uses `row_surface`, `check`, `label`, and `shortcut`:
 
-`Item.key` must be nonzero and unique for actionable rows. `Item.detail` becomes
-the semantic description; `shortcut` is visual. `MAX_ITEMS` is 128.
+```odin
+visible, chosen := menu.popup_begin(ctx, &app.menu, ITEMS[:],
+	menu.Options{accessible_label="Actions"}, key=alicorn.key_string("popup"), instance_id=41)
+if visible {
+	for item, index in ITEMS {
+		if item.kind == .Separator {
+			menu.separator(ctx, index)
+			continue
+		}
+		row, row_visible := menu.item_begin(ctx, &app.menu, item, index)
+		if row_visible {
+			if menu.row_surface(ctx, row) != 0 {
+				menu.check(ctx, row)
+				menu.label(ctx, row)
+				menu.shortcut(ctx, row)
+				alicorn.surface_end(ctx)
+			}
+			if menu.item_end(ctx, row) { app.run(item.key) }
+		}
+	}
+	menu.popup_end(ctx, &app.menu)
+}
+```
 
-### Menu collection gap
+A custom row keeps the `Menu_Item` owner and owns everything inside it:
 
-Alicorn's pinned `semantic_collection_begin` accepts List, Tree, Tab_List,
-List_Box, Radio_Group, Table, and Table_Row, but **not** `.Menu`. The menu
-therefore publishes a flat `Menu` group and `Menu_Item` children without a
-composite collection count/selection. Composite menu collection support is
-recorded as an Alicorn-side gap.
+```odin
+for item, index in ITEMS {
+	row, row_visible := menu.item_begin(ctx, &app.menu, item, index)
+	if !row_visible { continue }
+	if menu.row_surface(ctx, row) != 0 {
+		_ = ui.icon(ctx, .File, key=ui.key_u64(1), size=16)
+		if ui.column(ctx, key=ui.key_u64(2), grow=1) {
+			_ = ui.text(ctx, item.label, key=ui.key_u64(3), size=13)
+			_ = ui.text(ctx, item.detail, key=ui.key_u64(4), size=10)
+		}
+		if row.checked { _ = ui.icon(ctx, .Check, key=ui.key_u64(5), size=14) }
+		if item.shortcut != "" {
+			_ = ui.text(ctx, item.shortcut, key=ui.key_u64(6), size=10)
+		}
+		alicorn.surface_end(ctx)
+	}
+	if menu.item_end(ctx, row) { app.run(item.key) }
+}
+```
+
+`MenuItem` exposes the state a custom row needs:
+
+| Field | Meaning |
+| --- | --- |
+| `item` | The caller-owned item being rendered. |
+| `index`, `count` | Stable position in the popup's logical rows. |
+| `selected` | This row owns the keyboard-active identity. |
+| `checked` | The application-owned checked state. |
+| `disabled` | The item's disabled policy. |
+| `keep_open` | The popup's `keep_open_on_select` policy for this description. |
+| `check_color`, `check_slot` | Resolved defaults for the check part. |
+| `visible` | `false` means skip the subtree and do not call `item_end`. |
+
+`item_begin` also accepts ordinary `Options`, `Recipe`, and `Style` values, so a
+parts author can share the same resolved geometry as `popup_begin`.
+
+### Groups
+
+`group_begin(ctx, &state, "Danger", key=...)` opens an optional ad-hoc semantic
+`Menu` group around a section of rows; `group_end` closes it. Groups do not
+change row indexes, do not add a focus stop, and are not composite collections.
+Alicorn's pinned `semantic_collection_begin` still rejects `.Menu`, so the
+popup publishes a flat `Menu` group with `Menu_Item` children and groups add
+nested `Menu` semantics without a logical count or selected identity. This is
+the recorded #241 gap, not a second semantic model.
+
+### Submenus
+
+v1 is intentionally single-level. The single anchored popup, one panel scroll
+region, one active-row index, and trigger focus restoration do not contain a
+nested-open/open-parent coordination model. Implementing nested popups would
+duplicate that policy and need new dismissal/focus tests; it is not a cheap
+extension of the current machinery. Compose a second menu `State` anchored to a
+row when an application needs a submenu, and keep the parent/child open policy
+in the application. The package does not claim native submenu semantics.
 
 ## Styling, motion, and theme
 
@@ -82,7 +211,34 @@ transparent backdrop (no dimming) and a themed surface panel with a border.
 
 Keyboard-active rows are revealed through an inner hidden-scrollbar scroll
 region; wheel scrolling works because the region is retained. There is no
-animation.
+component motion: a menu opens and closes immediately, and the runtime owns
+overlay focus presentation.
+
+## API reference
+
+| Declaration | Notes |
+| --- | --- |
+| `Item` | `key`, `label`, `detail`, `shortcut`, `kind`, `disabled`, `checked`. |
+| `Item_Kind` | `.Item` or `.Separator`. |
+| `Options` | Accessible label, popup width, row geometry, max visible rows, placement margin, `keep_open_on_select`. |
+| `Recipe` / `Style` | Optional namespaced surface roles and visual geometry. |
+| `State` | Open/anchor/panel/scroll nodes, active roving identity, focus requests, and the pending chosen key. |
+| `MenuItem` | Per-description row context. |
+| `trigger` | Stock anchored Button trigger. |
+| `popup_begin` | Open the overlay, panel, `Menu` group, and row scroll; returns `(visible, chosen_key)`. |
+| `item_begin` / `item_end` | Open/close one `Menu_Item` Button owner; `item_end` returns activation. |
+| `row_surface`, `check`, `label`, `shortcut`, `detail` | Optional default row visuals. |
+| `separator` | Visual separator part. |
+| `group_begin` / `group_end` | Optional ad-hoc nested Menu group. |
+| `item` | Convenience default row built from the parts. |
+| `popup_end` | Close the panel, overlay, and key scope. |
+| `open_from_node`, `close`, `take_chosen` | Custom trigger, programmatic close, and pending-key consumption. |
+| `menu_semantic_id`, `item_semantic_id`, `group_semantic_id` | Stable semantic identities. |
+| `recipe_default`, `style_default` | Core defaults. |
+| `theme_contract_default`, `theme_contract_check`, `theme_contract_satisfied`, `theme_contract_missing_required` | Setup-time validation. |
+
+`Item.key` must be nonzero and unique for actionable rows. `Item.detail` becomes
+the semantic description; `shortcut` is visual. `MAX_ITEMS` is 128.
 
 ## Keyboard and accessibility contract
 
@@ -91,26 +247,36 @@ animation.
 - **Up/Down** move the active row, skipping separators and disabled rows;
   **Home/End** move to the first/last enabled row.
 - **Return/Space** choose the active row. `popup_begin` returns the chosen key
-  and closes the menu (unless the app reopens it). Pointer/semantic row
-  activation returns `true` from `item`.
+  and closes the menu (unless `keep_open_on_select`). Pointer/semantic row
+  activation returns `true` from `item`/`item_end`.
 - **Escape** and a pointer down outside the panel close the menu and restore
   trigger focus.
 - The popup publishes one `Menu` with the accessible label and each actionable
   row as `Menu_Item` with label, value, description, Checked/Disabled/Current
   states, and Focus/Select/Press actions when enabled.
-- Not claimed: submenus, type-ahead, multi-select, composite collection
+- Not claimed: submenus, type-ahead, multi-select, composite menu collection
   count/position, or native menu integration.
 
-## Conformance tests
+`menu/menu_test.odin` covers the wrapper: identities, theme contract, trigger
+semantics, checked/disabled states, Down skipping separators/disabled rows,
+Return choice, Escape dismissal, trigger focus restoration, pointer selection,
+outside-click dismissal, placement flip, and viewport containment.
+`menu/menu_parts_test.odin` drives custom rows and groups:
 
-`menu/menu_test.odin` covers:
+- custom rows preserve `Menu_Item` semantics, detail descriptions, checked and
+  disabled states, and action presence;
+- group parts publish ad-hoc nested `Menu` semantics without a collection;
+- keyboard navigation skips separators and disabled custom rows and chooses the
+  same stable key as the wrapper;
+- pointer, Escape, and outside dismissal use the same focus restoration;
+- placement remains inside the viewport.
 
-- identities, theme contract, and role overrides;
-- trigger semantics, Menu/Menu_Item grouping, checked/disabled states;
-- Down skipping separators/disabled rows, Return choice, Escape dismissal, and
-  trigger focus restoration;
-- pointer item selection, outside-click dismissal, bottom-edge placement flip,
-  and viewport containment.
+```powershell
+odin test menu -define:ODIN_TEST_THREADS=1 -collection:alicorn=<alicorn> -collection:alikit=.
+./out/menu_example.exe --smoke
+./out/menu_parts_example.exe --smoke
+./out/menu_composition_example.exe --smoke
+```
 
 There is no dropdown-menu pattern kind in `testui` at this revision; explicit
 drive assertions are used.
@@ -119,10 +285,17 @@ drive assertions are used.
 
 - Headless tests do not prove a physical screen-reader menu session or pixels.
 - Long menus scroll inside the popup but do not use a composite collection.
-- Submenus and type-ahead are future work.
+- Submenus are application-composed from a second menu `State`; they are not a
+  package feature.
+- Menu groups are ad-hoc nested Menu semantics, not a counted collection.
+- The application owns command identity, dispatch, checked state, and any
+  application-specific row content.
 
 ## Source map
 
 - [Package](../menu/menu.odin)
-- [Tests](../menu/menu_test.odin)
-- [Example](../examples/menu/main.odin)
+- [Default tests](../menu/menu_test.odin)
+- [Parts tests](../menu/menu_parts_test.odin)
+- [Default example](../examples/menu/main.odin)
+- [Parts example](../examples/menu_parts/main.odin)
+- [Composition example](../examples/menu_composition/main.odin)
