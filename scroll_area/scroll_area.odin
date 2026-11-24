@@ -94,13 +94,6 @@ DEFAULT_RECIPE :: Recipe{
 	corner_role=.Surface,
 }
 
-Style :: struct {
-	corner_radius: f32,
-	stroke_width:  f32,
-}
-
-DEFAULT_STYLE :: Style{corner_radius=8, stroke_width=1}
-
 Theme_Contract :: tc.Contract
 Theme_Contract_Report :: tc.Report
 
@@ -135,7 +128,6 @@ Bar_Geometry :: struct {
 }
 
 recipe_default :: proc() -> Recipe { return DEFAULT_RECIPE }
-style_default :: proc() -> Style { return DEFAULT_STYLE }
 
 theme_contract_default :: proc(recipe: Recipe) -> Theme_Contract {
 	contract: Theme_Contract
@@ -400,7 +392,6 @@ begin :: proc(
 	key: ui.UI_Key,
 	instance_id: u64,
 	recipe: Recipe = {},
-	style: Style = {},
 ) -> bool {
 	if ctx == nil || ctx.runtime == nil || state == nil || instance_id == 0 ||
 	   instance_id > MAX_INSTANCE_ID {

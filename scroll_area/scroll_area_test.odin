@@ -27,7 +27,9 @@ fixture_render :: proc(app: ^Test_App, ctx: ^ui.UI) {
 		if begin(ctx, &app.view, app.options, key=alicorn.key_string("scroll-fixture-area"),
 			instance_id=9301, recipe=app.recipe) {
 			for line in 0..<22 {
-				_ = ui.text(ctx, "Scrollable line", key=ui.key_u64(u64(700+line)), style=ui.layout_style(.Column, height=24),
+				label := "Scrollable line"
+				if line == 0 { label = "Visible top line" }
+				_ = ui.text(ctx, label, key=ui.key_u64(u64(700+line)), style=ui.layout_style(.Column, height=24),
 					decorative=true, color=alicorn.style_color(ctx, .Muted_Text))
 			}
 			end(ctx, &app.view)
@@ -130,6 +132,44 @@ test_scroll_area_semantics_keyboard_and_wheel :: proc(t: ^testing.T) {
 		"the thumb should be bounded by the minimum and shorter than its track")
 	testing.expect(t, bar.track.x+bar.track.w <= area_bounds.x+area_bounds.w+0.01,
 		"bar parts should sit on the region's trailing edge")
+}
+
+@(test)
+test_scroll_area_keeps_content_visible_and_contained_after_resize :: proc(t: ^testing.T) {
+	app := Test_App{}
+	handle, ok := fixture_open(&app, t)
+	if !ok { return }
+	defer testui.close(&handle)
+
+	area := find_area(&handle)
+	if !testing.expect(t, area.match == .Unique, "the scroll area should be realized before resize") {
+		testui.destroy_find_result(&area)
+		return
+	}
+	original_width := area.element.bounds.w
+	visible := testui.expect_visible_text(&handle, &area.element, "Visible top line")
+	testing.expect(t, visible.ok, testui.visible_text_diagnostic(visible))
+	testui.destroy_find_result(&area)
+
+	if !testing.expect(t, testui.resize(&handle, 360, 300) == .Ok,
+		"the scroll area fixture should accept a narrower viewport") {
+		return
+	}
+	area = find_area(&handle)
+	defer testui.destroy_find_result(&area)
+	if !testing.expect(t, area.match == .Unique, "the scroll area should be realized after resize") {
+		return
+	}
+	testing.expect(t, area.element.bounds.w < original_width-100,
+		"the scroll area should follow the available width after resize")
+	viewport := alicorn.Rect{0, 0, 360, 300}
+	inside_viewport := area.element.bounds.x >= viewport.x && area.element.bounds.y >= viewport.y &&
+		area.element.bounds.x+area.element.bounds.w <= viewport.x+viewport.w &&
+		area.element.bounds.y+area.element.bounds.h <= viewport.y+viewport.h
+	testing.expect(t, inside_viewport,
+		"the resized scroll area should remain inside the 360 × 300 logical viewport")
+	visible = testui.expect_visible_text(&handle, &area.element, "Visible top line")
+	testing.expect(t, visible.ok, testui.visible_text_diagnostic(visible))
 }
 
 @(test)

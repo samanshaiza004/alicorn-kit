@@ -69,9 +69,12 @@ theme.scrollbar_recipe = scroll_area.theme_scrollbar_recipe(app.recipe)
 id := alicorn.style_theme_register(rt, theme)
 ```
 
-`Style` carries corner radius and stroke width. `Options` carries axes, explicit
-or fit viewport sizes, min/max height, content extent or line count, line
-metrics, padding, bar policy, axis behavior, and focusability.
+`Options` carries axes, explicit or fit viewport sizes, min/max height, content
+extent or line count, line metrics, padding, bar policy, axis behavior, and
+focusability. The component does not expose per-instance corner or stroke
+settings: Alicorn's scroll-region API does not currently apply those values,
+so the unused `Style` surface was removed rather than implying that it changes
+the rendered viewport.
 
 The component computes the fit-content viewport itself from content + max
 height. The pinned `Scroll_Region` fit-content path does not resolve a nonzero
@@ -115,6 +118,8 @@ of mistake is now component-owned:
   wheel parity, and thumb/track part geometry;
 - intrinsic fit sizing and max-height bounding;
 - command helpers (`scroll_to`, `scroll_to_line`, `scroll_page`) and clamping.
+- visible retained text, containment, and width adaptation after resizing from
+  520 × 420 to 360 × 300 logical pixels.
 
 ## Limits
 
@@ -124,8 +129,16 @@ of mistake is now component-owned:
 - AliKit does not draw custom thumb/track pixels: the runtime paints its
   retained bars with the supplied theme recipe. `bar_geometry` exposes the part
   rects for inspection and app overlays.
+- The implementation and focused tests in this checkout use Alicorn
+  `4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`, recorded in
+  [`dependencies.lock.json`](../dependencies.lock.json).
 
 ## Source map
+
+The reference preview is an authored SVG layout target, not a desktop
+application screenshot. It does not claim pixel equivalence with native output.
+Open the [Scroll Area reference](research/authoring-reliability/references/scroll-area.svg)
+beside the runnable example when reviewing its proportions and scroll treatment.
 
 - [Package](../scroll_area/scroll_area.odin)
 - [Tests](../scroll_area/scroll_area_test.odin)

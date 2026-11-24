@@ -1,0 +1,86 @@
+---
+title: Scroll Area
+description: Bounded or intrinsic retained scrolling with keyboard navigation, Scroll View semantics, and scrollbar part geometry.
+---
+
+<div class="lede">
+<code>alikit:scroll_area</code> wraps Alicorn's retained scroll region with a caller-owned state,
+content-derived sizing, a single keyboard focus stop, and a public scrollbar geometry snapshot.
+The application owns the content, logical extent, theme registration, and commands that reveal
+content. AliKit owns the keyboard policy and <code>Scroll_View</code> semantics.
+</div>
+
+## Runnable example
+
+The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/scroll_area/main.odin)
+shows a 40-line build log. Its [authored SVG target](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/references/scroll-area.svg)
+is a layout reference, not a desktop screenshot. The example uses the public runtime package only
+for optional extension-role theme registration; the basic `begin`/`end` pattern needs the UI and
+Scroll Area packages.
+
+## Sizing and ownership
+
+```odin
+import ui "alicorn:ui"
+import scroll "alikit:scroll_area"
+
+if scroll.begin(ctx, &app.log,
+	 scroll.Options{
+		accessible_label="Build log",
+		line_count=40,
+		line_height=24,
+		fit_content=true,
+		max_height=320,
+		axes=.Vertical,
+	},
+	key=ui.key_string("build-log"),
+	instance_id=1,
+) {
+	if ui.column(ctx, key=ui.key_string("build-log-lines"), width=-1) {
+		for line in app.lines {
+			_ = ui.text(ctx, line, style=ui.layout_style(height=24), decorative=true)
+		}
+	}
+	scroll.end(ctx, &app.log)
+}
+```
+
+Use `viewport_height` for a fixed viewport, or `fit_content=true` with `max_height` to grow with
+the content until it reaches a cap. Supply `content_height` directly or use `line_count` and
+`line_height`; the extent must describe the actual content. This component does not virtualize.
+Use `alicorn:runtime` or `alicorn:ui` virtual-list APIs for large repeated data, or `alikit:data_grid`
+for interactive rows and cells.
+
+The component does not expose corner-radius or stroke-width options. Those fields previously
+appeared in a `Style` type but had no effect on Alicorn's scroll-region output, so the no-op API
+was removed.
+
+## Keyboard and accessibility
+
+- The region is one Tab stop unless `non_focusable` is set.
+- Up/Down scroll one line; Page Up/Down scroll one viewport; Home/End go to the content bounds.
+- Wheel scrolling and scrollbar dragging remain Alicorn runtime behavior.
+- The region publishes `Scroll_View` with an accessible name and description. Platform
+  screen-reader scroll actions are not claimed at the pinned revision.
+- Horizontal keyboard scrolling is not provided. `axis_behavior` controls runtime wheel handling.
+
+## Verification and limits
+
+The package tests check bounded and fit-content sizing, keyboard and wheel offsets, semantic
+identity, scrollbar geometry, visible retained text, and width adaptation after resize. TestUI
+checks logical bounds and shaped paint output; it does not verify GPU pixels, physical DPI, or
+operating-system screen-reader behavior.
+
+The component computes a fit-content viewport because the pinned runtime does not resolve a
+nonzero `Scroll_Region` fit height inside a Column. Scrollbar colors are configured through the
+theme-level recipe, not per region.
+
+## Source map
+
+- **Alicorn pin:** <code>4e0862f368cb638b7aece0bad9dd82cae0c3d8c4</code>; this is the revision in
+  [<code>dependencies.lock.json</code>](https://github.com/samanshaiza004/alicorn-kit/blob/main/dependencies.lock.json).
+- [Component guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/scroll-area.md)
+- [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/scroll_area/scroll_area.odin)
+- [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/scroll_area/scroll_area_test.odin)
+- [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/scroll_area/main.odin)
+- [Layout cookbook](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/layout-cookbook.md)

@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800" role="img" aria-labelledby="title desc">
+  <title id="title">Scroll Area build log reference</title>
+  <desc id="desc">A dark project workspace with a scrollable build log, line numbers, severity badges, and a visible scrollbar.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#111b22"/>
+      <stop offset="1" stop-color="#151d25"/>
+    </linearGradient>
+    <linearGradient id="selected" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#244e65"/>
+      <stop offset="1" stop-color="#1d394a"/>
+    </linearGradient>
+    <clipPath id="log-clip"><rect x="328" y="282" width="884" height="376" rx="8"/></clipPath>
+  </defs>
+  <rect width="1280" height="800" fill="url(#bg)"/>
+  <rect x="0" y="0" width="1280" height="60" fill="#19252d"/>
+  <circle cx="27" cy="30" r="7" fill="#ef6b65"/>
+  <circle cx="50" cy="30" r="7" fill="#e6b85d"/>
+  <circle cx="73" cy="30" r="7" fill="#66b878"/>
+  <path d="M111 21h16v18h-16zM115 17h8v4h-8z" fill="none" stroke="#8ca0a8" stroke-width="1.8"/>
+  <text x="142" y="36" fill="#ecf2f0" font-family="Inter,Arial,sans-serif" font-size="16" font-weight="600">Northstar</text>
+  <text x="240" y="36" fill="#7f929a" font-family="Inter,Arial,sans-serif" font-size="14">/</text>
+  <text x="260" y="36" fill="#aebcc0" font-family="Inter,Arial,sans-serif" font-size="14">Workspace</text>
+  <rect x="1084" y="14" width="164" height="32" rx="16" fill="#23333b"/>
+  <circle cx="1104" cy="30" r="4" fill="#62c18b"/>
+  <text x="1117" y="35" fill="#b9c9c8" font-family="Inter,Arial,sans-serif" font-size="12">Connected</text>
+
+  <rect x="0" y="60" width="236" height="740" fill="#152129"/>
+  <text x="28" y="104" fill="#70848d" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="1.2">PROJECT</text>
+  <rect x="16" y="120" width="204" height="42" rx="8" fill="url(#selected)"/>
+  <path d="M34 132h15v14H34zM38 128h7v4h-7z" fill="none" stroke="#9bd2da" stroke-width="1.6"/>
+  <text x="62" y="147" fill="#e3f1f1" font-family="Inter,Arial,sans-serif" font-size="14" font-weight="600">Build log</text>
+  <path d="M35 189l8 8-8 8" fill="none" stroke="#72878f" stroke-width="1.8"/>
+  <text x="62" y="202" fill="#a0b0b4" font-family="Inter,Arial,sans-serif" font-size="14">Overview</text>
+  <path d="M35 232l8 8-8 8" fill="none" stroke="#72878f" stroke-width="1.8"/>
+  <text x="62" y="245" fill="#a0b0b4" font-family="Inter,Arial,sans-serif" font-size="14">Artifacts</text>
+  <path d="M35 275l8 8-8 8" fill="none" stroke="#72878f" stroke-width="1.8"/>
+  <text x="62" y="288" fill="#a0b0b4" font-family="Inter,Arial,sans-serif" font-size="14">Dependencies</text>
+  <line x1="24" y1="320" x2="212" y2="320" stroke="#2a3941"/>
+  <text x="28" y="350" fill="#70848d" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700" letter-spacing="1.2">ENVIRONMENT</text>
+  <text x="28" y="382" fill="#9babad" font-family="Inter,Arial,sans-serif" font-size="13">windows-arm64</text>
+  <text x="28" y="410" fill="#73868c" font-family="Inter,Arial,sans-serif" font-size="12">Release · commit 4b8d1a2</text>
+  <rect x="24" y="704" width="188" height="60" rx="9" fill="#1d2b33"/>
+  <text x="40" y="730" fill="#8fa2a7" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700">SCROLL POSITION</text>
+  <text x="40" y="750" fill="#d6e0df" font-family="Inter,Arial,sans-serif" font-size="13">18–33 of 40 lines</text>
+
+  <text x="276" y="112" fill="#ecf2f0" font-family="Inter,Arial,sans-serif" font-size="28" font-weight="650">Build log</text>
+  <text x="276" y="139" fill="#91a3a9" font-family="Inter,Arial,sans-serif" font-size="13">Latest output from the Release pipeline</text>
+  <rect x="1050" y="94" width="104" height="32" rx="16" fill="#1d4939"/>
+  <circle cx="1068" cy="110" r="4" fill="#5dcc8d"/>
+  <text x="1080" y="114" fill="#a7e2be" font-family="Inter,Arial,sans-serif" font-size="11" font-weight="700">RUNNING</text>
+  <rect x="1164" y="94" width="88" height="32" rx="7" fill="#24343c" stroke="#34464e"/>
+  <text x="1183" y="114" fill="#c4d0d0" font-family="Inter,Arial,sans-serif" font-size="12">Copy log</text>
+
+  <rect x="276" y="166" width="976" height="542" rx="14" fill="#1a272f" stroke="#2d3d45"/>
+  <rect x="300" y="190" width="928" height="52" rx="8" fill="#202f38"/>
+  <circle cx="322" cy="216" r="6" fill="#62c18b"/>
+  <text x="340" y="221" fill="#dce7e5" font-family="Inter,Arial,sans-serif" font-size="13" font-weight="600">Release · Build #842</text>
+  <text x="825" y="221" fill="#8fa2a7" font-family="Inter,Arial,sans-serif" font-size="12">Started 10:42 AM</text>
+  <text x="1015" y="221" fill="#8fa2a7" font-family="Inter,Arial,sans-serif" font-size="12">40 lines</text>
+
+  <rect x="300" y="258" width="928" height="420" rx="9" fill="#111a20" stroke="#29383f"/>
+  <g clip-path="url(#log-clip)" font-family="SFMono-Regular,Consolas,monospace" font-size="12">
+    <rect x="301" y="283" width="925" height="30" fill="#17232a"/>
+    <text x="320" y="302" fill="#637981">018</text><text x="362" y="302" fill="#61777e">10:42:18</text><rect x="447" y="289" width="43" height="18" rx="4" fill="#173d31"/><text x="455" y="302" fill="#79d4a0" font-size="10" font-weight="700">INFO</text><text x="505" y="302" fill="#c5d2d1">Resolved 128 packages from lockfile.</text>
+    <text x="320" y="332" fill="#637981">019</text><text x="362" y="332" fill="#61777e">10:42:18</text><rect x="447" y="319" width="43" height="18" rx="4" fill="#173d31"/><text x="455" y="332" fill="#79d4a0" font-size="10" font-weight="700">INFO</text><text x="505" y="332" fill="#c5d2d1">Checking generated source and formatting.</text>
+    <text x="320" y="362" fill="#637981">020</text><text x="362" y="362" fill="#61777e">10:42:19</text><rect x="447" y="349" width="43" height="18" rx="4" fill="#173d31"/><text x="455" y="362" fill="#79d4a0" font-size="10" font-weight="700">INFO</text><text x="505" y="362" fill="#c5d2d1">Compiling target: aarch64-unknown-windows-msvc</text>
+    <rect x="301" y="373" width="925" height="30" fill="#1a2a31"/>
+    <text x="320" y="392" fill="#637981">021</text><text x="362" y="392" fill="#61777e">10:42:20</text><rect x="447" y="379" width="43" height="18" rx="4" fill="#173d31"/><text x="455" y="392" fill="#79d4a0" font-size="10" font-weight="700">INFO</text><text x="505" y="392" fill="#e5f1ef">Compiling package northstar/app (release)...</text>
+    <text x="320" y="422" fill="#637981">022</text><text x="362" y="422" fill="#61777e">10:42:22</text><rect x="447" y="409" width="43" height="18" rx="4" fill="#173d31"/><text x="455" y="422" fill="#79d4a0" font-size="10" font-weight="700">INFO</text><text x="505" y="422" fill="#c5d2d1">Linking Northstar.exe</text>
+    <text x="320" y="452" fill="#637981">023</text><text x="362" y="452" fill="#61777e">10:42:23</text><rect x="447" y="439" width="43" height="18" rx="4" fill="#173d31"/><text x="455" y="452" fill="#79d4a0" font-size="10" font-weight="700">INFO</text><text x="505" y="452" fill="#c5d2d1">Writing symbols to artifacts/Northstar.pdb</text>
+    <text x="320" y="482" fill="#637981">024</text><text x="362" y="482" fill="#61777e">10:42:24</text><rect x="447" y="469" width="43" height="18" rx="4" fill="#473925"/><text x="455" y="482" fill="#e7bd72" font-size="10" font-weight="700">WARN</text><text x="505" y="482" fill="#d8cfbc">Asset cache miss; rebuilding 3 bundles.</text>
+    <text x="320" y="512" fill="#637981">025</text><text x="362" y="512" fill="#61777e">10:42:26</text><rect x="447" y="499" width="43" height="18" rx="4" fill="#173d31"/><text x="455" y="512" fill="#79d4a0" font-size="10" font-weight="700">INFO</text><text x="505" y="512" fill="#c5d2d1">Optimizing release assets.</text>
+    <text x="320" y="542" fill="#637981">026</text><text x="362" y="542" fill="#61777e">10:42:27</text><rect x="447" y="529" width="43" height="18" rx="4" fill="#173d31"/><text x="455" y="542" fill="#79d4a0" font-size="10" font-weight="700">INFO</text><text x="505" y="542" fill="#c5d2d1">Bundle size: 18.4 MiB (compressed).</text>
+    <text x="320" y="572" fill="#637981">027</text><text x="362" y="572" fill="#61777e">10:42:28</text><rect x="447" y="559" width="43" height="18" rx="4" fill="#173d31"/><text x="455" y="572" fill="#79d4a0" font-size="10" font-weight="700">INFO</text><text x="505" y="572" fill="#c5d2d1">Validating package manifest.</text>
+    <text x="320" y="602" fill="#637981">028</text><text x="362" y="602" fill="#61777e">10:42:29</text><rect x="447" y="589" width="43" height="18" rx="4" fill="#173d31"/><text x="455" y="602" fill="#79d4a0" font-size="10" font-weight="700">INFO</text><text x="505" y="602" fill="#c5d2d1">Uploading 4 artifacts to the release store.</text>
+    <text x="320" y="632" fill="#637981">029</text><text x="362" y="632" fill="#61777e">10:42:30</text><rect x="447" y="619" width="43" height="18" rx="4" fill="#173d31"/><text x="455" y="632" fill="#79d4a0" font-size="10" font-weight="700">INFO</text><text x="505" y="632" fill="#c5d2d1">Waiting for remote signing service…</text>
+  </g>
+  <rect x="1212" y="274" width="4" height="388" rx="2" fill="#27363e"/>
+  <rect x="1211" y="375" width="6" height="116" rx="3" fill="#71858a"/>
+
+  <text x="300" y="694" fill="#9fb0b1" font-family="Inter,Arial,sans-serif" font-size="12">↑ / ↓ line</text>
+  <circle cx="380" cy="690" r="2" fill="#5c7178"/>
+  <text x="394" y="694" fill="#9fb0b1" font-family="Inter,Arial,sans-serif" font-size="12">Page Up / Down viewport</text>
+  <circle cx="555" cy="690" r="2" fill="#5c7178"/>
+  <text x="569" y="694" fill="#9fb0b1" font-family="Inter,Arial,sans-serif" font-size="12">Home / End bounds</text>
+  <text x="276" y="758" fill="#72868b" font-family="Inter,Arial,sans-serif" font-size="12">VISUAL REFERENCE · NOT A CAPTURE</text>
+  <text x="1002" y="758" fill="#72868b" font-family="Inter,Arial,sans-serif" font-size="12">1280 × 800 logical px</text>
+</svg>

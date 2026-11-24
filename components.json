@@ -1294,6 +1294,83 @@
         "Opening and closing are immediate; no motion contract is provided",
         "Headless tests do not prove native screen-reader announcements or platform modal behavior"
       ]
+    },
+    {
+      "id": "scroll-area",
+      "name": "Scroll Area",
+      "package": "alikit:scroll_area",
+      "kind": "component",
+      "status": "stable",
+      "purpose": "Bounded or intrinsic retained scrolling with keyboard navigation, Scroll_View semantics, and scrollbar part geometry.",
+      "page": "/components/scroll-area/",
+      "source": [
+        "scroll_area/scroll_area.odin"
+      ],
+      "tests": [
+        "scroll_area/scroll_area_test.odin"
+      ],
+      "example": "examples/scroll_area/main.odin",
+      "dependencies": [
+        "alicorn:runtime",
+        "alicorn:ui",
+        "alikit:theme_contract"
+      ],
+      "ownedState": "State (resolved extent and viewport, offsets, bar visibility, pending focus, interaction-scope lifetime)",
+      "applicationOwns": [
+        "scroll content and logical extent",
+        "line metrics or explicit viewport size",
+        "theme registration and recipe",
+        "commands that reveal application content"
+      ],
+      "parts": [
+        "Scroll_View region",
+        "runtime-owned track and thumb geometry",
+        "optional frame surface role"
+      ],
+      "keyboard": [
+        "Up/Down move by one logical line",
+        "Page Up/Down move by one viewport minus one line",
+        "Home/End move to the content bounds",
+        "Wheel input and scrollbar drag remain runtime-owned"
+      ],
+      "accessibility": [
+        "Scroll_View role with accessible name and description",
+        "One focusable region by default",
+        "No platform screen-reader scrolling claim at the pinned revision"
+      ],
+      "themeRoles": {
+        "frame_surface_role": "Optional namespaced extension role",
+        "track_role": "Scrollbar_Track",
+        "thumb_role": "Scrollbar_Thumb",
+        "corner_role": "Surface"
+      },
+      "api": [
+        "Options",
+        "Recipe",
+        "State",
+        "Bar_Geometry",
+        "begin",
+        "end",
+        "request_focus",
+        "scroll_to",
+        "scroll_to_line",
+        "scroll_page",
+        "bar_geometry",
+        "thumb_parts",
+        "content_height_from_lines",
+        "content_height_from_measure",
+        "theme_scrollbar_recipe",
+        "theme_contract_default",
+        "theme_contract_check",
+        "theme_contract_satisfied"
+      ],
+      "limits": [
+        "Does not virtualize; use virtual_list_begin or Data Grid for large repeated data",
+        "Horizontal keyboard scrolling is not provided",
+        "Scroll_View semantic scroll actions are unavailable at the pinned revision",
+        "Fit-content viewport sizing is component-computed because the pinned runtime does not resolve a Scroll_Region fit height inside a Column",
+        "Scrollbar colors are theme-level rather than per-region overrides"
+      ]
     }
   ],
   "supportingPackages": [

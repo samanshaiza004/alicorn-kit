@@ -4,8 +4,10 @@ This first catalog sweep covered the 12 components registered at the time in
 [`components.json`](../../components.json). The existing Dialog package was
 subsequently added as a thirteenth catalog component; its reference experiment
 is tracked in the [authoring-reliability benchmark](authoring-reliability/reference-benchmark.md).
-The table and original 81-test count below are a record of that earlier sweep,
-not the result of the new three-component benchmark.
+Scroll Area was already implemented and documented but was missing from the
+machine-readable registry and website component list; it has now been added as
+the fourteenth catalog component. The table and original 81-test count below
+are a record of that earlier sweep, not the result of the new reference work.
 
 For each package, it checks public inputs and outputs, imports, state ownership,
 layout sizing, visual parts, keyboard and pointer behavior, semantics,

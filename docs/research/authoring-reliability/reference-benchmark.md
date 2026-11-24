@@ -112,7 +112,17 @@ headless retained-output checks as visual-match evidence.
   semantic construction. A stock palette consumer still has the simpler
   `alicorn:ui` + `alikit:command_palette` import surface.
 
-Keep one result file per agent under `results/` with this table and its attempt notes:
+### Follow-up outside the three reference cases
+
+A catalog audit found that Scroll Area had a guide, example, and test suite but
+was missing from both the machine-readable registry and website component list.
+The same audit found a public `Style` type whose radius and stroke fields were
+never applied. The registry/page omission and no-op API were corrected, and a
+visible-text/resize assertion plus an authored Scroll Area target were added.
+See the separate [Scroll Area follow-up](results/scroll-area.md); it is not part
+of the three reference attempt counts.
+
+For each of the three reference implementations, keep one result file under `results/` with this table and its attempt notes:
 
 | Measure | Result |
 | --- | --- |
