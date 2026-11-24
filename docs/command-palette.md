@@ -21,8 +21,13 @@ query shell and draws custom result rows with groups, descriptions, chips, and
 checks. The composition example pairs the palette with a Segmented search
 scope.
 
-The result rows use the public parts (leading icon, title, description, selected
-check). The page links to runnable examples instead of embedding desktop captures.
+The result rows use public parts for their leading icon, title, description,
+and selected check. The runnable `examples/command_palette` is the
+authoring-reliability reference scene; `--reference` opens its filtered modal.
+Its vector target is
+[`docs/research/authoring-reliability/references/command-palette.svg`](research/authoring-reliability/references/command-palette.svg).
+The docs link to the authored target and runnable source instead of embedding
+desktop application screenshots.
 
 ## Installation
 
@@ -32,10 +37,12 @@ collection:
 - `command_palette/command_palette.odin`
 - `command_palette/command_palette_test.odin` (modal/default behavior)
 - `command_palette/command_palette_parts_test.odin` (public part behavior)
+- `command_palette/visual_output_test.odin` (reference geometry, visible text, filtering, and focus)
 - `command_palette/pilot_test.odin` (stock-vs-parts measurement)
-- `examples/command_palette/main.odin` (default modal)
+- `examples/command_palette/main.odin` (workspace scene and reference shell; use `--reference` to open it)
 - `examples/command_palette_parts/main.odin` (application-owned shell)
 - `examples/command_palette_composition/main.odin` (palette + segmented scope)
+- `docs/research/authoring-reliability/results/command-palette.md` (attempt log and verification limits)
 
 `init` allocates the query and match buffer; `destroy` releases them:
 
@@ -137,6 +144,11 @@ valid and the modal shows `Options.allocation_error_message`.
 An application can own the shell and still use the palette's public parts:
 
 ```odin
+import ui "alicorn:ui"
+import model "alikit:palette_model"
+import palette "alikit:command_palette"
+import parts "alikit:palette_parts"
+
 _, _ = palette.input(ctx, &app.palette_state, palette.Options{hide_title=true},
 	key=ui.key_string("app-query"))
 
@@ -163,12 +175,27 @@ if !opened {
 	}
 }
 ```
-import ui "alicorn:ui"
 
 The public result types are `Result_List`, `Result_Row`, and `Result_Group`;
 their visual helpers come from `alikit:palette_parts` (`row_surface`, `icon`,
 `label`, `description`, `indicator`) so there is one row contract. `row_key(id)`
 returns the retained Button key when an application needs to target a row.
+`row_surface` grows to the realized Button row's available width; a regression
+test checks that the default option title remains visibly drawable.
+
+The stock `build` path owns its modal and row drawing. For a custom modal and
+per-result artwork, the reference example composes `input`, `list_begin`,
+`item_begin`, `item_end`, and `list_end`, then draws the row surface and content
+with public UI APIs. Its custom overlay calls
+`alicorn.modal_overlay_begin/end` and `alicorn.semantic_describe_as`, so it
+imports `alicorn:runtime`; `alicorn:ui` does not currently expose those modal
+or semantic operations. A basic consumer of `build` still needs only
+`alicorn:ui` and `alikit:command_palette`.
+
+`Item` has no icon or shortcut fields, and `build` has no custom-row callback.
+The reference application maps stable item IDs to icon IDs and shortcut labels
+while owning result-row drawing. This remains application presentation data,
+not part of the palette command model.
 
 ### Groups
 
@@ -293,7 +320,14 @@ the `.Modal_Dialog` pattern check, IME composition yield, and idle return.
 
 `command_palette/command_palette_parts_test.odin` composes `input`, the result
 parts, and `group_begin` directly and verifies the `List_Box` logical count,
-semantic `Group`, custom row activation, and selected state.
+semantic `Group`, custom row activation, selected state, and visible default
+row text.
+
+`command_palette/visual_output_test.odin` exercises the reference shell at
+1280 × 800, 960 × 720, and 760 × 640. It checks modal bounds, query and row
+containment, shaped query/title/description/shortcut text, filtering, selected
+semantics, activation, and focus restoration. This verifies retained geometry
+and drawable text products, not GPU pixels or fractional-DPI rendering.
 
 `command_palette/pilot_test.odin` runs the same scripted path through the stock
 modal and `palette_parts.results` and asserts the same activated stable ID.
@@ -326,9 +360,11 @@ one submitted frame.
 - [Package](../command_palette/command_palette.odin)
 - [Modal tests](../command_palette/command_palette_test.odin)
 - [Part tests](../command_palette/command_palette_parts_test.odin)
+- [Reference output test](../command_palette/visual_output_test.odin)
 - [Pilot measurement](../command_palette/pilot_test.odin)
 - [Default example](../examples/command_palette/main.odin)
 - [Parts example](../examples/command_palette_parts/main.odin)
 - [Composition example](../examples/command_palette_composition/main.odin)
 - [Palette model](../palette_model/model.odin)
 - [Palette parts](../palette_parts/parts.odin)
+- [Authoring-reliability result](research/authoring-reliability/results/command-palette.md)

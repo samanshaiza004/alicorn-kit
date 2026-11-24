@@ -165,6 +165,9 @@ Header_Config :: struct {
 	columns:      []Column,
 	// tracks is required for Header_Layout.Grid and ignored for Flow.
 	tracks:       []alicorn.Grid_Track,
+	// scrollbar_gutter reserves the body's vertical-scrollbar width beside a
+	// sticky header so both grids resolve the same track width.
+	scrollbar_gutter: f32,
 	height:       f32,
 	column_gap:   f32,
 	cell_padding: f32,
@@ -182,6 +185,7 @@ Header :: struct {
 	config:     Header_Config,
 	parent:     alicorn.Semantic_Collection_Handle,
 	collection: alicorn.Semantic_Collection_Handle,
+	slot:       alicorn.Node_ID,
 	surface:    alicorn.Node_ID,
 	row:        alicorn.Node_ID,
 	open:       bool,
@@ -199,6 +203,8 @@ header_begin :: proc(
 ) -> (header: Header, visible: bool) {
 	if ctx == nil || ctx.runtime == nil || len(config.columns) == 0 || len(config.columns) > MAX_COLUMNS { return }
 	if row_id.namespace == 0 || parent.id.namespace == 0 { return }
+	gutter := config.scrollbar_gutter
+	if gutter < 0 || math.is_nan(gutter) || math.is_inf(gutter) { gutter = 0 }
 	surface := begin_surface(
 		ctx,
 		config.surface_role,
@@ -232,6 +238,19 @@ header_begin :: proc(
 		parent=parent.id,
 		visual_node=surface,
 	})
+	slot: alicorn.Node_ID
+	if gutter > 0 {
+		// Keep the header surface full width for a continuous background and
+		// reserve the scrollbar only from the child track grid.
+		slot = alicorn.container_begin(ctx, .Container,
+			label="table-header-scroll-slot",
+			key=ui.key_string("alikit-table-header-scroll-slot"),
+			style=ui.layout_style(.Row, width=-1, height=config.height, align=.Stretch))
+		if slot == 0 {
+			alicorn.surface_end(ctx)
+			return
+		}
+	}
 	row: alicorn.Node_ID
 	switch config.layout {
 	case .Flow:
@@ -240,15 +259,17 @@ header_begin :: proc(
 			.Container,
 			label="table-header-row-cells",
 			key=config.cells_key,
-			style=ui.layout_style(.Row, width=-1, height=-1, gap=config.column_gap, align=.Stretch),
+			style=ui.layout_style(.Row, width=-1, height=-1, grow=(1 if slot != 0 else 0),
+				gap=config.column_gap, align=.Stretch),
 		)
 	case .Grid:
 		auto_rows := [1]alicorn.Grid_Track{alicorn.grid_auto()}
 		row = alicorn.grid_begin(ctx, config.cells_key, config.tracks, auto_rows[:],
-			style=ui.layout_style(.Row, width=-1, height=config.height),
+			style=ui.layout_style(.Row, width=-1, height=config.height, grow=(1 if slot != 0 else 0)),
 			gap_x=config.column_gap, gap_y=0, label="grid-header-grid")
 	}
 	if row == 0 {
+		if slot != 0 { alicorn.container_end(ctx) }
 		alicorn.surface_end(ctx)
 		return
 	}
@@ -257,6 +278,7 @@ header_begin :: proc(
 		config=config,
 		parent=parent,
 		collection=collection,
+		slot=slot,
 		surface=surface,
 		row=row,
 		open=true,
@@ -370,6 +392,17 @@ header_end :: proc(ctx: ^ui.UI, header: ^Header) {
 		alicorn.container_end(ctx)
 	case .Grid:
 		alicorn.grid_end(ctx)
+	}
+	if header.slot != 0 {
+		gutter := max(header.config.scrollbar_gutter, 0)
+		if gutter > 0 {
+			gutter_node := alicorn.container_begin(ctx, .Container,
+				label="table-header-scrollbar-gutter",
+				key=ui.key_string("alikit-table-header-scrollbar-gutter"),
+				style=ui.layout_style(.Column, width=gutter, height=header.config.height))
+			if gutter_node != 0 { alicorn.container_end(ctx) }
+		}
+		alicorn.container_end(ctx)
 	}
 	alicorn.surface_end(ctx)
 	header.open = false

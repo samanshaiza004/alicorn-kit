@@ -29,6 +29,7 @@ The component-by-component audit coverage and remaining validation limits are re
 | [`alikit:menu`](menu/) | An anchored dropdown built from trigger/popup/row/separator/group parts with custom row rendering and one chosen command. | [Menu](menu/) |
 | [`alikit:table`](table/) | A static, non-spanned presentation table with shared column tracks, headers, cell scaffolding, intrinsic wrapped rows, and optional virtualization. | [Table](table/) |
 | [`alikit:data_grid`](data-grid/) | An interactive dataset grid with one Tab stop, roving cell focus, selection publication, sort proposals, and essential virtualization. | [Data Grid](data-grid/) |
+| [`alikit:dialog`](dialog/) | Composable Dialog and Alert Dialog parts with dismissal policy, initial focus, focus restoration, and nested overlays. | [Dialog](dialog/) |
 | [`alikit:table_core`](../manifest/) | Shared presentation for Table and Data Grid: column/cell/row shapes, tracks, headers, and cell semantics. | Support package |
 | [`alikit:palette_model`](../manifest/) | Filtering and navigating a caller-owned list without UI dependencies. | Model package |
 | [`alikit:tree_model`](../manifest/) | UI-independent tree-row validation, keyboard navigation, stable focus/selection, and paged-window reconciliation. | Model package |

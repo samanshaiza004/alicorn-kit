@@ -1,0 +1,59 @@
+---
+title: Dialog
+description: Composable modal dialogs with focus placement, dismissal policy, and focus restoration.
+---
+
+<div class="lede">
+<code>alikit:dialog</code> provides Dialog and Alert Dialog behavior over Alicorn's modal overlay.
+The application owns when to open, the dialog copy and content, action meaning, and dispatch. The
+component owns modal dismissal policy, initial focus, focus restoration, and dialog semantics.
+</div>
+
+## Runnable example
+
+The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/dialog/main.odin)
+shows a destructive confirmation, an Alert Dialog, and an application-authored project settings
+surface. The example imports only <code>alicorn:ui</code> and <code>alikit:dialog</code>; tests use
+the runtime package for focused-node and retained-output assertions.
+
+## Focus and dismissal
+
+- A Dialog dismisses on Escape and backdrop input by default. An Alert Dialog ignores backdrop
+  input and prevents Escape unless its options override those policies.
+- A Dialog with <code>primary_key</code> defaults initial focus to Primary. For a destructive
+  confirmation, configure <code>focus=.Configured</code> with the Cancel button's key and
+  <code>focus_kind=.Button</code>. The reference example does this so Enter does not delete the
+  project as soon as the dialog opens.
+- Tab traversal stays inside the topmost modal. Closing or dismissing restores focus to the
+  recorded opener.
+
+The headless suite checks focus containment, Cancel-first focus, safe Return handling, dismissal,
+opener restoration, Alert behavior, and nested dialogs. It does not prove physical screen-reader
+announcements or operating-system modal behavior.
+
+## Sizing and resize
+
+`Options.height=0` measures the panel from its content, and `max_height` bounds long dialogs. The
+reference example uses a 516 px target width, wrapped explanatory copy, and verifies the dialog at
+1280 × 800, 960 × 720, and 760 × 640 logical viewport sizes. This does not establish behavior below
+760 px or a native DPI matrix.
+
+`dialog.action` currently fixes button height at 32 px. The reference uses 40 px actions, so it
+composes regular `ui.button` controls inside `dialog.action_row_begin` and calls `dialog.dismiss`
+for the application state change. This remains within the public UI and Dialog APIs.
+
+The authoring target is an [authored SVG layout](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/references/dialog.svg),
+not a screenshot of a running desktop app.
+
+## Source and limits
+
+- [Component guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/dialog.md)
+- [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/dialog/dialog.odin)
+- [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/dialog/dialog_test.odin)
+- [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/dialog/main.odin)
+
+The panel uses a themed container because the pinned runtime's surface fit-content path does not
+measure arbitrary children. Headless tests verify retained geometry and drawable shaped text, not
+GPU pixels; native visual and fractional-DPI validation remains outstanding. These compatibility
+notes reflect Alicorn revision <code>4e0862f368cb638b7aece0bad9dd82cae0c3d8c4</code>, which the
+AliKit lockfile pins.

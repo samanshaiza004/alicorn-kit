@@ -1,9 +1,8 @@
 package main
 
-// Data Grid example with a real, application-owned dataset. The application
-// filters and sorts its own source rows, rebuilds a stable-key projection, and
-// owns the accepted cell selection. AliKit owns the table semantics,
-// virtualization, shared column tracks, and roving cell focus.
+// The application owns the 200-row dataset, filtering, sorting, and accepted
+// selection. AliKit owns the shared grid tracks, table semantics,
+// virtualization, and roving cell focus.
 //
 // Run:
 //   odin run examples/data_grid -collection:alicorn=/path/to/alicorn
@@ -14,112 +13,80 @@ import "core:mem"
 import "core:os"
 import "core:strings"
 import base_runtime "base:runtime"
-import alicorn "alicorn:runtime"
-import theme "alicorn:theme"
 import ui "alicorn:ui"
 import data_grid "../../data_grid"
 
-THEME_PATH :: "examples/data_grid/theme.json"
-THEME_JSON :: #load("theme.json")
-
-ROW_COUNT :: 120
-
-Status :: enum { Ready, Modified, Archived }
+ROW_COUNT :: 200
+SAMPLE_NAME_COUNT :: 8
 
 App :: struct {
-	view:       data_grid.State,
-	columns:    [4]data_grid.Column,
-	query:      ui.Text_Buffer,
-	initialized: bool,
-	allocator:  mem.Allocator,
-
-	source_cells: [ROW_COUNT][4]data_grid.Cell,
-	source_rows:  [ROW_COUNT]data_grid.Row,
-	projection:   [ROW_COUNT]data_grid.Row,
-	visible_count: int,
-	sort_by_size: bool,
-	sort_by_name: bool,
-	selection:    data_grid.Selection,
-
-	recipe:      data_grid.Recipe,
-	theme_id:    alicorn.Style_Theme_ID,
-	theme_error: bool,
-	missing:     [8]string,
-	missing_count: int,
-	status_row: u64,
-	status_col: u64,
-	smoke:      bool,
+	view:            data_grid.State,
+	columns:         [4]data_grid.Column,
+	query:           ui.Text_Buffer,
+	initialized:     bool,
+	allocator:       mem.Allocator,
+	source_cells:    [ROW_COUNT][4]data_grid.Cell,
+	source_rows:     [ROW_COUNT]data_grid.Row,
+	projection:      [ROW_COUNT]data_grid.Row,
+	visible_count:   int,
+	sort_column:     u64,
+	sort_descending: bool,
+	selection:       data_grid.Selection,
+	status:          string,
+	smoke:           bool,
 }
 
 COLUMNS: [4]data_grid.Column = {
-	{key=10, label="Name", align=.Start},
-	{key=20, label="Size", width=90, align=.End},
-	{key=30, label="Kind", width=92, align=.Start},
-	{key=40, label="Status", width=92, align=.Start},
+	{key=10, label="Name", align=.Start, sortable=true},
+	{key=20, label="Owner", width=150, align=.Start},
+	{key=30, label="Updated", width=150, align=.Start, sortable=true},
+	{key=40, label="Status", width=112, align=.Start},
 }
 
-sizes := [ROW_COUNT]f32{
-	1240, 820, 4100, 980, 15200, 77, 6400, 2300, 9000, 512,
-	1100, 30500, 400, 2000, 760, 8800, 300, 6100, 1500, 220,
-	4300, 9900, 130, 5600, 7400, 260, 1900, 12800, 450, 3200,
-	600, 4700, 2200, 690, 15000, 340, 5400, 8300, 210, 1800,
-	3700, 900, 24000, 620, 1200, 7700, 290, 4800, 3300, 540,
-	16000, 710, 3800, 110, 2500, 9300, 840, 6700, 420, 1900,
-	5200, 300, 14000, 810, 3600, 120, 7800, 440, 2200, 980,
-	17000, 640, 4100, 270, 2900, 8600, 390, 5900, 1300, 230,
-	4500, 10100, 180, 6300, 7600, 320, 2000, 13200, 470, 3400,
-	680, 4900, 2400, 730, 15500, 360, 5600, 8500, 250, 1900,
-	3900, 960, 25000, 660, 1400, 7900, 310, 5000, 3500, 580,
-	16500, 750, 4000, 150, 2700, 9500, 880, 6900, 460, 2100,
+SAMPLE_NAMES: [SAMPLE_NAME_COUNT]string = {
+	"Quarterly planning",
+	"Mobile launch",
+	"Spring campaign",
+	"Research & insights",
+	"Brand refresh 2027",
+	"Website migration",
+	"Workspace cleanup",
+	"Customer interviews",
 }
 
-initialize :: proc(app: ^App, rt: ^alicorn.Runtime) {
+OWNERS: [5]string = {"Nora Kim", "Eli Turner", "Mina Patel", "Jon Bell", "Ava Chen"}
+UPDATED: [8]string = {
+	"Today, 10:42", "Yesterday", "Mon, 16:08", "Jun 11",
+	"Jun 10", "Jun 9", "Jun 7", "Jun 5",
+}
+STATUSES: [3]string = {"Ready", "Review", "Blocked"}
+
+initialize :: proc(app: ^App) {
 	app.allocator = base_runtime.heap_allocator()
 	app.query, app.initialized = ui.text_buffer("", app.allocator)
 	app.columns = COLUMNS
-	app.columns[0].sortable = true
-	app.columns[1].sortable = true
 	app.selection = data_grid.Selection{row_key=1, column_key=10}
+	app.status = ""
 	for index in 0..<ROW_COUNT {
-		kind := "File"
-		if index%3 == 0 { kind = "Folder" }
-		status := "Ready"
-		if index%5 == 0 { status = "Modified" }
+		name := ""
+		if index < len(SAMPLE_NAMES) {
+			name = SAMPLE_NAMES[index]
+		} else {
+			name = fmt.aprintf("Project %03d", index+1, allocator=app.allocator)
+		}
+		owner := OWNERS[index%len(OWNERS)]
+		updated := UPDATED[index%len(UPDATED)]
+		status := STATUSES[(index*7)%len(STATUSES)]
 		app.source_cells[index] = {
-			{text=fmt.aprintf("Document %03d", index+1, allocator=app.allocator)},
-			{text=format_size(sizes[index], app.allocator)},
-			{text=kind},
+			{text=name},
+			{text=owner},
+			{text=updated},
 			{text=status},
 		}
 		app.source_rows[index] = data_grid.Row{key=u64(index+1), cells=app.source_cells[index][:]}
 	}
 	rebuild_projection(app)
-	registration := theme.theme_json_register(rt, string(THEME_JSON), THEME_PATH)
-	defer theme.theme_json_register_result_destroy(&registration)
-	app.theme_id = registration.theme_id
-	if app.theme_id == 0 {
-		fmt.println("Data Grid example theme registration failed:", registration.failure)
-		return
-	}
-	app.recipe = data_grid.Recipe{
-		header_surface_role=alicorn.style_extension_color_role_id("vendor.alikit.data_grid", "header"),
-		row_surface_role=alicorn.style_extension_color_role_id("vendor.alikit.data_grid", "row"),
-		selected_row_surface_role=alicorn.style_extension_color_role_id("vendor.alikit.data_grid", "selected_row"),
-		selected_cell_surface_role=alicorn.style_extension_color_role_id("vendor.alikit.data_grid", "selected_cell"),
-	}
-	contract := data_grid.theme_contract_default(app.recipe)
-	report := data_grid.theme_contract_check(rt, app.theme_id, contract)
-	app.missing, app.missing_count = data_grid.theme_contract_missing_required(contract, report)
-	for index in 0..<app.missing_count {
-		fmt.println("Missing table theme role:", app.missing[index])
-	}
-	if app.missing_count > 0 { app.theme_error = true; app.recipe = {} }
-}
-
-format_size :: proc(bytes: f32, allocator := context.allocator) -> string {
-	if bytes >= 1024*1024 { return fmt.aprintf("%.1f MB", bytes/(1024*1024), allocator=allocator) }
-	if bytes >= 1024 { return fmt.aprintf("%.0f KB", bytes/1024, allocator=allocator) }
-	return fmt.aprintf("%.0f B", bytes, allocator=allocator)
+	_ = data_grid.request_focus(&app.view)
 }
 
 contains_fold :: proc(haystack, needle: string) -> bool {
@@ -131,12 +98,20 @@ contains_fold :: proc(haystack, needle: string) -> bool {
 rebuild_projection :: proc(app: ^App) {
 	app.visible_count = 0
 	for index in 0..<ROW_COUNT {
-		if !contains_fold(app.source_cells[index][0].text, app.query.text) { continue }
+		cells := app.source_cells[index]
+		matches := false
+		for cell in cells {
+			if contains_fold(cell.text, app.query.text) {
+				matches = true
+				break
+			}
+		}
+		if !matches { continue }
 		app.projection[app.visible_count] = app.source_rows[index]
 		app.visible_count += 1
 	}
-	// Application-owned sorting: insert stable keys into the projection. The
-	// table never sorts or filters the caller's rows.
+	// Sort only the application-owned projection; stable row keys keep focus
+	// and selection attached to the same project as rows move.
 	for index in 1..<app.visible_count {
 		current := app.projection[index]
 		move := index
@@ -149,98 +124,148 @@ rebuild_projection :: proc(app: ^App) {
 }
 
 less :: proc(app: ^App, left, right: data_grid.Row) -> bool {
-	if app.sort_by_size {
-		left_size := sizes[left.key-1]
-		right_size := sizes[right.key-1]
-		if left_size == right_size { return left.key < right.key }
-		return left_size < right_size
+	less_than := left.key < right.key
+	if app.sort_column == 10 {
+		less_than = left.cells[0].text < right.cells[0].text
+	} else if app.sort_column == 30 {
+		// The fixture's earlier keys are newer, matching the displayed dates.
+		less_than = left.key < right.key
 	}
-	if app.sort_by_name { return left.cells[0].text < right.cells[0].text }
-	return left.key < right.key
+	return !less_than if app.sort_descending else less_than
+}
+
+sort_proposed :: proc(app: ^App, column_key: u64) {
+	if app.sort_column == column_key {
+		app.sort_descending = !app.sort_descending
+	} else {
+		app.sort_column = column_key
+		app.sort_descending = false
+	}
+	for index in 0..<len(app.columns) { app.columns[index].sort = .None }
+	state := data_grid.Sort_State.Ascending if !app.sort_descending else data_grid.Sort_State.Descending
+	if app.sort_column == 10 { app.columns[0].sort = state }
+	if app.sort_column == 30 { app.columns[2].sort = state }
+	rebuild_projection(app)
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=ui.key_string("table-example-root"), width=-1, height=-1,
-		padding=24, gap=12) {
-		_ = ui.text(ctx, "Data Grid", size=26)
-		_ = ui.text(ctx, "Application-owned filtering and sorting; virtualized rows; nested table semantics.",
-			size=13, color=ui.style_color(ctx, .Muted_Text))
-		if ui.row(ctx, key=ui.key_string("table-example-controls"), width=-1,
-			height=34, gap=10, align=.Center) {
-			_ = ui.text_field(ctx, "Filter", &app.query,
-				key=ui.key_string("table-example-filter"), width=240, height=30)
-			_ = ui.checkbox(ctx, "Sort by size", &app.sort_by_size,
-				key=ui.key_string("table-example-sort"), width=160, height=28)
-			_ = ui.text(ctx, fmt.tprintf("%d rows", app.visible_count), size=12,
-				color=ui.style_color(ctx, .Muted_Text))
+	rebuild_projection(app)
+	viewport := ctx.runtime.viewport
+	visible_rows := clamp(int((viewport.h-360)/48), 4, 8)
+	panel_width := clamp(viewport.w-220, 320, 1060)
+	panel_height := max(viewport.h-234, 320)
+	if viewport.w >= 1100 {
+		app.columns[1].width = 200
+		app.columns[2].width = 200
+		app.columns[3].width = 198
+	} else {
+		app.columns[1].width = 150
+		app.columns[2].width = 150
+		app.columns[3].width = 112
+	}
+	status := fmt.tprintf("%d projects in this workspace", app.visible_count)
+	if app.status != "" { status = app.status }
+
+	if ui.column(ctx, key=ui.key_string("grid-example-window"), width=-1, height=-1) {
+		if ui.panel(ctx, key=ui.key_string("grid-example-titlebar"), width=-1, height=54,
+			fill=ui.style_color(ctx, .Subtle_Surface)) {
+			if ui.row(ctx, key=ui.key_string("grid-example-brand"), width=-1,
+				height=-1, align=.Center) {
+				_ = ui.column(ctx, key=ui.key_string("grid-example-brand-inset"), width=96, height=1)
+				_ = ui.text(ctx, "Northstar", size=15)
+			}
 		}
-		rebuild_projection(app)
-		if ui.panel(ctx, key=ui.key_string("table-example-panel"), width=-1, height=-1,
-			grow=1, padding=8, fill=ui.style_color(ctx, .Surface), radius=10,
-			stroke=ui.border(1, ui.style_color(ctx, .Border), .Inside)) {
-			if event := data_grid.data_grid(
-				ctx,
-				&app.view,
-				app.columns[:],
-				app.projection[:app.visible_count],
-				app.selection,
-				data_grid.Options{accessible_label="Documents", row_header=true,
-					max_visible_rows=10, row_height=30},
-				key=ui.key_string("grid-example-grid"),
-				instance_id=7101,
-				recipe=app.recipe,
-				); event.kind == .Activated {
-				app.selection.row_key = event.row_key
-				app.selection.column_key = event.column_key
-				app.status_row = event.row_key
-				app.status_col = event.column_key
-			} else if event.kind == .Sort_Proposed {
-				if event.column_key == 10 {
-					app.sort_by_name = !app.sort_by_name
-					app.sort_by_size = false
-				} else if event.column_key == 20 {
-					app.sort_by_size = !app.sort_by_size
-					app.sort_by_name = false
+		if ui.row(ctx, key=ui.key_string("grid-example-main"), width=-1, height=-1, grow=1) {
+			if ui.panel(ctx, key=ui.key_string("grid-example-rail"), width=72, height=-1,
+				fill=ui.style_color(ctx, .Subtle_Surface), align=.Center) {
+				_ = ui.column(ctx, key=ui.key_string("grid-example-rail-top-space"), width=1, height=34)
+				if ui.icon_button(ctx, "Northstar", .Info,
+					key=ui.key_string("grid-example-brand-mark"),
+					style=ui.layout_style(width=34, height=34), variant=.Primary) {
+					app.status = "Northstar workspace."
 				}
-				app.columns[0].sort = (data_grid.Sort_State.Ascending if app.sort_by_name else data_grid.Sort_State.None)
-				app.columns[1].sort = (data_grid.Sort_State.Ascending if app.sort_by_size else data_grid.Sort_State.None)
-				rebuild_projection(app)
+				_ = ui.column(ctx, key=ui.key_string("grid-example-rail-brand-gap"), width=1, height=26)
+				if ui.icon_button(ctx, "Projects", .File,
+					key=ui.key_string("grid-example-projects"),
+					style=ui.layout_style(width=36, height=36), selected=true) {
+					app.status = "Projects is the current view."
+				}
+				_ = ui.column(ctx, key=ui.key_string("grid-example-rail-projects-gap"), width=1, height=15)
+				if ui.icon_button(ctx, "Search", .Search,
+					key=ui.key_string("grid-example-search"),
+					style=ui.layout_style(width=36, height=36)) {
+					app.status = "Use the project filter to search this dataset."
+				}
 			}
-			if app.theme_error {
-				_ = ui.text(ctx, "Optional table theme roles are incomplete; core roles are in use.",
-					size=12, color=ui.style_color(ctx, .Danger))
+			_ = ui.column(ctx, key=ui.key_string("grid-example-content-inset"), width=38, height=-1)
+			if ui.column(ctx, key=ui.key_string("grid-example-content"), width=panel_width,
+				height=-1, gap=19) {
+				_ = ui.column(ctx, key=ui.key_string("grid-example-content-top-space"),
+					width=1, height=24)
+				if ui.row(ctx, key=ui.key_string("grid-example-heading"), width=-1,
+					height=56, gap=12, align=.Center) {
+					if ui.column(ctx, width=-1, grow=1, gap=4) {
+						_ = ui.text(ctx, "Projects", size=25)
+						_ = ui.text(ctx, status, size=13, color=ui.style_color(ctx, .Muted_Text))
+					}
+					if ui.button(ctx, "Export", key=ui.key_string("grid-example-export"),
+						width=116, height=36, variant=.Quiet) {
+						app.status = "Export is an application-owned action."
+					}
+					if ui.button(ctx, "New project", key=ui.key_string("grid-example-new"),
+						width=132, height=36, variant=.Primary) {
+						app.status = "Project creation is an application-owned action."
+					}
+				}
+				if ui.panel(ctx, key=ui.key_string("grid-example-panel"), width=-1,
+					height=panel_height, padding=16, gap=12,
+					fill=ui.style_color(ctx, .Surface), radius=10,
+					stroke=ui.border(1, ui.style_color(ctx, .Border), .Inside)) {
+					if ui.row(ctx, key=ui.key_string("grid-example-toolbar"), width=-1,
+						height=40, justify=.Space_Between, align=.Center) {
+						if ui.row(ctx, key=ui.key_string("grid-example-search-controls"),
+							width=-1, height=-1, gap=10, align=.Center) {
+							_ = ui.icon(ctx, .Search, size=16)
+							_ = ui.text_field(ctx, "Filter projects", &app.query,
+								key=ui.key_string("grid-example-filter"), width=320, height=36)
+						}
+						_ = ui.text(ctx, fmt.tprintf("%d rows", app.visible_count), size=12,
+							color=ui.style_color(ctx, .Muted_Text))
+					}
+					if event := data_grid.data_grid(
+						ctx,
+						&app.view,
+						app.columns[:],
+						app.projection[:app.visible_count],
+						app.selection,
+						data_grid.Options{accessible_label="Projects", row_header=true,
+							max_visible_rows=visible_rows, row_height=48, header_height=42,
+							cell_padding=10, header_text_size=12, cell_text_size=13},
+						key=ui.key_string("grid-example-grid"),
+						instance_id=7101,
+					); event.kind == .Activated {
+						app.selection = data_grid.Selection{row_key=event.row_key, column_key=event.column_key}
+						app.status = fmt.tprintf("Selected row %d, column %d", event.row_key, event.column_key)
+					} else if event.kind == .Sort_Proposed {
+						sort_proposed(app, event.column_key)
+					}
+				}
 			}
 		}
-		status := "Activate a cell with Return, Space, or the pointer."
-		if app.status_row != 0 {
-			status = fmt.tprintf("Activated row %d, column %d", app.status_row, app.status_col)
-		}
-		_ = ui.text(ctx, status, size=13, color=ui.style_color(ctx, .Muted_Text))
 	}
 }
 
 stop :: proc(app: ^App) {
 	if app.smoke {
-		fmt.println("data_grid_smoke", "rows", app.visible_count, "selected", app.selection.row_key,
-			"column", app.selection.column_key, "idle", true)
+		fmt.println("data_grid_smoke", "rows", ROW_COUNT, "visible", app.visible_count,
+			"selected", app.selection.row_key, "column", app.selection.column_key, "idle", true)
 	}
 	if app.initialized { ui.text_buffer_destroy(&app.query) }
 	if app.allocator.procedure != nil {
-		for index in 0..<ROW_COUNT {
+		for index in SAMPLE_NAME_COUNT..<ROW_COUNT {
 			delete(app.source_cells[index][0].text, app.allocator)
-			delete(app.source_cells[index][1].text, app.allocator)
 		}
 	}
-}
-
-on_key :: proc(app: ^App, rt: ^alicorn.Runtime, key: alicorn.Application_Key) -> bool {
-	#partial switch key {
-	case .Escape:
-		_ = ui.text_buffer_set(&app.query, "")
-		alicorn.invalidate_root(rt, "Data Grid example cleared filter")
-		return true
-	}
-	return false
 }
 
 main :: proc() {
@@ -249,15 +274,7 @@ main :: proc() {
 		if argument == "--smoke" { smoke = true }
 	}
 	app := App{smoke=smoke}
-	ui.run(
-		&app,
-		render,
-		title="Alicorn - Table",
-		width=980,
-		height=640,
-		on_initialize=initialize,
-		on_key=on_key,
-		on_stop=stop,
-		smoke=smoke,
-	)
+	initialize(&app)
+	ui.run(&app, render, title="Northstar · Projects", width=1280, height=800,
+		on_stop=stop, smoke=smoke)
 }

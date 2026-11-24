@@ -416,6 +416,7 @@ emit_header_row :: proc(
 	options: Options,
 	style: Style,
 	recipe: Recipe,
+	scrollbar_gutter: f32,
 ) -> Event {
 	header, visible := core.header_begin(
 		ctx,
@@ -423,6 +424,7 @@ emit_header_row :: proc(
 			layout=.Grid,
 			columns=columns,
 			tracks=tracks,
+			scrollbar_gutter=scrollbar_gutter,
 			height=options.header_height,
 			column_gap=options.column_gap,
 			cell_padding=options.cell_padding,
@@ -625,6 +627,8 @@ data_grid :: proc(
 	header_count := 0
 	if !resolved.hide_header { header_count = 1 }
 	row_count := len(rows)
+	scrollbar_gutter := f32(0)
+	if row_count > resolved.max_visible_rows { scrollbar_gutter = alicorn.SCROLLBAR_THICKNESS }
 	logical_count := row_count+header_count
 	realized_last := u64(logical_count)
 
@@ -660,7 +664,7 @@ data_grid :: proc(
 
 	if !resolved.hide_header {
 		header_event := emit_header_row(ctx, columns, tracks_slice, table_collection, instance_id,
-			resolved, resolved_style, recipe)
+			resolved, resolved_style, recipe, scrollbar_gutter)
 		if header_event.kind != .None { event = header_event }
 	}
 

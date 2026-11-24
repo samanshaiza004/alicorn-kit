@@ -21,10 +21,22 @@ rows and ordinary document navigation.
 The component retains only ephemeral focus/proposal state. It publishes
 `Selected`/`Current` from caller values and never mutates selection.
 
+The runnable reference example imports `alicorn:ui` and `alikit:data_grid`;
+it does not import `alicorn:runtime`. The application owns the 200-row fixture,
+search projection, sorting, and responsive column widths. It reads the current
+viewport through the UI callback context to choose a bounded visible-row count.
+
 `alikit:table_core` is the shared presentation layer used by both this grid and
 [Table](table.md). It owns the common data shapes, column tracks, header parts,
 and cell semantic scaffolding; `data_grid` keeps its distinct managed-focus,
 roving, reveal, and proposal layer.
+
+For a long virtualized body, the shared header track grid reserves Alicorn's
+`SCROLLBAR_THICKNESS` inside the full-width header surface. This keeps its
+decoration continuous while header and body calculate fractional columns from
+the same usable width. `data_grid` requests that gutter only when the row count
+exceeds `max_visible_rows`; short datasets do not leave a blank scrollbar
+strip. Both components use the same header slot in `table_core`.
 
 ## Copyable implementation
 
@@ -127,7 +139,10 @@ claimed as a pattern.
 - sortable header semantics, direction description, Press action, and
   `Sort_Proposed`;
 - 200-row virtualization with virtual semantic rows and Page Down reveal;
-- the native example smoke path.
+- shared header/body tracks with and without a scrollbar, first-row clipping,
+  and visible cell text at 1280, 960, and 760 px widths;
+- fractional TestUI presentation scales at 1×, 1.25×, 1.5×, and 2×;
+- the runnable example build against the pinned Alicorn and AccessKit collections.
 
 There is no `testui` data-grid pattern at the pinned revision; `.Roving_List`
 and `.Roving_Grid` require a `List_Box` container. Explicit drive assertions are
@@ -136,9 +151,17 @@ used until the `.Data_Grid` pattern addition lands.
 ## Limits
 
 - Headless tests do not prove a physical screen-reader grid session or pixels.
+- TestUI fractional-scale checks do not replace native DPI captures; no native
+  pixel comparison is claimed by the reference authoring result.
 - Non-spanned only; columns cap at 64. Virtual rows publish cells only when
   realized.
 - Sorting and filtering are application callbacks over the projection.
+
+## Compatibility
+
+This reference was built against Alicorn
+`4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`, the revision recorded in
+[`dependencies.lock.json`](../dependencies.lock.json).
 
 ## Source map
 

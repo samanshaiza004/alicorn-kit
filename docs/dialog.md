@@ -29,6 +29,22 @@ input and focus.
 
 Files: `dialog/dialog.odin`, `dialog/dialog_test.odin`, `examples/dialog/main.odin`.
 
+The authoring-reliability reference is [a vector design target](research/authoring-reliability/references/dialog.svg),
+not a desktop capture. The example uses a 516 px width to match that target and
+leaves height at the component's intrinsic default; the modal stays inside the
+viewport at the tested 760 × 640 size. This target width is an example choice,
+not a requirement for application dialogs. The ordinary example imports only
+`alicorn:ui` and `alikit:dialog`; the test package imports the runtime for
+focused-node and retained-output assertions. The target uses 40 px actions,
+while `dialog.action` currently fixes its buttons at 32 px. To match the target,
+the example composes ordinary `ui.button` controls inside
+`dialog.action_row_begin` and uses `dialog.dismiss` for the state transition.
+That is a deliberate public-API composition and a dimension workaround worth
+recording in the reference benchmark.
+
+Compatibility and fit-content notes here reflect the Alicorn revision pinned
+by this repository: `4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`.
+
 ```odin
 import ui "alicorn:ui"
 // In the ordinary root:
@@ -107,6 +123,9 @@ a color alpha, not an animated scrim.
   action, otherwise the first action; `Alert_Dialog` defaults to the panel.
   Explicit targets: `Panel`, `Primary`, `First_Action`, `Configured`
   (`focus_key` + `focus_kind`).
+- The reference example configures `Cancel` as initial focus for its destructive
+  confirmation. This avoids making Enter delete data immediately after opening;
+  the component's general-purpose default remains unchanged.
 - **Focus restoration** returns to the recorded opener on Escape, backdrop, or
   `close`/`dismiss`.
 - **Tab** traversal is contained and wraps within the modal subtree by Alicorn.
@@ -129,6 +148,9 @@ a color alpha, not an animated scrim.
 - Alert backdrop and Escape prevention plus the live Alerts entity;
 - Dialog backdrop dismissal and focus restoration;
 - primary and configured focus placement;
+- the authoring reference's wrapping, panel/action containment, shared action
+  baseline, visible copy, Cancel-first focus, safe Return behavior, and
+  containment after resize from 1280 × 800 through 960 × 720 to 760 × 640;
 - nested dialogs: topmost Escape only, parent survival, child focus restoration.
 
 ## Limits

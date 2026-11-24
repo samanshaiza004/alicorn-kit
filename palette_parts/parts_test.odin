@@ -143,6 +143,8 @@ test_palette_parts_publishes_a_list_collection :: proc(t: ^testing.T) {
 	alpha := find_option(&handle, "Alpha")
 	defer testui.destroy_find_result(&alpha)
 	if !testing.expect(t, alpha.match == .Unique, "Alpha should publish one option") { return }
+	visible_alpha := testui.expect_visible_text(&handle, &alpha.element, "Alpha")
+	testing.expect(t, visible_alpha.ok, testui.visible_text_diagnostic(visible_alpha))
 	testing.expect_value(t, alpha.element.collection_id, list.element.semantic_id)
 	testing.expect_value(t, alpha.element.position_in_set, u64(0))
 	testing.expect_value(t, alpha.element.size_of_set, u64(6))

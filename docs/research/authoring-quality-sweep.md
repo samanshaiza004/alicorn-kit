@@ -1,6 +1,12 @@
 # AliKit catalog authoring-quality sweep
 
-This sweep covers the 12 components in [`components.json`](../../components.json).
+This first catalog sweep covered the 12 components registered at the time in
+[`components.json`](../../components.json). The existing Dialog package was
+subsequently added as a thirteenth catalog component; its reference experiment
+is tracked in the [authoring-reliability benchmark](authoring-reliability/reference-benchmark.md).
+The table and original 81-test count below are a record of that earlier sweep,
+not the result of the new three-component benchmark.
+
 For each package, it checks public inputs and outputs, imports, state ownership,
 layout sizing, visual parts, keyboard and pointer behavior, semantics,
 accessibility claims, its runnable example, and its component guide. The

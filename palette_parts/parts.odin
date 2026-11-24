@@ -511,7 +511,7 @@ row_surface :: proc(ctx: ^ui.UI, row: Row) -> alicorn.Node_ID {
 		ctx,
 		alicorn.surface_core_color_role(.Surface),
 		key=ui.key_u64(1),
-		style=ui.layout_style(.Row, width=-1, height=row.list.options.row_height-2,
+		style=ui.layout_style(.Row, width=-1, height=row.list.options.row_height-2, grow=1,
 			padding=8, gap=8, align=.Center),
 		shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=5},
 		fill=row_fill,

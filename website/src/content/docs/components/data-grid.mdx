@@ -15,6 +15,8 @@ headers, and cell scaffolding come from <code>alikit:table_core</code>.
 
 The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/data_grid/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
 
+The authoring-reliability target is an [authored Data Grid SVG](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/references/data-grid.svg), not a desktop capture. The example and its result log are linked from the [reference benchmark](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/reference-benchmark.md).
+
 ## Responsibility split
 
 | Layer | Responsibility |
@@ -26,6 +28,18 @@ The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/m
 
 The component stores only ephemeral focus and proposal state. It publishes `Selected` from the
 application's `Selection` but never mutates it.
+
+The runnable reference example imports <code>alicorn:ui</code> and
+<code>alikit:data_grid</code>, without importing <code>alicorn:runtime</code>. The application
+owns its 200-row dataset, search projection, sorting, and responsive column widths. It reads the
+current viewport through the UI callback context to choose a bounded visible-row count.
+
+For a long virtualized body, the shared header track grid reserves Alicorn's
+<code>SCROLLBAR_THICKNESS</code> inside the full-width header surface. Its decoration stays
+continuous while header and body resolve fractional columns from the same usable width. The
+gutter is requested only when the row count exceeds <code>max_visible_rows</code>, so short
+datasets do not leave a blank scrollbar strip. Both components use the shared header slot in
+<code>table_core</code>.
 
 ## Copyable implementation
 
@@ -111,7 +125,10 @@ question as an Alicorn-side proposal.
 - Up skipping a disabled row, Down, Home/End columns, Return activation, and pointer parity;
 - sortable header semantics, direction description, Press action, and `Sort_Proposed`;
 - 200-row virtualization with virtual semantic rows and Page Down reveal;
-- the native example smoke path.
+- header/body track alignment with and without a scrollbar, clipped-row bounds, and visible cell
+  text at 1280, 960, and 760 px widths;
+- fractional TestUI presentation scales at 1×, 1.25×, 1.5×, and 2×;
+- the runnable example build against the pinned Alicorn and AccessKit collections.
 
 ```powershell
 odin test data_grid -define:ODIN_TEST_THREADS=1 -collection:alicorn=<alicorn> -collection:alikit=.
@@ -145,7 +162,7 @@ There is no `testui` data-grid pattern at the pinned revision; explicit drive as
 ## Compatibility
 
 <div class="pin-note"><strong>Pin:</strong> built against Alicorn
-<code>3c9ccb9df5478008efe66082ef9d0a47b9ae98d6</code>. See
+<code>4e0862f368cb638b7aece0bad9dd82cae0c3d8c4</code>. See
 <a href="../../compatibility/">Compatibility and pinning</a>.</div>
 
 ## Source map

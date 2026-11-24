@@ -13,7 +13,9 @@ without importing model types. Import `palette_model` only when using its indepe
 
 ## Runnable example
 
-The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
+The [Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette/main.odin) is a runnable consumer of this package. Run it with `--reference` to open the authoring-reliability scene and prefill its query with `export`. Its visual target is the authored [Command Palette SVG](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/references/command-palette.svg); this page does not embed desktop application screenshots.
+
+The reference test checks the modal's 660 × 576 logical bounds at 1280 × 800, 960 × 720, and 760 × 640, plus query/result visibility, containment, filtering, selection semantics, activation, and focus restoration. TestUI observes retained text and geometry, not GPU pixels. Native pixel matching and DPI captures remain unverified.
 
 ## Responsibility split
 
@@ -22,6 +24,10 @@ The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/m
 | **Alicorn** | Modal overlay, focus scope, input routing, text field, virtual list, semantics, layout, and rendering. |
 | **`command_palette`** | Controlled query, cached match buffer, selection by stable ID, keyboard/pointer routing, panel appearance, and focus restoration. |
 | **Application** | Items and stable `Item_ID` values, matching/ranking policy in caller-filtered mode, open shortcut, and activation dispatch. |
+
+The compact `build` path owns its overlay and default row drawing. The reference scene composes the public query and result-list parts so it can add per-item icons and keyboard shortcuts. `Item` has no icon or shortcut fields, and `build` does not currently accept a custom-row callback, so the example maps each stable item ID to those presentation values.
+
+That custom shell imports `alicorn:runtime` for `modal_overlay_begin/end` and `semantic_describe_as`. Those public operations are not re-exported by `alicorn:ui`; the minimal `build` example below needs only `alicorn:ui` and `alikit:command_palette`.
 
 Use the palette for command access. Do not use it as a general dialog, a file picker, or a router:
 those are application or other-component concerns.
@@ -164,6 +170,11 @@ covers:
   named step;
 - idle return after the palette closes.
 
+`command_palette/visual_output_test.odin` exercises the reference shell at all
+three logical viewports. `palette_parts/parts_test.odin` also checks that the
+default result title has visible shaped text after `row_surface` fills its
+Button owner.
+
 ```powershell
 odin test command_palette -collection:alicorn=<alicorn> -collection:alikit=.
 ./out/command_palette_example.exe --smoke
@@ -203,7 +214,7 @@ frame.
 ## Compatibility
 
 <div class="pin-note"><strong>Pin:</strong> built and tested against Alicorn
-<code>3c9ccb9df5478008efe66082ef9d0a47b9ae98d6</code>. AliKit is source-level; see
+<code>4e0862f368cb638b7aece0bad9dd82cae0c3d8c4</code>. AliKit is source-level; see
 <a href="../../compatibility/">Compatibility and pinning</a> before updating the pair.</div>
 
 ## Source map
@@ -211,9 +222,11 @@ frame.
 - [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/command_palette/command_palette.odin)
 - [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/command_palette/command_palette_test.odin)
 - [Parts tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/command_palette/command_palette_parts_test.odin)
+- [Reference output test](https://github.com/samanshaiza004/alicorn-kit/blob/main/command_palette/visual_output_test.odin)
 - [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette/main.odin)
 - [Parts example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette_parts/main.odin)
 - [Composition example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette_composition/main.odin)
 - [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/command-palette.md)
 - [Palette model](https://github.com/samanshaiza004/alicorn-kit/blob/main/palette_model/model.odin)
 - [Palette parts](https://github.com/samanshaiza004/alicorn-kit/blob/main/palette_parts/parts.odin)
+- [Authoring-reliability results](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/results/command-palette.md)

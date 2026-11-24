@@ -6,7 +6,7 @@
   "alicorn": {
     "repository": "https://github.com/Carnival-Science/Alicorn.git",
     "ref": "master",
-    "revision": "3c9ccb9df5478008efe66082ef9d0a47b9ae98d6"
+    "revision": "4e0862f368cb638b7aece0bad9dd82cae0c3d8c4"
   },
   "accesskit_binding": {
     "repository": "https://github.com/samanshaiza004/odin-accesskit.git",
@@ -30,7 +30,8 @@
         "command_palette/command_palette.odin"
       ],
       "tests": [
-        "command_palette/command_palette_test.odin"
+        "command_palette/command_palette_test.odin",
+        "command_palette/visual_output_test.odin"
       ],
       "example": "examples/command_palette/main.odin",
       "dependencies": [
@@ -1207,6 +1208,91 @@
         "Built-in sorting/filtering/editing are not included",
         "Unrealized virtual rows do not export per-cell values",
         "No data-grid testui pattern at the pinned revision"
+      ]
+    },
+    {
+      "id": "dialog",
+      "name": "Dialog",
+      "package": "alikit:dialog",
+      "kind": "component",
+      "status": "stable",
+      "purpose": "Composable Dialog and Alert_Dialog parts with dismissal policy, initial focus, focus restoration, and nested overlay behavior.",
+      "page": "/components/dialog/",
+      "source": [
+        "dialog/dialog.odin"
+      ],
+      "tests": [
+        "dialog/dialog_test.odin"
+      ],
+      "example": "examples/dialog/main.odin",
+      "dependencies": [
+        "alicorn:runtime",
+        "alicorn:ui",
+        "alikit:theme_contract"
+      ],
+      "ownedState": "State (open state, opener identity, focus restoration, pending dismissal event)",
+      "applicationOwns": [
+        "when to open and close",
+        "dialog copy and content",
+        "action meaning and dispatch",
+        "configured destructive-action focus policy"
+      ],
+      "parts": [
+        "dialog surface",
+        "title",
+        "description",
+        "content slot",
+        "action row",
+        "primary/cancel/custom actions",
+        "optional close affordance",
+        "Alert semantic companion"
+      ],
+      "keyboard": [
+        "Escape dismisses Dialog by default and is prevented for Alert_Dialog",
+        "Tab traversal stays within the topmost modal overlay",
+        "initial focus is configurable by target and key",
+        "dismissal restores focus to the opener"
+      ],
+      "accessibility": [
+        "Dialog role with title and description",
+        "Alert_Dialog publishes an assertive Alert companion",
+        "focus stays within the active overlay",
+        "action buttons use ordinary button semantics"
+      ],
+      "themeRoles": {
+        "panel_surface_role": "Surface",
+        "backdrop_surface_role": "Surface"
+      },
+      "api": [
+        "State",
+        "Options",
+        "Variant",
+        "Escape_Policy",
+        "Backdrop_Policy",
+        "Focus_Target",
+        "Action_Kind",
+        "Event",
+        "open",
+        "open_from_node",
+        "close",
+        "begin",
+        "title",
+        "description",
+        "content_begin",
+        "content_end",
+        "action_row_begin",
+        "action_row_end",
+        "action",
+        "close_affordance",
+        "dismiss",
+        "dialog_semantic_id",
+        "alert_semantic_id"
+      ],
+      "limits": [
+        "Dialog panel uses a themed container because arbitrary-child surface fit-content is unavailable at the pinned Alicorn revision",
+        "The built-in action helper uses a fixed 32 px height",
+        "Opening and closing are immediate; no motion contract is provided",
+        "Headless tests do not prove native screen-reader announcements or platform modal behavior"
       ]
     }
   ],

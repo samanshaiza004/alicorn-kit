@@ -79,7 +79,7 @@ find_grid :: proc(handle: ^testui.Test_Handle(Test_App)) -> testui.Find_Result {
 }
 
 @(private)
-find_role :: proc(handle: ^testui.Test_Handle(Test_App), role: alicorn.Semantic_Role, name: string) -> testui.Find_Result {
+find_role :: proc(handle: ^testui.Test_Handle($T), role: alicorn.Semantic_Role, name: string) -> testui.Find_Result {
 	return testui.find(handle, testui.Query{role=role, name=name, match_role=true, match_name=true})
 }
 
@@ -206,10 +206,121 @@ Large_Fixture :: struct {
 }
 
 large_render :: proc(fixture: ^Large_Fixture, ctx: ^ui.UI) {
-	_ = data_grid(ctx, &fixture.state, fixture.columns, fixture.rows,
-		Selection{row_key=1000, column_key=20},
-		Options{accessible_label="Files", row_header=true, max_visible_rows=5},
-		key=alicorn.key_string("grid-large-fixture"), instance_id=9102)
+	visible_rows := clamp(int((ctx.runtime.viewport.h-350)/48), 4, 8)
+	if ui.column(ctx, key=ui.key_string("grid-large-root"), width=-1, height=-1,
+		padding=16, gap=12) {
+		_ = ui.text(ctx, "Projects", size=24)
+		if ui.panel(ctx, key=ui.key_string("grid-large-panel"), width=-1, height=-1,
+			grow=1, padding=8, gap=8, fill=ui.style_color(ctx, .Surface), radius=8,
+			stroke=ui.border(1, ui.style_color(ctx, .Border), .Inside)) {
+			_ = data_grid(ctx, &fixture.state, fixture.columns, fixture.rows,
+				Selection{row_key=1000, column_key=10},
+				Options{accessible_label="Files", row_header=true,
+					max_visible_rows=visible_rows, row_height=48, header_height=42},
+				key=alicorn.key_string("grid-large-fixture"), instance_id=9102)
+		}
+	}
+}
+
+check_large_grid_geometry :: proc(
+	t: ^testing.T,
+	handle: ^testui.Test_Handle(Large_Fixture),
+	fixture: ^Large_Fixture,
+) {
+	grid_node := testui.find(handle, testui.Query{role=.Table, name="Files", match_role=true, match_name=true})
+	defer testui.destroy_find_result(&grid_node)
+	if !testing.expect(t, grid_node.match == .Unique, "the reference scene should publish one Data Grid") { return }
+	first_row := find_role(handle, .Table_Row, "Row 1")
+	defer testui.destroy_find_result(&first_row)
+	if !testing.expect(t, first_row.match == .Unique, "the first row should be realized in the viewport") { return }
+	list_info, list_found := alicorn.node_info(handle.runtime, fixture.state.list_node)
+	if !testing.expect(t, list_found && list_info.scroll_geometry_resolved,
+		"the virtualized body should expose resolved scroll geometry") { return }
+	viewport := list_info.scroll_viewport_bounds
+	row_bounds := first_row.element.bounds
+	row_visible := row_bounds.x >= viewport.x-0.5 && row_bounds.y >= viewport.y-0.5 &&
+		row_bounds.x+row_bounds.w <= viewport.x+viewport.w+0.5 &&
+		row_bounds.y+row_bounds.h <= viewport.y+viewport.h+0.5
+	testing.expect(t, row_visible,
+		"the realized row should remain inside the clipped virtual-list viewport")
+
+	name_header := find_role(handle, .Table_Column_Header, "Name")
+	defer testui.destroy_find_result(&name_header)
+	name_cell := find_role(handle, .Table_Row_Header, "Row 1")
+	defer testui.destroy_find_result(&name_cell)
+	header_row := find_role(handle, .Table_Row, "Columns")
+	defer testui.destroy_find_result(&header_row)
+	if !testing.expect(t, name_header.match == .Unique && name_cell.match == .Unique,
+		"the first shared column should expose its header and first row cell") { return }
+	if testing.expect(t, header_row.match == .Unique, "the full header track should be exposed") {
+		left_viewport := testui.expect_aligned(handle, &header_row.element, &first_row.element, .Left)
+		testing.expect(t, left_viewport.ok, testui.layout_check_diagnostic(left_viewport))
+		// The header paint stays full width, while its tracks reserve the body's
+		// actual scrollbar viewport. Short datasets should have no empty gutter.
+		expected_gutter := f32(0)
+		if list_info.scroll_content_height > list_info.scroll_viewport_height {
+			expected_gutter = alicorn.SCROLLBAR_THICKNESS
+		}
+		width_difference := header_row.element.bounds.w-first_row.element.bounds.w
+		width_error := width_difference-expected_gutter
+		if width_error < 0 { width_error = -width_error }
+		testing.expectf(t, width_error <= 0.5,
+			"header background should extend the body track by the active gutter %.2f; difference=%.2f",
+			expected_gutter, width_difference)
+	}
+	left_track := testui.expect_aligned(handle, &name_cell.element, &name_header.element, .Left)
+	testing.expect(t, left_track.ok, testui.layout_check_diagnostic(left_track))
+	right_track := testui.expect_aligned(handle, &name_cell.element, &name_header.element, .Right)
+	testing.expect(t, right_track.ok, testui.layout_check_diagnostic(right_track))
+	cell_inside_row := testui.expect_inside(handle, &name_cell.element, &first_row.element)
+	testing.expect(t, cell_inside_row.ok, testui.layout_check_diagnostic(cell_inside_row))
+	visible := testui.expect_visible_text(handle, &name_cell.element, "Row 1")
+	testing.expect(t, visible.ok, testui.visible_text_diagnostic(visible))
+}
+
+@(test)
+test_reference_grid_layout_is_stable_across_fractional_scales :: proc(t: ^testing.T) {
+	columns := fixture_columns()
+	cells: [LARGE_ROW_COUNT][3]Cell
+	rows: [LARGE_ROW_COUNT]Row
+	for index in 0..<LARGE_ROW_COUNT {
+		cells[index] = {{text=fixture_row_name(index)}, {text="1 KB"}, {text="file"}}
+		rows[index] = Row{key=u64(1000+index), cells=cells[index][:]}
+	}
+	scales := [4]f32{1, 1.25, 1.5, 2}
+	for scale in scales {
+		fixture := Large_Fixture{columns=columns[:], rows=rows[:]}
+		_ = request_focus(&fixture.state)
+		handle, status := testui.open(&fixture, large_render, width=1280, height=800, scale=scale)
+		if !testing.expectf(t, status == .Ok, "the grid should open at scale %.2f: %v %s",
+			scale, status, testui.last_turn_diagnostic(&handle)) {
+			if handle.runtime != nil { testui.close(&handle) }
+			continue
+		}
+		check_large_grid_geometry(t, &handle, &fixture)
+		testui.close(&handle)
+	}
+}
+
+@(test)
+test_short_dataset_does_not_reserve_scrollbar_gutter :: proc(t: ^testing.T) {
+	columns := fixture_columns()
+	cells: [3][3]Cell
+	rows: [3]Row
+	for index in 0..<3 {
+		cells[index] = {{text=fixture_row_name(index)}, {text="1 KB"}, {text="file"}}
+		rows[index] = Row{key=u64(1000+index), cells=cells[index][:]}
+	}
+	fixture := Large_Fixture{columns=columns[:], rows=rows[:], state={}}
+	_ = request_focus(&fixture.state)
+	handle, status := testui.open(&fixture, large_render, width=1280, height=800)
+	if !testing.expectf(t, status == .Ok, "the short grid fixture should open: %v %s",
+		status, testui.last_turn_diagnostic(&handle)) {
+		if handle.runtime != nil { testui.close(&handle) }
+		return
+	}
+	defer testui.close(&handle)
+	check_large_grid_geometry(t, &handle, &fixture)
 }
 
 @(test)
@@ -223,13 +334,14 @@ test_table_virtualizes_and_reveals_large_rows :: proc(t: ^testing.T) {
 	}
 	fixture := Large_Fixture{columns=columns[:], rows=rows[:]}
 	_ = request_focus(&fixture.state)
-	handle, status := testui.open(&fixture, large_render, width=620, height=320)
+	handle, status := testui.open(&fixture, large_render, width=1280, height=800)
 	if !testing.expectf(t, status == .Ok, "the large grid fixture should open: %v %s",
 		status, testui.last_turn_diagnostic(&handle)) {
 		if handle.runtime != nil { testui.close(&handle) }
 		return
 	}
 	defer testui.close(&handle)
+	check_large_grid_geometry(t, &handle, &fixture)
 
 	grid_node := testui.find(&handle, testui.Query{role=.Table, name="Files", match_role=true, match_name=true})
 	if !testing.expect(t, grid_node.match == .Unique, "the large grid should publish one Table") {
@@ -244,6 +356,17 @@ test_table_virtualizes_and_reveals_large_rows :: proc(t: ^testing.T) {
 			"the last row should start outside the realized window")
 	}
 	testui.destroy_find_result(&last)
+
+	viewports := [3][2]int{{1280, 800}, {960, 720}, {760, 640}}
+	for viewport in viewports {
+		width, height := viewport[0], viewport[1]
+		if handle.viewport_width != width || handle.viewport_height != height {
+			resize_status := testui.resize(&handle, width, height)
+			testing.expectf(t, resize_status == .Ok,
+				"the grid should complete resize to %dx%d: %v", width, height, resize_status)
+		}
+		check_large_grid_geometry(t, &handle, &fixture)
+	}
 
 	for _ in 0..<40 {
 		_ = testui.step(&handle, testui.Input{kind=.Key, key=.Page_Down})

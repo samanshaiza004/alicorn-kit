@@ -77,8 +77,182 @@ fixture_open :: proc(app: ^Test_App, t: ^testing.T) -> (testui.Test_Handle(Test_
 }
 
 @(private)
-find_button :: proc(handle: ^testui.Test_Handle(Test_App), name: string) -> testui.Find_Result {
+find_button :: proc(handle: ^testui.Test_Handle($T), name: string) -> testui.Find_Result {
 	return testui.find(handle, testui.Query{role=.Button, name=name, match_role=true, match_name=true})
+}
+
+REFERENCE_DELETE_DESCRIPTION :: "“Summer Archive” and its files will be removed from Northstar for everyone with access. This action cannot be undone, and any active downloads will stop."
+
+Reference_App :: struct {
+	state: State,
+	delete_count: int,
+	cancel_count: int,
+}
+
+reference_render :: proc(app: ^Reference_App, ctx: ^ui.UI) {
+	if ui.column(ctx, key=ui.key_string("reference-root"), width=-1, height=-1, padding=24, gap=12) {
+		if ui.button(ctx, "Delete project", key=ui.key_string("reference-open"), width=144, height=36) {
+			_ = open(&app.state, ctx.runtime)
+		}
+	}
+}
+
+reference_overlay :: proc(app: ^Reference_App, ctx: ^ui.UI) {
+	if !app.state.open { return }
+	visible, _ := begin(ctx, &app.state, "Delete project?",
+		Options{
+			description=REFERENCE_DELETE_DESCRIPTION,
+			primary_key=ui.key_string("reference-delete"),
+			focus=.Configured,
+			focus_key=ui.key_string("reference-cancel"),
+			focus_kind=.Button,
+			width=516,
+			max_height=500,
+			padding=24,
+			gap=12,
+			action_gap=12,
+		}, key=ui.key_string("reference-dialog"), instance_id=9701)
+	if !visible { return }
+
+	title(ctx, "Delete project?")
+	description(ctx, REFERENCE_DELETE_DESCRIPTION)
+	if content_begin(ctx, ui.key_string("reference-details")) {
+		if ui.panel(ctx, key=ui.key_string("reference-summary"), width=-1,
+			height=58, padding=12, gap=3, fill=ui.style_color(ctx, .Surface), radius=8) {
+			_ = ui.text(ctx, "14 files · 2 members", size=13)
+			_ = ui.text(ctx, "Shared access ends immediately.", size=12,
+				color=ui.style_color(ctx, .Muted_Text))
+		}
+		content_end(ctx)
+	}
+	if action_row_begin(ctx, Options{action_gap=12}, ui.key_string("reference-actions")) {
+		if ui.button(ctx, "Cancel", key=ui.key_string("reference-cancel"),
+			width=112, height=40, variant=.Quiet) {
+			app.cancel_count += 1
+			dismiss(ctx, &app.state, .Action)
+		}
+		if ui.button(ctx, "Delete project", key=ui.key_string("reference-delete"),
+			width=153, height=40, variant=.Primary) {
+			app.delete_count += 1
+			dismiss(ctx, &app.state, .Action)
+		}
+		action_row_end(ctx)
+	}
+	end(ctx, &app.state)
+}
+
+@(private)
+reference_open :: proc(app: ^Reference_App, t: ^testing.T) -> (testui.Test_Handle(Reference_App), bool) {
+	handle, status := testui.open(app, reference_render, width=1280, height=800,
+		render_overlays=reference_overlay)
+	if !testing.expectf(t, status == .Ok, "the reference fixture should open: %v %s",
+		status, testui.last_turn_diagnostic(&handle)) {
+		if handle.runtime != nil { testui.close(&handle) }
+		return {}, false
+	}
+	return handle, true
+}
+
+@(test)
+test_dialog_reference_geometry_focus_and_resizing :: proc(t: ^testing.T) {
+	app := Reference_App{}
+	handle, ok := reference_open(&app, t)
+	if !ok { return }
+	defer testui.close(&handle)
+
+	opener := find_button(&handle, "Delete project")
+	if !testing.expect(t, opener.match == .Unique, "the reference trigger should be realized") {
+		testui.destroy_find_result(&opener)
+		return
+	}
+	_ = testui.click(&handle, &opener.element)
+	testui.destroy_find_result(&opener)
+	_ = testui.describe_once(&handle)
+	_ = testui.describe_once(&handle)
+
+	panel := testui.find(&handle, testui.Query{
+		role=.Dialog, name="Delete project?", match_role=true, match_name=true,
+	})
+	cancel := find_button(&handle, "Cancel")
+	delete_action := testui.find(&handle, testui.Query{
+		role=.Button, key=ui.key_string("reference-delete"),
+		match_role=true, match_key=true,
+	})
+	defer testui.destroy_find_result(&panel)
+	defer testui.destroy_find_result(&cancel)
+	defer testui.destroy_find_result(&delete_action)
+	if !testing.expectf(t, panel.match == .Unique && cancel.match == .Unique &&
+		delete_action.match == .Unique,
+		"reference lookups: panel=%v/%q cancel=%v/%q delete=%v/%q",
+		panel.match, panel.element.name, cancel.match, cancel.element.name,
+		delete_action.match, delete_action.element.name) { return }
+
+	testing.expect(t, alicorn.focused_node(handle.runtime) == cancel.element.visual_node,
+		"the destructive reference must focus Cancel instead of the destructive action")
+	inside_cancel := testui.expect_inside(&handle, &cancel.element, &panel.element)
+	testing.expect(t, inside_cancel.ok, testui.layout_check_diagnostic(inside_cancel))
+	inside_delete := testui.expect_inside(&handle, &delete_action.element, &panel.element)
+	testing.expect(t, inside_delete.ok, testui.layout_check_diagnostic(inside_delete))
+	aligned := testui.expect_aligned(&handle, &cancel.element, &delete_action.element, .Center_Y)
+	testing.expect(t, aligned.ok, testui.layout_check_diagnostic(aligned))
+	visible_copy := testui.expect_visible_text(&handle, &panel.element, REFERENCE_DELETE_DESCRIPTION)
+	testing.expect(t, visible_copy.ok, testui.visible_text_diagnostic(visible_copy))
+
+	// Enter on the first-open focus target must not trigger the destructive action.
+	_ = testui.step(&handle, testui.Input{kind=.Key, key=.Return})
+	testing.expect(t, app.delete_count == 0 && app.cancel_count == 1,
+		"Enter must not confirm deletion when Cancel has initial focus")
+
+	// Reopen, then resize through the same description path used by a host.
+	_ = testui.describe_once(&handle)
+	opener = find_button(&handle, "Delete project")
+	if !testing.expect(t, opener.match == .Unique, "the opener should return after dismissal") {
+		testui.destroy_find_result(&opener)
+		return
+	}
+	_ = testui.click(&handle, &opener.element)
+	testui.destroy_find_result(&opener)
+	_ = testui.describe_once(&handle)
+	_ = testui.describe_once(&handle)
+	if !testing.expect(t, testui.resize(&handle, 960, 720) == .Ok,
+		"the reference scene should accept a medium viewport") { return }
+
+	testui.destroy_find_result(&panel)
+	panel = testui.find(&handle, testui.Query{
+		role=.Dialog, name="Delete project?", match_role=true, match_name=true,
+	})
+	if !testing.expect(t, panel.match == .Unique && panel.element.has_bounds,
+		"the dialog should remain measurable at the medium viewport") { return }
+	no_overflow := testui.expect_no_overflow(&handle, &panel.element)
+	testing.expect(t, no_overflow.ok, testui.layout_check_diagnostic(no_overflow))
+	testing.expect(t,
+		panel.element.bounds.x >= 0 && panel.element.bounds.y >= 0 &&
+		panel.element.bounds.x+panel.element.bounds.w <= 960 &&
+		panel.element.bounds.y+panel.element.bounds.h <= 720,
+		"the medium dialog should remain within the logical viewport")
+	visible_at_medium := testui.expect_visible_text(&handle, &panel.element,
+		REFERENCE_DELETE_DESCRIPTION)
+	testing.expect(t, visible_at_medium.ok, testui.visible_text_diagnostic(visible_at_medium))
+
+	testui.destroy_find_result(&panel)
+	if !testing.expect(t, testui.resize(&handle, 760, 640) == .Ok,
+		"the reference scene should accept a smaller viewport") { return }
+	panel = testui.find(&handle, testui.Query{
+		role=.Dialog, name="Delete project?", match_role=true, match_name=true,
+	})
+	if !testing.expect(t, panel.match == .Unique && panel.element.has_bounds,
+		"the dialog should remain measurable at the smaller viewport") { return }
+	no_overflow = testui.expect_no_overflow(&handle, &panel.element)
+	testing.expect(t, no_overflow.ok, testui.layout_check_diagnostic(no_overflow))
+	testing.expect(t,
+		panel.element.bounds.x >= 0 && panel.element.bounds.y >= 0 &&
+		panel.element.bounds.x+panel.element.bounds.w <= 760 &&
+		panel.element.bounds.y+panel.element.bounds.h <= 640,
+		"the smaller dialog should remain within the logical viewport")
+
+	visible_after_resize := testui.expect_visible_text(&handle, &panel.element,
+		REFERENCE_DELETE_DESCRIPTION)
+	testing.expect(t, visible_after_resize.ok, testui.visible_text_diagnostic(visible_after_resize))
 }
 
 @(test)
