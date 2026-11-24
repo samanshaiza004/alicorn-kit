@@ -17,7 +17,6 @@ import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import palette "alikit:command_palette"
 import segmented "../../segmented"
-import model "alikit:palette_model"
 
 SCOPES: [3]segmented.Item = {
 	{value=1, label="Commands"},
@@ -25,35 +24,35 @@ SCOPES: [3]segmented.Item = {
 	{value=3, label="Navigation"},
 }
 
-COMMANDS: [4]model.Item = {
-	{id=model.Item_ID(1), title="Build project", description="Run the configured build", keywords="compile"},
-	{id=model.Item_ID(2), title="Run tests", description="Execute the full workspace suite", keywords="test"},
-	{id=model.Item_ID(3), title="Open settings", description="Adjust editor preferences", keywords="preferences"},
-	{id=model.Item_ID(4), title="Publish release", description="Unavailable while checks run", keywords="ship", disabled=true},
+COMMANDS: [4]palette.Item = {
+	{id=palette.Item_ID(1), title="Build project", description="Run the configured build", keywords="compile"},
+	{id=palette.Item_ID(2), title="Run tests", description="Execute the full workspace suite", keywords="test"},
+	{id=palette.Item_ID(3), title="Open settings", description="Adjust editor preferences", keywords="preferences"},
+	{id=palette.Item_ID(4), title="Publish release", description="Unavailable while checks run", keywords="ship", disabled=true},
 }
 
-FILES: [3]model.Item = {
-	{id=model.Item_ID(11), title="main.odin", description="src/main.odin", keywords="source"},
-	{id=model.Item_ID(12), title="README.md", description="Project overview", keywords="docs"},
-	{id=model.Item_ID(13), title="theme.json", description="examples/theme.json", keywords="theme"},
+FILES: [3]palette.Item = {
+	{id=palette.Item_ID(11), title="main.odin", description="src/main.odin", keywords="source"},
+	{id=palette.Item_ID(12), title="README.md", description="Project overview", keywords="docs"},
+	{id=palette.Item_ID(13), title="theme.json", description="examples/theme.json", keywords="theme"},
 }
 
-NAVIGATION: [3]model.Item = {
-	{id=model.Item_ID(21), title="Go to definition", description="Jump to the symbol", keywords="symbol"},
-	{id=model.Item_ID(22), title="Go to line", description="Enter a line number", keywords="line"},
-	{id=model.Item_ID(23), title="Go to file", description="Search workspace files", keywords="file"},
+NAVIGATION: [3]palette.Item = {
+	{id=palette.Item_ID(21), title="Go to definition", description="Jump to the symbol", keywords="symbol"},
+	{id=palette.Item_ID(22), title="Go to line", description="Enter a line number", keywords="line"},
+	{id=palette.Item_ID(23), title="Go to file", description="Search workspace files", keywords="file"},
 }
 
 App :: struct {
 	palette:  palette.State,
 	segments: segmented.State,
 	scope:    u64,
-	last:     model.Item_ID,
+	last:     palette.Item_ID,
 	status:   string,
 	smoke:    bool,
 }
 
-scope_items :: proc(scope: u64) -> []model.Item {
+scope_items :: proc(scope: u64) -> []palette.Item {
 	switch scope {
 	case 2: return FILES[:]
 	case 3: return NAVIGATION[:]
@@ -113,7 +112,7 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 	)
 	if event.kind == .Activated {
 		app.last = event.item_id
-		app.status = fmt.tprintf("Activated item ID %d in %s.", model.item_id_value(event.item_id),
+		app.status = fmt.tprintf("Activated item ID %d in %s.", u64(event.item_id),
 			scope_label(app.scope))
 	}
 }
@@ -121,7 +120,7 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 stop :: proc(app: ^App) {
 	if app.smoke {
 		fmt.println("command_palette_composition_smoke", "scope", app.scope,
-			"last", model.item_id_value(app.last), "idle", true)
+			"last", u64(app.last), "idle", true)
 	}
 }
 

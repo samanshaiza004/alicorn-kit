@@ -2,7 +2,9 @@
 
 `alikit:command_palette` provides a themed modal palette over a caller-owned
 action list. `alikit:palette_model` contains the filtering and selection rules
-without a UI dependency. The result list is built from the same public parts as
+without a UI dependency. `command_palette` re-exports `Item` and `Item_ID`, so
+a default palette consumer imports `palette_model` only when using its
+independent model helpers. The result list is built from the same public parts as
 `alikit:palette_parts`, so a complete palette and an application-owned shell
 share one result contract.
 
@@ -77,36 +79,51 @@ modal overlay
 ## Minimal example
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import palette "alikit:command_palette"
-import model "alikit:palette_model"
 
-SAMPLE_ITEMS: [2]model.Item = {
-	{id=model.Item_ID(1), title="Open File", description="Browse the workspace"},
-	{id=model.Item_ID(2), title="Build Project", keywords="compile"},
+SAMPLE_ITEMS :: [2]palette.Item{
+	{id=palette.Item_ID(1), title="Open File", description="Browse the workspace"},
+	{id=palette.Item_ID(2), title="Build Project", keywords="compile"},
 }
 
 App :: struct {
 	palette: palette.State,
-	items:   [2]model.Item,
+	items:   [2]palette.Item,
+}
+
+render :: proc(app: ^App, ctx: ^ui.UI) {
+	_ = ui.text(ctx, "AliKit · Command Palette", size=24)
 }
 
 render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 	if !app.palette.open { return }
 	event := palette.build(ctx, &app.palette, app.items[:],
-		key=alicorn.key_string("app-palette"),
-		options=palette.Options{title="Example Actions"})
+		ui.key_string("app-palette"),
+		palette.Options{title="Example Actions"})
 	if event.kind == .Activated {
 		// Dispatch the stable ID in application code.
 	}
 }
 
-on_key :: proc(app: ^App, rt: ^alicorn.Runtime, key: alicorn.Application_Key) -> bool {
+on_key :: proc(app: ^App, rt: ^ui.Runtime, key: ui.Application_Key) -> bool {
 	if !app.palette.open && key == .Open_Command_Palette {
 		return palette.open_palette(&app.palette, rt)
 	}
 	return false
+}
+
+main :: proc() {
+	app := App{items=SAMPLE_ITEMS}
+	if !palette.init(&app.palette) { return }
+	defer palette.destroy(&app.palette)
+	ui.run(&app, render,
+		title="AliKit Command Palette",
+		width=760,
+		height=520,
+		on_key=on_key,
+		render_overlays=render_overlays,
+	)
 }
 ```
 
@@ -121,11 +138,11 @@ An application can own the shell and still use the palette's public parts:
 
 ```odin
 _, _ = palette.input(ctx, &app.palette, palette.Options{hide_title=true},
-	key=alicorn.key_string("app-query"))
+	key=ui.key_string("app-query"))
 
 count, _ := model.filter(ITEMS[:], palette.query_text(&app.palette), app.matches[:])
 list, opened := palette.list_begin(ctx, &app.palette, ITEMS[:], app.matches[:count],
-	key=alicorn.key_string("app-results"), options=palette.Options{hide_title=true})
+	key=ui.key_string("app-results"), options=palette.Options{hide_title=true})
 if !opened {
 	_ = palette.empty(ctx, palette.Options{hide_title=true})
 } else {
