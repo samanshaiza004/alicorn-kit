@@ -1,0 +1,70 @@
+---
+title: Component registry
+description: The machine-readable components.json seed for tooling, agents, and future catalog pages.
+---
+
+The repository root contains [`components.json`](https://github.com/samanshaiza004/alicorn-kit/blob/main/components.json),
+the first machine-readable AliKit component registry. The website copies it to
+`/components.json` at build time so the download and the source of truth stay together.
+
+export const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+
+<p><a href={`${base}components.json`} download>Download components.json</a></p>
+
+## What an entry records
+
+| Field | Meaning |
+| --- | --- |
+| `id`, `name`, `package` | Stable catalog identity and the Odin import path. |
+| `kind`, `status` | `component`, `copyable-composite`, or `copyable-parts`; `stable` or `pilot`. |
+| `purpose` | One-line catalog copy. |
+| `page` | The rendered catalog page. |
+| `source`, `tests`, `example` | Files that make the entry copyable and verifiable. |
+| `capture` | The native PNG used by the preview. |
+| `dependencies` | AliKit, Alicorn, and support-package imports. |
+| `ownedState`, `applicationOwns` | The ownership split in machine-readable form. |
+| `parts` | Composable visual or semantic parts. |
+| `keyboard`, `accessibility` | Published input and semantic contracts. |
+| `themeRoles` | Recipe roles and their core fallbacks. |
+| `api` | Public types and procedures for API-reference generation. |
+| `limits` | Explicit non-claims and known core gaps. |
+
+The top level records the Alicorn and AccessKit revisions, the validation commands, and four
+supporting packages (`palette_model`, `tree_model`, `selection`, and `theme_contract`) that are not
+standalone catalog pages today.
+
+## Registry seed, not a package manifest
+
+This is a catalog seed, not a dependency resolver. It does not declare a binary artifact,
+semantic version, or install command. AliKit remains source-level and pinned; the manifest exists
+so an agent or a future docs generator can discover the components, their files, and their
+contracts without scraping prose.
+
+## Shape
+
+```json
+{
+  "schema": 1,
+  "alicorn": {
+    "repository": "https://github.com/Carnival-Science/Alicorn.git",
+    "revision": "47c9d4a7cd1f637876190fec899daeeac00a30ae"
+  },
+  "components": [
+    {
+      "id": "radio-group",
+      "name": "Radio Group",
+      "package": "alikit:radio_group",
+      "source": ["radio_group/radio_group.odin"],
+      "tests": ["radio_group/radio_group_test.odin"],
+      "example": "examples/radio_group/main.odin",
+      "capture": "website/public/captures/radio-group.png",
+      "parts": ["group_begin/group_end", "item_begin/item_end", "indicator", "label"],
+      "api": ["State", "Options", "Event", "group_begin", "item_begin", "group_end", "radio_group"]
+    }
+  ]
+}
+```
+
+The live file is authoritative; this excerpt only shows the shape. A future revision can add
+per-component pages for the model packages and generated API signatures without changing the
+catalog URLs.

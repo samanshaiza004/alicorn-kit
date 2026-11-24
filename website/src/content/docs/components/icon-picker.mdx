@@ -1,0 +1,199 @@
+---
+title: Icon Picker
+description: A complete copyable icon chooser with search, two appearances, roving focus, and one activation event.
+---
+
+import Capture from '../../../components/Capture.astro';
+
+<div class="lede">
+<code>alikit:icon_picker</code> is a complete composite built from public parts: search, a virtualized grid or list
+of icon choices, roving keyboard focus, semantic selection, one activation event, and two
+appearances that share one behavior contract. It is ordinary copyable Odin source built only on
+Alicorn's public UI and runtime APIs. <code>picker()</code> is a convenience wrapper over
+<code>search</code>, <code>grid_begin</code>, <code>item_begin</code>, <code>cell</code>/<code>row</code>,
+<code>item_end</code>, and <code>grid_end</code>.
+</div>
+
+## Preview
+
+<Capture src="captures/icon-picker.png" alt="Native icon picker dialog with a search field and a grid of twelve icon cells, one selected" caption="Native SDL_GPU capture of examples/icon_picker at Alicorn 47c9d4a. The application-owned modal hosts the complete copyable package; the grid and list appearances share the same semantics." />
+
+<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
+real native dialog; the grid is not recreated in JavaScript.</div>
+
+## Responsibility split
+
+| Layer | Responsibility |
+| --- | --- |
+| **Alicorn** | Modal overlay, focus, text field, virtual list, roving view model, Button owners, semantics, layout, and rendering. |
+| **`icon_picker`** | Query and matches, search part, grid/list appearances, cell/row drawing, active key, reveal, and one activation proposal. |
+| **Application** | Choices, accepted selection, commands, surrounding dialog, and focus restoration. |
+
+## Copyable implementation
+
+Files: `icon_picker/icon_picker.odin`, `icon_picker/icon_picker_test.odin`,
+`examples/icon_picker/main.odin`. The example imports the package by relative path, so the pair
+builds with only the Alicorn collection; the test suite also proves the copied-source path.
+
+```odin
+import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
+import picker "alikit:icon_picker" // or a relative copy
+
+App :: struct {
+	icon:         picker.State,
+	choices:      [2]picker.Choice,
+	selected_key: u64,
+	open:         bool,
+}
+
+render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
+	if !app.open { return }
+	if alicorn.modal_overlay_begin(ctx, "icon-dialog") == 0 { return }
+	if ui.panel(ctx, width=420, height=alicorn.LAYOUT_SIZE_FIT_CONTENT, padding=16) {
+		_ = alicorn.semantic_description(ctx, .Dialog, "Choose an icon")
+		event := picker.picker(ctx, &app.icon, app.choices[:],
+			picker.Options{accessible_label="Icons"},
+			key=alicorn.key_string("app-icon-picker"),
+			instance_id=1)
+		if event.kind == .Activated {
+			app.selected_key = event.key
+			app.open = false
+		}
+	}
+	alicorn.modal_overlay_end(ctx)
+}
+
+main :: proc() {
+	app := App{
+		choices={
+			{key=1, label="Search", icon=.Search},
+			{key=2, label="Settings", icon=.Settings},
+		},
+	}
+	if !picker.init(&app.icon) { return }
+	defer picker.destroy(&app.icon)
+	app.icon.selected_key = app.selected_key
+	ui.run(&app, render, render_overlays=render_overlays,
+		title="Icon Picker", width=640, height=480)
+}
+```
+
+`state.selected_key` is controlled by the application; the picker never mutates it. Keyboard,
+pointer, and semantic activation all produce the same `Event{kind=.Activated, key=...}` proposal.
+
+## Parts and identities
+
+| Part | Public surface | What can be omitted or replaced |
+| --- | --- | --- |
+| Search | `search`, `Options.hide_search`, `search_accessible_name`, `state.query` | Use `set_query`/`query_text` or provide your own query field. |
+| Collection | `grid_begin`/`grid_end`, `Options.accessible_label`, `appearance`, `columns`, `cell_size`, `row_height`, `max_visible_rows` | Grid or list layout; pass a `scope_owner` for the shared keyboard scope. |
+| Cell/row | `item_begin`/`item_end`, `Grid_Item`, `cell`, `row` | Replace drawing while keeping stable keys and semantics. |
+| Identity | `choice_semantic_id`, `collection_semantic_id` | Stable application keys and one `instance_id`. |
+| Activation | `Event`, `grid_end` | The picker proposes; the application accepts. |
+| Navigation | `handle_key` | Drive navigation from an application-owned query field. |
+| Focus | `request_search_focus`, `request_grid_focus` | Application input decides when to request focus. |
+| Theme | Alicorn core color roles only | No component theme contract is required. |
+
+Three examples cover the paths: the default composite (`examples/icon_picker`), custom cells and
+rows (`examples/icon_picker_parts`), and a dialog + Segmented appearance host
+(`examples/icon_picker_composition`).
+
+`Choice.keywords` contributes to search but is not announced. `Choice.detail` is announced in both
+appearances; the grid does not paint it. `Choice.label` is always the accessible name.
+
+## Styling, motion, and theme
+
+The picker uses Alicorn core roles (`Surface`, `Text`, `Muted_Text`, `Selection`, `Accent`) and
+has no theme contract. Appearance is controlled by `Options.appearance`:
+
+- `.Grid` paints square icon cells with a tooltip-free visual label and an accessible name.
+- `.List` paints full-width rows with an icon, label, and detail text.
+- Both share the same choices, filter, stable keys, semantic IDs, states, actions, and keyboard
+  step. Switching appearance keeps focus on the collection and preserves identity.
+- There is no picker-authored motion. Hover, focus, and selected presentation come from Alicorn
+  control recipes; the picker does not own an animation lifecycle.
+
+## Keyboard and accessibility contract
+
+| Input | Result |
+| --- | --- |
+| `Up` / `Down` | Grid: one row. List: one item. Disabled choices are skipped. |
+| `Left` / `Right` | Grid: one cell. List: ignored. |
+| `Home` / `End` | First/last enabled cell of the active row (list: first/last). |
+| `Page Up` / `Page Down` | One page of rows/cells. |
+| `Return` / `Space` | Propose the active enabled choice. |
+| pointer | Propose the clicked enabled choice. |
+| query edit | Refilter; keep the active key when visible, otherwise choose the nearest enabled row. |
+
+- While search owns focus, arrows, Home/End, Page Up/Page Down, and Space drive the grid through
+  Alicorn's `text_preempt_keys` policy. Characters, Backspace, Delete, and IME composition stay
+  with the field.
+- The collection publishes `List_Box` + `List_Box_Option` semantics with logical count, realized
+  range, `Selected`, `Current`, `Disabled`, and `Select`/`Focus` actions.
+- Virtualization publishes only realized rows; `virtual_list_ensure_visible` reveals the active
+  row.
+- Not claimed: a dedicated Grid semantic role, `Ctrl+Home`/`Ctrl+End`, fuzzy ranking, or a
+  platform accessibility bridge in headless tests.
+
+## Conformance tests
+
+`icon_picker/icon_picker_test.odin` runs eleven external-package tests:
+
+- token matching, stable identity, and selection reconciliation;
+- keyboard, pointer, and semantic activation parity;
+- focus versus selection, disabled skipping, removal, and reorder;
+- appearance switch with identical cell identity and bounds change;
+- filtering, IME yield, and search-focus arrow/Space yield;
+- 200-choice virtualization and reveal;
+- the `.Modal_Dialog` pattern check with a positive run and a negative control;
+- Escape, outside-click, and nested overlay dismissal with focus restoration;
+- teardown idle and an application `Ctrl+F` focus interaction.
+
+```powershell
+odin test icon_picker -collection:alicorn=<alicorn> -collection:alikit=.
+./out/icon_picker_example.exe --smoke
+```
+
+Headless tests do not exercise OS IME candidate windows, native accessibility bridges, or pixels.
+
+## API reference
+
+| Declaration | Notes |
+| --- | --- |
+| `State` | Query buffer, filtered matches, active key, focus/reveal flags. Call `init` and `destroy`. |
+| `Choice` | `key`, `label`, `icon`, `keywords`, `detail`, `disabled`. |
+| `Options` | Labels, appearance, columns, cell/row geometry, visible rows, icon size, `hide_search`. |
+| `Appearance` | `.Grid` or `.List`. |
+| `Grid` / `Grid_Item` | Per-description collection and cell/row contexts. |
+| `Event` / `Event_Kind` | One-shot `Activated` proposal carrying `key`. |
+| `picker` | Describe the composite and return an activation event. |
+| `search`, `grid_begin`, `grid_end`, `item_begin`, `item_end`, `cell`, `row`, `empty` | Public parts. |
+| `sync`, `handle_key` | Refresh matches and drive navigation from an application-owned scope. |
+| `set_query`, `query_text`, `active_key`, `match_count` | Controlled query and diagnostics. |
+| `request_search_focus`, `request_grid_focus` | Request an after-frame focus. |
+| `choice_semantic_id`, `collection_semantic_id` | Stable semantic identities. |
+
+## Limits
+
+- The grid has no dedicated Grid role; it publishes a `List_Box` with positions.
+- `Home`/`End` are row bounds; there is no `Ctrl+Home`/`Ctrl+End` intent.
+- Filtering is local ASCII case-insensitive substring matching; replace `matches` for domain
+  ranking.
+- Space activation is subject to Alicorn's text-preemption rule when the search field owns focus.
+
+## Compatibility
+
+<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
+<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<a href="../../compatibility/">Compatibility and pinning</a>.</div>
+
+## Source map
+
+- [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/icon_picker/icon_picker.odin)
+- [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/icon_picker/icon_picker_test.odin)
+- [Parts tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/icon_picker/icon_picker_parts_test.odin)
+- [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker/main.odin)
+- [Parts example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker_parts/main.odin)
+- [Composition example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker_composition/main.odin)
+- [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/icon-picker.md)

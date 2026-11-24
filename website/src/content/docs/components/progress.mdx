@@ -1,0 +1,231 @@
+---
+title: Progress
+description: Determinate and indeterminate progress with Progress semantics, a numeric range, and caller-driven motion.
+---
+
+import Capture from '../../../components/Capture.astro';
+
+<div class="lede">
+<code>alikit:progress</code> presents determinate or indeterminate work. A determinate bar
+publishes role <code>Progress</code>, a visible percentage, and a numeric
+value/minimum/maximum. An indeterminate bar publishes no numeric value. The application owns the
+value, range, and indeterminate phase.
+</div>
+
+## Preview
+
+<Capture src="captures/progress.png" alt="Native progress window showing four determinate downloads at 0, 25, 60, and 100 percent plus an indeterminate Loading workspace bar" caption="Native SDL_GPU capture of examples/progress at Alicorn 47c9d4a. The example theme supplies the track and teal fill roles; the value text and segment geometry carry the state." />
+
+<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
+real native component; the bar is not recreated in JavaScript. The capture predates the parts
+examples; re-capture is pending.</div>
+
+## Responsibility split
+
+| Layer | Responsibility |
+| --- | --- |
+| **Alicorn** | Layout, semantic surfaces, `Progress` role, numeric range, retained paint, reduced-motion preference, and paint-only motion. |
+| **`progress`** | Track, fill, label, and value parts; clamping; percentage formatting; indeterminate geometry; optional pulse declaration; namespaced surface recipe. |
+| **Application** | Value/range, indeterminate phase, and any animation loop that advances the phase. |
+
+The component has no timer, animation lifecycle, or application value. `State` holds diagnostic
+values from the most recent description: resolved fraction, phase, reduced-motion decision, and
+segment geometry.
+
+## Copyable implementation
+
+Files: `progress/progress.odin`, `progress/progress_test.odin`,
+`examples/progress/main.odin`, `examples/progress/theme.json`.
+
+```odin
+import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
+import progress "alikit:progress"
+
+App :: struct {
+	upload: progress.State,
+	value:  f64,
+}
+
+render :: proc(app: ^App, ctx: ^ui.UI) {
+	progress.progress(
+		ctx,
+		&app.upload,
+		app.value, 0, 100,
+		progress.Options{accessible_label="Upload progress", width=320},
+		key=alicorn.key_string("upload"),
+		instance_id=1,
+	)
+}
+```
+
+No init or destroy is required; the component allocates nothing. For multiple instances in one
+parent, give each one a keyed parent scope so the component-internal keys stay distinct; the
+example does this for its four download bars and the loading bar.
+
+## Compose the parts
+
+`progress` is a convenience wrapper over the public parts. A linear bar keeps the default parts:
+
+```odin
+part, visible := progress.begin(ctx, &app.upload, app.value, 0, 100,
+	progress.Options{accessible_label="Upload progress", width=320},
+	key=alicorn.key_string("upload"), instance_id=43)
+if visible {
+	progress.label(ctx, &part)
+	progress.value_text(ctx, &part)
+	track, track_visible := progress.track_begin(ctx, &part)
+	if track_visible {
+		progress.indicator(ctx, &track) // omit for a custom fill
+		progress.track_end(ctx)
+	}
+	progress.end(ctx, &part)
+}
+```
+
+A ring donut uses the same `begin` and semantics but owns its surfaces. The component supplies the
+fraction-to-arc math:
+
+```odin
+part, visible := progress.begin(ctx, &app.export, app.value, 0, 100,
+	progress.Options{accessible_label="Export", width=180},
+	key=alicorn.key_string("export-ring"), instance_id=44)
+if visible {
+	// ... a circle track surface, then:
+	arc := progress.ring_shape(part.normalized) // Arc Surface_Shape
+	// optional centered text:
+	ui.text(ctx, progress.format_value(part.normalized), key=ui.key_u64(1), size=30)
+	progress.end(ctx, &part)
+}
+```
+
+Public geometry helpers: `fraction`, `format_value`, `linear_geometry`, `ring_sweep`, `ring_shape`,
+and `ring_segment_shape`. `Track` exposes `inner_width`, `inner_height`, `fill_width`, and
+`offset_width` for custom indicators. Semantics are published by `begin`; omitting visual parts
+never removes the accessible value or numeric range.
+
+Three independently compilable examples cover the paths: the default bar (`examples/progress`),
+linear plus ring parts from one range (`examples/progress_parts`), and a dialog-hosted export
+(`examples/progress_composition`).
+
+## Parts and identities
+
+| Part | Visual part | What can be omitted or replaced |
+| --- | --- | --- |
+| Root | — | Always present; carries `Progress` semantics and the stable semantic ID. |
+| Label | `.Label` | Set `hide_label` to omit it; the accessible name remains. |
+| Value | `.Content` | Set `hide_value` to omit the visible value; semantic value remains. |
+| Track | `.Surface` | Always present; role and geometry are recipe/options driven. |
+| Fill | `.Indicator` | Omitted at 0% and for an empty unresolved range. |
+
+`progress_semantic_id(instance_id)` is stable across value, phase, and theme changes. A zero
+instance ID is rejected. Track and fill are decorative visual parts and do not add duplicate
+semantic entities.
+
+## Styling, motion, and theme
+
+`Recipe` declares two optional namespaced surface roles:
+
+| Field | Core fallback |
+| --- | --- |
+| `track_surface_role` | `Subtle_Surface` |
+| `fill_surface_role` | `Accent` |
+
+Zero roles need no theme registration. Configured roles are validated with
+`theme_contract_default`, `theme_contract_check`, `theme_contract_satisfied`, and
+`theme_contract_missing_required`. The example registers `vendor.alikit.progress.*`, activates the
+theme with `alicorn.style_environment_push`, and falls back to core roles when the recipe is
+zero.
+
+Geometry lives in `Options`: `width`, `track_height`, `track_padding`, `corner_radius`,
+label/value sizes, and `indeterminate_width`. The track width is definite so fill geometry is
+exact and a value change touches only the bar's layout frontier. `value_label` overrides the
+formatted percentage in both visible and semantic values.
+
+Indeterminate work has no numeric value. The application supplies `indeterminate_phase` in
+`0..1`; the active segment moves by that phase. `pulse=true` adds a paint-only opacity response
+through `ui.motion`. The application must advance the phase; the component never owns a timer.
+When the host reports Reduce Motion, the component declares `Motion_Intent.Snap` and the pulse
+does not animate. Selection/appearance does not rely on color alone: value text and segment
+position carry the state.
+
+## Keyboard and accessibility contract
+
+- Progress is non-interactive: no Tab stop, key map, or actions.
+- The semantic node publishes role `Progress`, the accessible label, and a human-readable value
+  (`"42%"`, or `"Loading"` when indeterminate).
+- Determinate progress publishes `semantic_numeric_range(clamped_value, minimum, maximum, 0)`.
+  The numeric and visible values use the same clamped fraction; a non-positive range reports 0
+  without dividing by zero.
+- Indeterminate progress does **not** publish numeric range properties, so assistive technology
+  does not announce a fabricated percentage.
+- Not claimed: task cancellation, estimated remaining time, or live-region announcements on every
+  value change. A progress bar is not a status log.
+
+## Conformance tests
+
+`progress/progress_test.odin` covers:
+
+- fraction clamping and the zero-range case;
+- role, label, value text, numeric range, and stable identity;
+- a value change driven by ordinary input with updated semantics and a bounded layout frontier
+  (`layout_nodes_visited < 80`);
+- indeterminate mode having no numeric value and reporting `"Loading"`;
+- caller-driven phase moving the segment without changing its width;
+- reduced-motion observation reflected in state, with a snapped pulse settling through an
+  advance-time turn;
+- the theme contract reporting configured and missing roles.
+
+```powershell
+odin test progress -define:ODIN_TEST_THREADS=1 -collection:alicorn=<alicorn> -collection:alikit=.
+./out/progress_example.exe --smoke
+```
+
+There is no `testui` pattern kind for a progress bar. It is a non-interactive presentation
+contract; explicit semantic assertions are the appropriate conformance check.
+
+## API reference
+
+| Declaration | Notes |
+| --- | --- |
+| `Options` | Labels, width, track geometry, label/value sizes, indeterminate phase/width, `pulse`, `hide_label`, `hide_value`, `value_label`. |
+| `Recipe` | Optional track/fill namespaced surface roles. |
+| `State` | Diagnostic resolved fraction, phase, reduced-motion decision, and segment geometry. |
+| `Progress` / `Track` | Per-description root and track contexts with public value/geometry fields. |
+| `begin` | Opens the root and publishes `Progress` semantics; returns `(Progress, visible)`. |
+| `label` / `value_text` | Optional default visual parts. |
+| `track_begin` / `indicator` / `track_end` | Optional default linear track and fill. |
+| `end` | Closes the progress root. |
+| `progress` | Convenience wrapper built from the parts. |
+| `progress_semantic_id` | Stable semantic identity from the instance ID. |
+| `fraction`, `format_value` | Pure clamped fraction and percentage text helpers. |
+| `linear_geometry`, `ring_sweep`, `ring_shape`, `ring_segment_shape` | Public linear and ring geometry math. |
+| `recipe_default` | Core-role recipe. |
+| `theme_contract_default`, `theme_contract_check`, `theme_contract_satisfied`, `theme_contract_missing_required` | Setup-time validation. |
+
+## Limits
+
+- The track has a definite width. A fill percentage needs a definite parent; the component
+  deliberately avoids a second percentage-width policy.
+- Continuous indeterminate motion is application-owned. The component provides phase mapping
+  and an optional motion declaration, not a scheduler.
+- The value text uses `%.0f%%`; supply `value_label` for units or localization.
+- Headless tests do not prove pixels, native high-contrast rendering, or an assistive-technology
+  announcement.
+
+## Compatibility
+
+<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
+<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<a href="../../compatibility/">Compatibility and pinning</a>.</div>
+
+## Source map
+
+- [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/progress/progress.odin)
+- [Default tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/progress/progress_test.odin)
+- [Parts tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/progress/progress_parts_test.odin)
+- [Default example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/progress/main.odin)
+- [Parts example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/progress_parts/main.odin)
+- [Composition example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/progress_composition/main.odin)
+- [Theme JSON](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/progress/theme.json)
+- [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/progress.md)
