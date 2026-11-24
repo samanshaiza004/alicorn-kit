@@ -176,8 +176,10 @@ test_radio_parts_custom_cards_keep_semantics_keyboard_and_parity :: proc(t: ^tes
 		"the re-described custom card should expose the new checked/focused state")
 
 	// Pointer and semantic activation share the same proposal path.
+	testui.destroy_find_result(&studio)
 	studio = find_parts_radio(&handle, "Studio")
 	starters := find_parts_radio(&handle, "Starter")
+	defer testui.destroy_find_result(&starters)
 	_ = testui.click(&handle, &starters.element)
 	testing.expect_value(t, app.selected, u64(101))
 	status := testui.step(&handle, testui.Input{

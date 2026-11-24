@@ -12,7 +12,6 @@ package main
 
 import "core:fmt"
 import "core:os"
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import menu "../../menu"
 
@@ -34,22 +33,22 @@ App :: struct {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=alicorn.key_string("menu-parts-example-root"), width=-1, height=-1,
+	if ui.column(ctx, key=ui.key_string("menu-parts-example-root"), width=-1, height=-1,
 		padding=24, gap=12) {
 		_ = ui.text(ctx, "Menu parts", size=26)
 		_ = ui.text(ctx, "Custom icon, detail, checkmark, and group label inside the semantic Menu_Item owner.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
+			size=13, color=ui.style_color(ctx, .Muted_Text))
 		_ = menu.trigger(ctx, &app.view, "File actions",
 			menu.Options{accessible_label="File actions"},
-			key=alicorn.key_string("menu-parts-example-trigger"))
-		_ = ui.text(ctx, app.status, size=13, color=alicorn.style_color(ctx, .Muted_Text))
+			key=ui.key_string("menu-parts-example-trigger"))
+		_ = ui.text(ctx, app.status, size=13, color=ui.style_color(ctx, .Muted_Text))
 	}
 }
 
 render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 	visible, chosen := menu.popup_begin(ctx, &app.view, ITEMS[:],
 		menu.Options{accessible_label="File actions", popup_width=300},
-		key=alicorn.key_string("menu-parts-example-popup"), instance_id=7501)
+		key=ui.key_string("menu-parts-example-popup"), instance_id=7501)
 	if !visible {
 		if chosen != 0 { apply(app, chosen) }
 		return
@@ -61,7 +60,7 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 		}
 		if index == 4 {
 			_ = menu.group_begin(ctx, &app.view, "Danger zone",
-				key=alicorn.key_string("menu-parts-example-danger"))
+				key=ui.key_string("menu-parts-example-danger"))
 		}
 		row, row_visible := menu.item_begin(ctx, &app.view, item, index,
 			menu.Options{accessible_label="File actions", popup_width=300})
@@ -71,9 +70,9 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 					color_role=.Muted_Text if row.disabled else .Text)
 				if ui.column(ctx, key=ui.key_pair(0xA11C_6D51, item.key), grow=1, gap=1) {
 					_ = ui.text(ctx, item.label, key=ui.key_pair(0xA11C_6D52, item.key), size=13,
-						color=alicorn.style_color(ctx, .Muted_Text if row.disabled else .Text))
+						color=ui.style_color(ctx, .Muted_Text if row.disabled else .Text))
 					_ = ui.text(ctx, item.detail, key=ui.key_pair(0xA11C_6D53, item.key), size=10,
-						color=alicorn.style_color(ctx, .Muted_Text))
+						color=ui.style_color(ctx, .Muted_Text))
 				}
 				if row.checked {
 					_ = ui.icon(ctx, .Check, key=ui.key_pair(0xA11C_6D54, item.key), size=14,
@@ -81,9 +80,9 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 				}
 				if item.shortcut != "" {
 					_ = ui.text(ctx, item.shortcut, key=ui.key_pair(0xA11C_6D55, item.key), size=10,
-						color=alicorn.style_color(ctx, .Muted_Text))
+						color=ui.style_color(ctx, .Muted_Text))
 				}
-				alicorn.surface_end(ctx)
+				ui.surface_end(ctx)
 			}
 			if menu.item_end(ctx, row) { apply(app, item.key) }
 		}

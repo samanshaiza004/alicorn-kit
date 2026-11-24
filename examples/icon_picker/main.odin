@@ -95,7 +95,7 @@ picker_options :: proc(app: ^App) -> picker.Options {
 
 describe_picker :: proc(app: ^App, ctx: ^ui.UI) -> bool {
 	event := picker.picker(ctx, &app.icon, app.choices[:], picker_options(app),
-		key=alicorn.key_string("example-icon-picker"), instance_id=7001)
+		key=ui.key_string("example-icon-picker"), instance_id=7001)
 	if event.kind != .Activated { return false }
 	app.selected_key = event.key
 	app.icon.selected_key = event.key
@@ -104,31 +104,31 @@ describe_picker :: proc(app: ^App, ctx: ^ui.UI) -> bool {
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
 	if alicorn.container_begin(ctx, .Container, label="icon-picker-example-root",
-		key=alicorn.key_string("icon-picker-example-root"),
+		key=ui.key_string("icon-picker-example-root"),
 		style=alicorn.layout_style(.Column, width=-1, height=-1, grow=1, padding=16, gap=8),
-		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
+		color=ui.style_color(ctx, .Window_Background)) != 0 {
 		_ = ui.text(ctx, "AliKit · Icon Picker", size=24)
 		_ = ui.text(ctx,
 			"Search, rove with arrows, Enter selects. Ctrl+F focuses search from anywhere in the picker; Ctrl+2 switches appearances.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
-		if ui.row(ctx, key=alicorn.key_string("example-actions"), height=36, gap=8, align=.Center) {
+			size=13, color=ui.style_color(ctx, .Muted_Text))
+		if ui.row(ctx, key=ui.key_string("example-actions"), height=36, gap=8, align=.Center) {
 			opener, clicked := alicorn.button_ex(ctx, "Insert icon…", key="example-open-picker",
 				style=ui.layout_style(width=150, height=32), variant=.Primary)
 			if clicked { open_modal(app, opener) }
 			if ui.button(ctx,
 				"Appearance: Grid" if app.appearance == .Grid else "Appearance: List",
-				key=alicorn.key_string("example-toggle-appearance"), width=170, height=32, variant=.Quiet,
+				key=ui.key_string("example-toggle-appearance"), width=170, height=32, variant=.Quiet,
 			) {
 				app.appearance = .List if app.appearance == .Grid else .Grid
 			}
 			if app.selected_key != 0 {
 				_ = ui.text(ctx, "Selected choice is application-owned.", size=12,
-					color=alicorn.style_color(ctx, .Muted_Text))
+					color=ui.style_color(ctx, .Muted_Text))
 			}
 		}
 		_ = ui.text(ctx, "The dialog above uses the complete copyable package.", size=13)
 		_ = ui.text(ctx, "Changes are proposed as one event and accepted by the application.", size=12,
-			color=alicorn.style_color(ctx, .Muted_Text))
+			color=ui.style_color(ctx, .Muted_Text))
 		alicorn.container_end(ctx)
 	}
 }
@@ -137,19 +137,19 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 	if !app.open_modal { return }
 	overlay := alicorn.modal_overlay_begin(
 		ctx,
-		alicorn.key_string("example-icon-picker-modal"),
+		ui.key_string("example-icon-picker-modal"),
 		style=ui.layout_style(.Column, width=-1, height=-1, padding=28, align=.Center, justify=.Center),
 		backdrop_color=alicorn.Color{0.01, 0.02, 0.03, 0.42},
 	)
 	app.overlay_node = overlay
 	if overlay == 0 { return }
-	if ui.panel(ctx, key=alicorn.key_string("example-icon-picker-dialog"), width=430,
+	if ui.panel(ctx, key=ui.key_string("example-icon-picker-dialog"), width=430,
 		height=alicorn.LAYOUT_SIZE_FIT_CONTENT, padding=16, gap=10) {
 		_ = alicorn.semantic_description(ctx, .Dialog, "Choose an icon",
 			description="Select an icon for the document")
-		if ui.row(ctx, key=alicorn.key_string("example-icon-picker-header"), height=26, align=.Center) {
+		if ui.row(ctx, key=ui.key_string("example-icon-picker-header"), height=26, align=.Center) {
 			_ = ui.text(ctx, "Choose an icon", size=16, style=ui.layout_style(.Row, grow=1))
-			if ui.button(ctx, "Close", key=alicorn.key_string("example-icon-picker-close"),
+			if ui.button(ctx, "Close", key=ui.key_string("example-icon-picker-close"),
 				width=64, height=26, variant=.Quiet) {
 				close_modal(app, ctx.runtime)
 			}
@@ -169,15 +169,15 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 	if app.nested_open {
 		if alicorn.modal_overlay_begin(
 			ctx,
-			alicorn.key_string("example-icon-picker-nested-modal"),
+			ui.key_string("example-icon-picker-nested-modal"),
 			style=ui.layout_style(.Column, width=-1, height=-1, padding=28, align=.Center, justify=.Center),
 			backdrop_color=alicorn.Color{0.01, 0.02, 0.03, 0.42},
 		) != 0 {
-			if ui.panel(ctx, key=alicorn.key_string("example-icon-picker-nested-dialog"), width=300,
+			if ui.panel(ctx, key=ui.key_string("example-icon-picker-nested-dialog"), width=300,
 				height=alicorn.LAYOUT_SIZE_FIT_CONTENT, padding=14, gap=8) {
 				_ = alicorn.semantic_description(ctx, .Dialog, "Shortcut details")
 				_ = ui.text(ctx, "Ctrl+F focuses the icon search field.", size=12)
-				if ui.button(ctx, "Done", key=alicorn.key_string("example-icon-picker-nested-done"),
+				if ui.button(ctx, "Done", key=ui.key_string("example-icon-picker-nested-done"),
 					width=80, height=26) {
 					app.nested_open = false
 					schedule_restore(app, ctx.runtime, app.nested_opener)

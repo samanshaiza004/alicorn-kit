@@ -103,40 +103,40 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 	}
 
 	if alicorn.container_begin(ctx, .Container, label="notices-example-root",
-		key=alicorn.key_string("notices-example-root"),
+		key=ui.key_string("notices-example-root"),
 		style=alicorn.layout_style(.Column, width=-1, height=-1, grow=1, padding=28, gap=16, align=.Center),
-		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
+		color=ui.style_color(ctx, .Window_Background)) != 0 {
 		_ = ui.text(ctx, "Notices", size=26)
 		_ = ui.text(ctx, "Runtime toasts plus copyable inline card parts.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
+			size=13, color=ui.style_color(ctx, .Muted_Text))
 
 		theme_scope := alicorn.Style_Environment_Scope{}
 		if app.theme_id != 0 {
 			theme_scope = alicorn.style_environment_push(ctx, alicorn.Style_Environment{theme=app.theme_id})
 		}
-		if ui.panel(ctx, key=alicorn.key_string("notices-example-card"), width=600,
+		if ui.panel(ctx, key=ui.key_string("notices-example-card"), width=600,
 			height=alicorn.LAYOUT_SIZE_FIT_CONTENT, padding=20, gap=12,
-			fill=alicorn.style_color(ctx, .Surface), radius=12,
-			stroke=ui.border(1, alicorn.style_color(ctx, .Border), .Inside)) {
-			if ui.row(ctx, key=alicorn.key_string("notices-example-actions"), width=-1,
+			fill=ui.style_color(ctx, .Surface), radius=12,
+			stroke=ui.border(1, ui.style_color(ctx, .Border), .Inside)) {
+			if ui.row(ctx, key=ui.key_string("notices-example-actions"), width=-1,
 				height=32, gap=8, justify=.Center) {
-				if ui.button(ctx, "Post saved", key=alicorn.key_string("post-saved"), width=130, height=30, variant=.Primary) {
+				if ui.button(ctx, "Post saved", key=ui.key_string("post-saved"), width=130, height=30, variant=.Primary) {
 					request_toast(app, notices.toast("example-saved", "Saved", "Document saved.",
 						.Success, .Persistent))
 				}
-				if ui.button(ctx, "Post warning", key=alicorn.key_string("post-warning"), width=150, height=30) {
+				if ui.button(ctx, "Post warning", key=ui.key_string("post-warning"), width=150, height=30) {
 					request_toast(app, notices.toast("example-warning", "Couldn't refresh folder",
 						"The folder's contents may be out of date.", .Warning, .Persistent,
 						app.warning_actions[:]))
 				}
-				if ui.button(ctx, "Post error", key=alicorn.key_string("post-error"), width=130, height=30, variant=.Danger) {
+				if ui.button(ctx, "Post error", key=ui.key_string("post-error"), width=130, height=30, variant=.Danger) {
 					request_toast(app, notices.toast("example-error", "Save failed",
 						"Check the destination and try again.", .Error, .Persistent))
 				}
 			}
-			_ = ui.text(ctx, "Inline card parts:", size=13, color=alicorn.style_color(ctx, .Muted_Text))
+			_ = ui.text(ctx, "Inline card parts:", size=13, color=ui.style_color(ctx, .Muted_Text))
 			if event := notices.stack(ctx, app.banner_states[:], app.banner_items[:],
-				key=alicorn.key_string("notices-example-banner"), recipe=app.recipe); event.kind != .None {
+				key=ui.key_string("notices-example-banner"), recipe=app.recipe); event.kind != .None {
 				app.status = "Banner action received."
 				if event.kind == .Actioned && event.action == RETRY_ACTION {
 					app.status = "Banner retry requested."
@@ -148,11 +148,11 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 					app.banner_states[0] = {}
 				}
 			}
-			_ = ui.text(ctx, app.status, key=alicorn.key_string("notices-example-status"), size=13,
-				color=alicorn.style_color(ctx, .Muted_Text))
+			_ = ui.text(ctx, app.status, key=ui.key_string("notices-example-status"), size=13,
+				color=ui.style_color(ctx, .Muted_Text))
 			if app.theme_error {
 				_ = ui.text(ctx, "Optional notice theme role is missing; core roles are in use.",
-					size=12, color=alicorn.style_color(ctx, .Danger))
+					size=12, color=ui.style_color(ctx, .Danger))
 			}
 		}
 		if theme_scope.active { alicorn.style_environment_pop(ctx, theme_scope) }

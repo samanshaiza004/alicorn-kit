@@ -3,8 +3,6 @@ title: Icon Picker
 description: A complete copyable icon chooser with search, two appearances, roving focus, and one activation event.
 ---
 
-import Capture from '../../../components/Capture.astro';
-
 <div class="lede">
 <code>alikit:icon_picker</code> is a complete composite built from public parts: search, a virtualized grid or list
 of icon choices, roving keyboard focus, semantic selection, one activation event, and two
@@ -14,12 +12,9 @@ Alicorn's public UI and runtime APIs. <code>picker()</code> is a convenience wra
 <code>item_end</code>, and <code>grid_end</code>.
 </div>
 
-## Preview
+## Runnable example
 
-<Capture src="captures/icon-picker.png" alt="Native icon picker dialog with a search field and a grid of twelve icon cells, one selected" caption="Native SDL_GPU capture of examples/icon_picker at Alicorn 47c9d4a. The application-owned modal hosts the complete copyable package; the grid and list appearances share the same semantics." />
-
-<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
-real native dialog; the grid is not recreated in JavaScript.</div>
+The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
 
 ## Responsibility split
 
@@ -50,11 +45,11 @@ App :: struct {
 render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 	if !app.open { return }
 	if alicorn.modal_overlay_begin(ctx, "icon-dialog") == 0 { return }
-	if ui.panel(ctx, width=420, height=alicorn.LAYOUT_SIZE_FIT_CONTENT, padding=16) {
+	if ui.panel(ctx, width=420, padding=16) {
 		_ = alicorn.semantic_description(ctx, .Dialog, "Choose an icon")
 		event := picker.picker(ctx, &app.icon, app.choices[:],
 			picker.Options{accessible_label="Icons"},
-			key=alicorn.key_string("app-icon-picker"),
+			key=ui.key_string("app-icon-picker"),
 			instance_id=1)
 		if event.kind == .Activated {
 			app.selected_key = event.key
@@ -184,8 +179,8 @@ Headless tests do not exercise OS IME candidate windows, native accessibility br
 
 ## Compatibility
 
-<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
-<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<div class="pin-note"><strong>Pin:</strong> built and tested against Alicorn
+<code>3c9ccb9df5478008efe66082ef9d0a47b9ae98d6</code>. See
 <a href="../../compatibility/">Compatibility and pinning</a>.</div>
 
 ## Source map

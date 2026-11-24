@@ -38,12 +38,12 @@ tick :: proc(app: ^App, rt: ^alicorn.Runtime) {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=alicorn.key_string("progress-compose-root"),
+	if ui.column(ctx, key=ui.key_string("progress-compose-root"),
 		width=-1, height=-1, padding=28, gap=14, align=.Center) {
 		_ = ui.text(ctx, "Progress + Dialog", size=26)
 		_ = ui.text(ctx, "The dialog owns dismissal and focus; progress parts own their presentation and range.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
-		if ui.button(ctx, "Show export dialog", key=alicorn.key_string("progress-compose-open"),
+			size=13, color=ui.style_color(ctx, .Muted_Text))
+		if ui.button(ctx, "Show export dialog", key=ui.key_string("progress-compose-open"),
 			width=190, height=34) {
 			_ = dialog.open(&app.view, ctx.runtime)
 		}
@@ -58,9 +58,9 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 		"Export project",
 		dialog.Options{
 			description="Your project is being prepared. Cancel stops the export.",
-			primary_key=alicorn.key_string("progress-compose-cancel"),
+			primary_key=ui.key_string("progress-compose-cancel"),
 		},
-		key=alicorn.key_string("progress-compose-dialog"),
+		key=ui.key_string("progress-compose-dialog"),
 		instance_id=4701,
 	)
 	if !visible {
@@ -69,14 +69,14 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 	}
 	dialog.title(ctx, "Export project")
 	dialog.description(ctx, "Preparing assets and writing the package.")
-	if dialog.content_begin(ctx, key=alicorn.key_string("progress-compose-content")) {
+	if dialog.content_begin(ctx, key=ui.key_string("progress-compose-content")) {
 		linear_progress(app, ctx)
 		ring_progress(app, ctx)
 		dialog.content_end(ctx)
 	}
-	if dialog.action_row_begin(ctx, key=alicorn.key_string("progress-compose-actions")) {
+	if dialog.action_row_begin(ctx, key=ui.key_string("progress-compose-actions")) {
 		if dialog.action(ctx, &app.view, "Cancel export", .Cancel,
-			key=alicorn.key_string("progress-compose-cancel")) {
+			key=ui.key_string("progress-compose-cancel")) {
 			dialog.dismiss(ctx, &app.view, .Action)
 		}
 		dialog.action_row_end(ctx)
@@ -92,7 +92,7 @@ linear_progress :: proc(app: ^App, ctx: ^ui.UI) {
 		0,
 		100,
 		progress.Options{accessible_label="Package progress", width=360},
-		key=alicorn.key_string("progress-compose-linear"),
+		key=ui.key_string("progress-compose-linear"),
 		instance_id=4702,
 	)
 	if !visible { return }
@@ -122,7 +122,7 @@ ring_progress :: proc(app: ^App, ctx: ^ui.UI) {
 			indeterminate=true,
 			indeterminate_phase=app.phase,
 		},
-		key=alicorn.key_string("progress-compose-ring"),
+		key=ui.key_string("progress-compose-ring"),
 		instance_id=4703,
 	)
 	if !visible { return }
@@ -137,11 +137,11 @@ ring_progress :: proc(app: ^App, ctx: ^ui.UI) {
 				style=ui.layout_style(.Row, width=88, height=88),
 				shape=alicorn.Surface_Shape{kind=.Circle},
 				fill=alicorn.Color{0, 0, 0, 0},
-				stroke=alicorn.Paint_Stroke{color=alicorn.style_color(ctx, .Border), width=8},
+				stroke=alicorn.Paint_Stroke{color=ui.style_color(ctx, .Border), width=8},
 				label="compose-ring-track",
 			)
 			if track != 0 {
-				alicorn.surface_end(ctx)
+				ui.surface_end(ctx)
 				_ = alicorn.position_child(ctx, track, alicorn.positioned(0, 0))
 			}
 			arc := alicorn.surface_begin(
@@ -151,11 +151,11 @@ ring_progress :: proc(app: ^App, ctx: ^ui.UI) {
 				style=ui.layout_style(.Row, width=88, height=88),
 				shape=progress.ring_segment_shape(app.phase),
 				fill=alicorn.Color{0, 0, 0, 0},
-				stroke=alicorn.Paint_Stroke{color=alicorn.style_color(ctx, .Accent), width=8},
+				stroke=alicorn.Paint_Stroke{color=ui.style_color(ctx, .Accent), width=8},
 				label="compose-ring-arc",
 			)
 			if arc != 0 {
-				alicorn.surface_end(ctx)
+				ui.surface_end(ctx)
 				_ = alicorn.position_child(ctx, arc, alicorn.positioned(0, 0))
 			}
 			_ = ui.icon(ctx, .Settings, key=ui.key_u64(14), size=18, color_role=.Muted_Text)
@@ -163,7 +163,7 @@ ring_progress :: proc(app: ^App, ctx: ^ui.UI) {
 		if ui.column(ctx, key=ui.key_u64(15), grow=1, gap=2, align=.Center) {
 			_ = ui.text(ctx, "Optimizing images", key=ui.key_u64(16), size=13)
 			_ = ui.text(ctx, "This step has no percentage.", key=ui.key_u64(17), size=11,
-				color=alicorn.style_color(ctx, .Muted_Text))
+				color=ui.style_color(ctx, .Muted_Text))
 		}
 	}
 	progress.end(ctx, &part)

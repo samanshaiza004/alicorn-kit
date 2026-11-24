@@ -5,12 +5,17 @@ description: The AliKit packages available today, their ownership boundary, and 
 
 AliKit is a small, optional set of source-level Odin packages built on Alicorn. It does not add
 another runtime, component lifecycle, or application state store. This catalog describes the
-packages that exist today; every entry links to a page with the native preview, copyable source,
+packages that exist today; every entry links to a page with a runnable example, copyable source,
 contract, tests, API, and limits.
+
+For practical sizing, alignment, virtual-list, and overflow patterns, see the
+[layout cookbook](../authoring/layout-cookbook/).
+The component-by-component audit coverage and remaining validation limits are recorded in the
+[authoring-quality sweep on GitHub](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-quality-sweep.md).
 
 ## Available components
 
-| Package | Use it for | Native preview |
+| Package | Use it for | Example page |
 | --- | --- | --- |
 | [`alikit:command_palette`](command-palette/) | An accessible modal palette with a controlled query, selection, keyboard navigation, virtualized results, public result parts, and focus restoration. | [Command Palette](command-palette/) |
 | [`alikit:tree_view`](tree-view/) | Accessible virtualized tree rows, indentation, focus reveal, keyboard navigation, and optional row-anchored context menus. | [Tree View](tree-view/) |

@@ -26,12 +26,19 @@ Copy `palette_parts/parts.odin` (and, for the regression suite,
 with `alikit:command_palette` because it compares both paths.
 
 ```odin
-import palette "alikit:palette_model"
 import parts "alikit:palette_parts"
+
+ITEMS := [2]parts.Item{
+	{id=parts.Item_ID(1), title="Open File", description="Browse the workspace"},
+	{id=parts.Item_ID(2), title="Build Project", keywords="compile"},
+}
 ```
 
-No init or destroy is required; the part allocates nothing. The application
-owns its `ui.Text_Buffer` query and its match buffer.
+No init or destroy is required; the part allocates nothing. `parts.Item`,
+`parts.Item_ID`, and `parts.Match` expose the public input types, so ordinary
+consumers do not need to import `palette_model` just to construct rows. Import
+`palette_model` only when using its independent filtering or selection helpers.
+The application owns its `ui.Text_Buffer` query and its match buffer.
 
 ## Composition
 
@@ -51,19 +58,27 @@ There are three supported authoring paths:
 ## Usage
 
 ```odin
+import ui "alicorn:ui"
+import palette "alikit:palette_model" // optional helper for substring filtering
+import parts "alikit:palette_parts"
+
 app.matches_count, _ = palette.filter(app.items[:], app.query.text, app.matches[:])
 event := parts.results(
 	ctx,
 	&app.results,
 	app.items[:],
 	app.matches[:app.matches_count],
-	key=alicorn.key_string("app-palette-results"),
+	key=ui.key_string("app-palette-results"),
 	parts.Options{accessible_label="Commands"},
 )
 if event.kind == .Activated {
 	app.run_command(event.item_id)
 }
 ```
+
+The example uses `palette_model.filter` as an optional substring matcher; matching and ranking
+remain application policy. `parts.Item`, `parts.Item_ID`, and `parts.Match` are the component's
+public input types, so import `palette_model` only when its helper behavior fits the application.
 
 Pass a fresh visible slice each turn; the part never stores item strings.
 `handle_key` is the application's keyboard path when its query field owns
@@ -84,8 +99,9 @@ row's current position without retained state.
 ## Custom rendering
 
 ```odin
+import ui "alicorn:ui"
 list, opened := parts.list_begin(ctx, &app.results, ITEMS[:], visible,
-	key=alicorn.key_string("results"), options=parts.Options{accessible_label="Commands"})
+	key=ui.key_string("results"), options=parts.Options{accessible_label="Commands"})
 if !opened {
 	_ = parts.empty(ctx, parts.Options{empty_label="No matches"})
 } else {
@@ -97,7 +113,7 @@ if !opened {
 			parts.label(ctx, row)
 			parts.description(ctx, row)
 			parts.indicator(ctx, row)
-			alicorn.surface_end(ctx)
+			ui.surface_end(ctx)
 		}
 		if parts.item_end(ctx, &list, row) {
 			app.run_command(row.item.id)

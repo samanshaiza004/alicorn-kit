@@ -25,6 +25,7 @@ Files: `notices/notices.odin`, `notices/notices_test.odin`,
 `examples/notices/main.odin`, `examples/notices/theme.json`.
 
 ```odin
+import ui "alicorn:ui"
 import notices "alikit:notices"
 
 // Between frames (for example from ui.run on_after_frame), with the host clock:
@@ -42,7 +43,7 @@ if event, found := notices.take_action(rt); found {
 
 // Inline presentation parts:
 if event := notices.stack(ctx, app.card_states[:], app.cards[:],
-	key=alicorn.key_string("notices"), recipe=app.recipe); event.kind != .None {
+	key=ui.key_string("notices"), recipe=app.recipe); event.kind != .None {
 	if event.kind == .Actioned { handle_action(event.action) }
 	if event.kind == .Dismissed { app.cards[0].retiring = true }
 	if event.kind == .Retire_Settled { remove_card(app) }

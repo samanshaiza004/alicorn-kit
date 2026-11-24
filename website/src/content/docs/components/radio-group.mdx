@@ -3,8 +3,6 @@ title: Radio Group
 description: A controlled radio group with Radio_Group/Radio_Button semantics, one Tab stop, roving arrows, and activation parity.
 ---
 
-import Capture from '../../../components/Capture.astro';
-
 <div class="lede">
 <code>alikit:radio_group</code> is a controlled compound control for choosing one value from a
 small fixed set. It publishes <code>Radio_Group</code> / <code>Radio_Button</code> semantics, one
@@ -12,13 +10,9 @@ Tab stop, roving arrow navigation, disabled skipping, and pointer, keyboard, and
 assistive-technology activation parity.
 </div>
 
-## Preview
+## Runnable example
 
-<Capture src="captures/radio-group.png" alt="Native radio group window with a Reading preferences card, a vertical text-size group, and a horizontal density group" caption="Native SDL_GPU capture of examples/radio_group at Alicorn 47c9d4a. The themed surfaces come from the example theme; the selected dot and focus presentation do not rely on color alone." />
-
-<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
-real native control; keyboard behavior is documented and tested in the package.
-The capture predates the parts examples; re-capture is pending.</div>
+The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/radio_group/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
 
 ## Responsibility split
 
@@ -36,7 +30,6 @@ identity, a focus request, and one pending proposal.
 Import the package through the AliKit collection:
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import radio "alikit:radio_group"
 ```
@@ -59,7 +52,6 @@ Files: `radio_group/radio_group.odin`, `selection/selection.odin`,
 `examples/radio_group/main.odin`, `examples/radio_group/theme.json`.
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import radio "alikit:radio_group"
 
@@ -76,7 +68,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 		app.options[:],
 		app.selected,
 		radio.Options{accessible_label="Text size", orientation=.Vertical},
-		key=alicorn.key_string("text-size"),
+		key=ui.key_string("text-size"),
 		instance_id=1,
 	); event.kind == .Selection_Proposed {
 		app.selected = event.value
@@ -95,8 +87,9 @@ composed directly; the parts own the Button owner, `Radio_Button` semantics, rov
 state, and activation parity, while the author owns everything between `item_begin` and `item_end`.
 
 ```odin
+import ui "alicorn:ui"
 group, visible := radio.group_begin(ctx, &app.group, app.options[:], app.selected,
-	label="Text size", key=alicorn.key_string("size"), instance_id=41)
+	label="Text size", key=ui.key_string("size"), instance_id=41)
 if visible {
 	for option in app.options {
 		item, item_visible := radio.item_begin(ctx, &group, option)
@@ -235,8 +228,8 @@ instead of claiming a pattern that does not exist.
 
 ## Compatibility
 
-<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
-<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<div class="pin-note"><strong>Pin:</strong> built and tested against Alicorn
+<code>3c9ccb9df5478008efe66082ef9d0a47b9ae98d6</code>. See
 <a href="../../compatibility/">Compatibility and pinning</a>.</div>
 
 ## Source map

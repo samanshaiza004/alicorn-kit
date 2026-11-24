@@ -12,7 +12,6 @@ package main
 
 import "core:fmt"
 import "core:os"
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import picker "../../icon_picker"
 
@@ -38,34 +37,31 @@ App :: struct {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if alicorn.container_begin(ctx, .Container, label="icon-picker-parts-example-root",
-		key=alicorn.key_string("icon-picker-parts-example-root"),
-		style=alicorn.layout_style(.Column, width=-1, height=-1, grow=1, padding=24, gap=10),
-		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
+	if ui.panel(ctx, key=ui.key_string("icon-picker-parts-example-root"),
+		width=-1, height=-1, grow=1, padding=24, gap=10,
+		fill=ui.style_color(ctx, .Window_Background), label="icon-picker-parts-example-root") {
 		_ = ui.text(ctx, "Icon picker parts", size=26)
 		_ = ui.text(ctx, "The application owns the tile and row visuals; the parts own search, grid navigation, and semantics.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
+			size=13, color=ui.style_color(ctx, .Muted_Text))
 		_ = ui.checkbox(ctx, "List appearance", &app.list_mode,
-			key=alicorn.key_string("icon-picker-parts-example-list"), width=170, height=28)
+			key=ui.key_string("icon-picker-parts-example-list"), width=170, height=28)
 		app.appearance = .List if app.list_mode else .Grid
 
-		if !ui.key_scope(ctx, alicorn.key_string("icon-picker-parts-example-scope")) { return }
-		root := alicorn.container_begin(ctx, .Container, label="icon-picker-parts-example-body",
-			key=alicorn.key_string("icon-picker-parts-example-body"),
-			style=ui.layout_style(.Column, width=460, height=alicorn.LAYOUT_SIZE_FIT_CONTENT, gap=8))
-		if root != 0 {
-			options := picker.Options{accessible_label="Icon choices",
-				search_accessible_name="Search icons", appearance=app.appearance,
-				columns=5, cell_size=56, cell_gap=8, row_height=40, max_visible_rows=4}
-			_ = ui.interaction_scope(ctx, root, rawptr(app), alicorn.Interaction_Scope_Options{
+		if !ui.key_scope(ctx, ui.key_string("icon-picker-parts-example-scope")) { return }
+		if ui.column(ctx, key=ui.key_string("icon-picker-parts-example-body"), width=460, gap=8) {
+			root, scope_registered := ui.interaction_scope_current(ctx, rawptr(app), ui.Interaction_Scope_Options{
 				keys={.Up, .Down, .Left, .Right, .Home, .End, .Page_Up, .Page_Down, .Return, .Toggle},
 				composition_yield_keys={.Up, .Down, .Left, .Right, .Home, .End, .Page_Up, .Page_Down, .Return, .Toggle},
 				text_preempt_keys={.Up, .Down, .Left, .Right, .Home, .End, .Page_Up, .Page_Down, .Toggle},
 			})
+			if !scope_registered { return }
+			options := picker.Options{accessible_label="Icon choices",
+				search_accessible_name="Search icons", appearance=app.appearance,
+				columns=5, cell_size=56, cell_gap=8, row_height=40, max_visible_rows=4}
 			_, _ = picker.search(ctx, &app.state, options,
-				key=alicorn.key_string("icon-picker-parts-example-search"))
+				key=ui.key_string("icon-picker-parts-example-search"))
 			grid, visible := picker.grid_begin(ctx, &app.state, CHOICES[:], options,
-				key=alicorn.key_string("icon-picker-parts-example-grid"),
+				key=ui.key_string("icon-picker-parts-example-grid"),
 				instance_id=8101, scope_owner=root)
 			if !visible {
 				_ = picker.empty(ctx, &app.state, options)
@@ -85,39 +81,37 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 					app.status = fmt.tprintf("Choice %d proposed.", event.key)
 				}
 			}
-			alicorn.container_end(ctx)
 		}
-		_ = ui.text(ctx, app.status, size=13, color=alicorn.style_color(ctx, .Muted_Text))
-		alicorn.container_end(ctx)
+		_ = ui.text(ctx, app.status, size=13, color=ui.style_color(ctx, .Muted_Text))
 	}
 }
 
 picker_cell :: proc(ctx: ^ui.UI, item: picker.Grid_Item) {
-	fill := alicorn.style_color(ctx, .Selection if item.selected else .Subtle_Surface)
-	stroke := alicorn.style_color(ctx, .Focus if item.active else .Border)
+	fill := ui.style_color(ctx, .Selection if item.selected else .Subtle_Surface)
+	stroke := ui.style_color(ctx, .Focus if item.active else .Border)
 	if ui.panel(ctx, key=ui.key_u64(1), width=-1, height=-1, padding=4,
 		align=.Center, justify=.Center, fill=fill, radius=12,
 		stroke=ui.border(2 if item.active else 1, stroke, .Inside),
 		label="custom-icon-cell") {
 		_ = ui.text(ctx, item.choice.label[:1], key=ui.key_u64(2), size=18,
-			color=alicorn.style_color(ctx, .Accent_Text if item.selected else .Text))
+			color=ui.style_color(ctx, .Accent_Text if item.selected else .Text))
 		_ = ui.text(ctx, item.choice.label, key=ui.key_u64(3), size=9,
-			color=alicorn.style_color(ctx, .Muted_Text))
+			color=ui.style_color(ctx, .Muted_Text))
 	}
 }
 
 picker_row :: proc(ctx: ^ui.UI, item: picker.Grid_Item) {
-	fill := alicorn.style_color(ctx, .Selection if item.selected else .Surface)
+	fill := ui.style_color(ctx, .Selection if item.selected else .Surface)
 	if ui.panel(ctx, key=ui.key_u64(1), width=-1, height=38, padding=8, gap=8,
 		align=.Center, fill=fill, radius=8,
-		stroke=ui.border(1, alicorn.style_color(ctx, .Border), .Inside),
+		stroke=ui.border(1, ui.style_color(ctx, .Border), .Inside),
 		label="custom-icon-row") {
 		_ = ui.box(ctx, key=ui.key_u64(2), size=22, radius=6,
-			fill=alicorn.style_color(ctx, .Subtle_Surface))
+			fill=ui.style_color(ctx, .Subtle_Surface))
 		if ui.column(ctx, key=ui.key_u64(3), grow=1, gap=1) {
 			_ = ui.text(ctx, item.choice.label, key=ui.key_u64(4), size=13)
 			_ = ui.text(ctx, item.choice.detail, key=ui.key_u64(5), size=10,
-				color=alicorn.style_color(ctx, .Muted_Text))
+				color=ui.style_color(ctx, .Muted_Text))
 		}
 		if item.selected {
 			_ = ui.icon(ctx, .Check, key=ui.key_u64(6), size=14, color_role=.Accent)

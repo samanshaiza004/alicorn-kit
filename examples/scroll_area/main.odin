@@ -47,11 +47,11 @@ initialize :: proc(app: ^App, rt: ^alicorn.Runtime) {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=alicorn.key_string("scroll-example-root"), width=-1, height=-1,
+	if ui.column(ctx, key=ui.key_string("scroll-example-root"), width=-1, height=-1,
 		padding=24, gap=12) {
 		_ = ui.text(ctx, "Scroll Area", size=26)
 		_ = ui.text(ctx, "Focus the region, then use Up/Down, Page Up/Down, Home, or End. Wheel input is runtime-owned.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
+			size=13, color=ui.style_color(ctx, .Muted_Text))
 		options := scroll.Options{
 			accessible_label="Build log",
 			line_count=LINE_COUNT,
@@ -60,13 +60,13 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 			max_height=320,
 			axes=.Vertical,
 		}
-		if scroll.begin(ctx, &app.view, options, key=alicorn.key_string("scroll-example-area"),
+		if scroll.begin(ctx, &app.view, options, key=ui.key_string("scroll-example-area"),
 			instance_id=7201, recipe=app.recipe) {
-			if ui.column(ctx, key=alicorn.key_string("scroll-example-lines"), width=-1, gap=0) {
+			if ui.column(ctx, key=ui.key_string("scroll-example-lines"), width=-1, gap=0) {
 				for line in 0..<LINE_COUNT {
 					_ = ui.text(ctx, fmt.tprintf("Build log line %02d: retained offset survives rebuilds.", line+1),
 						key=ui.key_u64(u64(920+line)), style=ui.layout_style(.Column, height=24),
-						size=12, decorative=true, color=alicorn.style_color(ctx, .Muted_Text))
+						size=12, decorative=true, color=ui.style_color(ctx, .Muted_Text))
 				}
 			}
 			scroll.end(ctx, &app.view)
@@ -74,7 +74,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 		bar := scroll.bar_geometry(&app.view)
 		_ = ui.text(ctx, fmt.tprintf("viewport %.0f / content %.0f / thumb %.0f",
 			app.view.viewport_height, app.view.content_height, bar.thumb.h),
-			size=12, color=alicorn.style_color(ctx, .Muted_Text))
+			size=12, color=ui.style_color(ctx, .Muted_Text))
 	}
 }
 

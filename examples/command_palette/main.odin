@@ -17,7 +17,7 @@ SAMPLE_ITEMS :: [4]palette.Item{
 }
 
 App :: struct {
-	palette:     palette.State,
+	palette_state: palette.State,
 	items:       [4]palette.Item,
 	last_action: palette.Item_ID,
 }
@@ -26,10 +26,10 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 	if ui.column(ctx, padding=16, gap=8) {
 		_ = ui.text(ctx, "AliKit · Command Palette", size=24)
 		_ = ui.text(ctx, "Press the host command-palette shortcut, or open it with the button.")
-		if !app.palette.open {
+		if !app.palette_state.open {
 			if ui.button(ctx, "Open palette", key=ui.key_string("command-palette-example-open"),
 				width=140, height=30, variant=.Primary) {
-				_ = palette.open_palette(&app.palette, ctx.runtime)
+				_ = palette.open_palette(&app.palette_state, ctx.runtime)
 			}
 		}
 		if app.last_action != 0 {
@@ -39,8 +39,8 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 }
 
 render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
-	if !app.palette.open { return }
-	event := palette.build(ctx, &app.palette, app.items[:],
+	if !app.palette_state.open { return }
+	event := palette.build(ctx, &app.palette_state, app.items[:],
 		key=ui.key_string("alikit-example-palette"),
 		options=palette.Options{
 			title="Example Actions",
@@ -50,8 +50,8 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 }
 
 on_key :: proc(app: ^App, rt: ^ui.Runtime, key: ui.Application_Key) -> bool {
-	if !app.palette.open && key == .Open_Command_Palette {
-		_ = palette.open_palette(&app.palette, rt)
+	if !app.palette_state.open && key == .Open_Command_Palette {
+		_ = palette.open_palette(&app.palette_state, rt)
 		return true
 	}
 	return false
@@ -63,11 +63,11 @@ main :: proc() {
 		if argument == "--smoke" { smoke = true }
 	}
 	app := App{items=SAMPLE_ITEMS}
-	if !palette.init(&app.palette) {
+	if !palette.init(&app.palette_state) {
 		fmt.eprintln("Could not initialize the command palette state.")
 		return
 	}
-	defer palette.destroy(&app.palette)
+	defer palette.destroy(&app.palette_state)
 	ui.run(&app, render, title="AliKit Command Palette", width=760, height=520,
 		on_key=on_key, render_overlays=render_overlays, smoke=smoke)
 }

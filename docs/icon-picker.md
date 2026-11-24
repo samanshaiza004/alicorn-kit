@@ -100,7 +100,7 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 		_ = alicorn.semantic_description(ctx, .Dialog, "Choose an icon")
 		event := picker.picker(ctx, &app.icon, app.choices[:],
 			picker.Options{accessible_label="Icons"},
-			key=alicorn.key_string("app-icon-picker"),
+			key=ui.key_string("app-icon-picker"),
 			instance_id=1)
 		if event.kind == .Activated {
 			app.selected_key = event.key // accept the proposed change
@@ -117,17 +117,17 @@ The parts own the semantics and navigation; the author owns the cell or row:
 
 ```odin
 root := alicorn.container_begin(ctx, .Container, label="icons",
-	key=alicorn.key_string("icons-root"),
+	key=ui.key_string("icons-root"),
 	style=ui.layout_style(.Column, width=-1, height=alicorn.LAYOUT_SIZE_FIT_CONTENT, gap=8))
 _ = ui.interaction_scope(ctx, root, rawptr(&app.icon), alicorn.Interaction_Scope_Options{
 	keys={.Up, .Down, .Left, .Right, .Home, .End, .Page_Up, .Page_Down, .Return, .Toggle},
 	composition_yield_keys={.Up, .Down, .Left, .Right, .Home, .End, .Page_Up, .Page_Down, .Return, .Toggle},
 	text_preempt_keys={.Up, .Down, .Left, .Right, .Home, .End, .Page_Up, .Page_Down, .Toggle},
 })
-_, _ = picker.search(ctx, &app.icon, options, key=alicorn.key_string("icons-search"))
+_, _ = picker.search(ctx, &app.icon, options, key=ui.key_string("icons-search"))
 
 grid, visible := picker.grid_begin(ctx, &app.icon, choices, options,
-	key=alicorn.key_string("icons-grid"), instance_id=1, scope_owner=root)
+	key=ui.key_string("icons-grid"), instance_id=1, scope_owner=root)
 if !visible {
 	_ = picker.empty(ctx, &app.icon, options)
 } else {
@@ -137,7 +137,7 @@ if !visible {
 		// Draw any ordinary Alicorn layout inside the semantic Button owner.
 		if ui.panel(ctx, key=ui.key_u64(1), width=-1, height=-1, padding=4,
 			align=.Center, justify=.Center,
-			fill=alicorn.style_color(ctx, .Selection if item.selected else .Subtle_Surface),
+			fill=ui.style_color(ctx, .Selection if item.selected else .Subtle_Surface),
 			radius=12) {
 			_ = ui.text(ctx, item.choice.label[:1], key=ui.key_u64(2), size=18)
 		}

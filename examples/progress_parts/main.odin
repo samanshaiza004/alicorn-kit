@@ -34,11 +34,11 @@ linear_render :: proc(app: ^App, ctx: ^ui.UI) {
 		0,
 		100,
 		progress.Options{accessible_label="Export progress", width=420},
-		key=alicorn.key_string("parts-linear"),
+		key=ui.key_string("parts-linear"),
 		instance_id=4601,
 	)
 	if !visible { return }
-	if ui.row(ctx, key=alicorn.key_string("parts-linear-heading"), width=-1,
+	if ui.row(ctx, key=ui.key_string("parts-linear-heading"), width=-1,
 		height=alicorn.LAYOUT_SIZE_FIT_CONTENT, align=.Center, gap=8) {
 		progress.label(ctx, &part)
 		progress.value_text(ctx, &part)
@@ -61,15 +61,15 @@ ring_render :: proc(app: ^App, ctx: ^ui.UI) {
 		0,
 		100,
 		progress.Options{accessible_label="Export ring", width=180},
-		key=alicorn.key_string("parts-ring"),
+		key=ui.key_string("parts-ring"),
 		instance_id=4602,
 	)
 	if !visible { return }
-	if ui.column(ctx, key=alicorn.key_string("parts-ring-heading"), width=-1,
+	if ui.column(ctx, key=ui.key_string("parts-ring-heading"), width=-1,
 		height=alicorn.LAYOUT_SIZE_FIT_CONTENT, align=.Center, gap=2) {
-		_ = ui.text(ctx, "Export", key=alicorn.key_string("parts-ring-title"), size=14)
-		_ = ui.text(ctx, "custom ring layout", key=alicorn.key_string("parts-ring-note"), size=11,
-			color=alicorn.style_color(ctx, .Muted_Text))
+		_ = ui.text(ctx, "Export", key=ui.key_string("parts-ring-title"), size=14)
+		_ = ui.text(ctx, "custom ring layout", key=ui.key_string("parts-ring-note"), size=11,
+			color=ui.style_color(ctx, .Muted_Text))
 	}
 	if ui.row(ctx, key=ui.key_u64(10), width=168, height=168,
 		align=.Center, justify=.Center) {
@@ -82,11 +82,11 @@ ring_render :: proc(app: ^App, ctx: ^ui.UI) {
 				style=ui.layout_style(.Row, width=160, height=160),
 				shape=progress.ring_shape(part.normalized),
 				fill=alicorn.Color{0, 0, 0, 0},
-				stroke=alicorn.Paint_Stroke{color=alicorn.style_color(ctx, .Accent), width=12},
+				stroke=alicorn.Paint_Stroke{color=ui.style_color(ctx, .Accent), width=12},
 				label="export-ring-arc",
 			)
 			if arc != 0 {
-				alicorn.surface_end(ctx)
+				ui.surface_end(ctx)
 				_ = alicorn.position_child(ctx, arc, alicorn.positioned(0, 0))
 			}
 		}
@@ -94,7 +94,7 @@ ring_render :: proc(app: ^App, ctx: ^ui.UI) {
 			align=.Center, justify=.Center, gap=2) {
 			_ = ui.text(ctx, progress.format_value(part.normalized), key=ui.key_u64(14), size=30)
 			_ = ui.text(ctx, "complete", key=ui.key_u64(15), size=11,
-				color=alicorn.style_color(ctx, .Muted_Text))
+				color=ui.style_color(ctx, .Muted_Text))
 		}
 	}
 	progress.end(ctx, &part)
@@ -113,7 +113,7 @@ loading_ring_render :: proc(app: ^App, ctx: ^ui.UI) {
 			indeterminate=true,
 			indeterminate_phase=app.phase,
 		},
-		key=alicorn.key_string("parts-loading-ring"),
+		key=ui.key_string("parts-loading-ring"),
 		instance_id=4603,
 	)
 	if !visible { return }
@@ -127,17 +127,17 @@ loading_ring_render :: proc(app: ^App, ctx: ^ui.UI) {
 			style=ui.layout_style(.Row, width=124, height=124),
 			shape=progress.ring_segment_shape(app.phase),
 			fill=alicorn.Color{0, 0, 0, 0},
-			stroke=alicorn.Paint_Stroke{color=alicorn.style_color(ctx, .Selection), width=10},
+			stroke=alicorn.Paint_Stroke{color=ui.style_color(ctx, .Selection), width=10},
 			label="loading-ring-arc",
 		)
 		if arc != 0 {
-			alicorn.surface_end(ctx)
+			ui.surface_end(ctx)
 			_ = alicorn.position_child(ctx, arc, alicorn.positioned(0, 0))
 		}
 		if ui.column(ctx, key=ui.key_u64(23), width=124, height=124,
 			align=.Center, justify=.Center) {
 			_ = ui.text(ctx, "Optimizing", key=ui.key_u64(24), size=11,
-				color=alicorn.style_color(ctx, .Muted_Text))
+				color=ui.style_color(ctx, .Muted_Text))
 		}
 	}
 	progress.end(ctx, &part)
@@ -157,11 +157,11 @@ ring_track :: proc(
 		style=ui.layout_style(.Row, width=size, height=size),
 		shape=alicorn.Surface_Shape{kind=.Circle},
 		fill=alicorn.Color{0, 0, 0, 0},
-		stroke=alicorn.Paint_Stroke{color=alicorn.style_color(ctx, role), width=stroke_width},
+		stroke=alicorn.Paint_Stroke{color=ui.style_color(ctx, role), width=stroke_width},
 		label="progress-ring-track",
 	)
 	if id == 0 { return }
-	alicorn.surface_end(ctx)
+	ui.surface_end(ctx)
 	_ = alicorn.position_child(ctx, id, alicorn.positioned(0, 0))
 }
 
@@ -173,29 +173,29 @@ tick :: proc(app: ^App, rt: ^alicorn.Runtime) {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=alicorn.key_string("progress-parts-root"),
+	if ui.column(ctx, key=ui.key_string("progress-parts-root"),
 		width=-1, height=-1, padding=26, gap=16, align=.Center) {
 		_ = ui.text(ctx, "Progress parts", size=26)
 		_ = ui.text(ctx, "Same range, two presentations. The ring owns its layout and geometry; semantics stay shared.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
-		if ui.row(ctx, key=alicorn.key_string("progress-parts-row"), gap=28, align=.Start) {
-			if ui.column(ctx, key=alicorn.key_string("progress-parts-left"),
+			size=13, color=ui.style_color(ctx, .Muted_Text))
+		if ui.row(ctx, key=ui.key_string("progress-parts-row"), gap=28, align=.Start) {
+			if ui.column(ctx, key=ui.key_string("progress-parts-left"),
 				width=440, gap=16) {
 				_ = ui.text(ctx, "Linear parts", size=15)
 				linear_render(app, ctx)
 				loading_ring_render(app, ctx)
 				_ = ui.checkbox(ctx, "Animate indeterminate ring", &app.animate,
-					key=alicorn.key_string("progress-parts-animate"), width=250, height=28)
+					key=ui.key_string("progress-parts-animate"), width=250, height=28)
 			}
-			if ui.column(ctx, key=alicorn.key_string("progress-parts-right"),
+			if ui.column(ctx, key=ui.key_string("progress-parts-right"),
 				width=220, gap=12, align=.Center) {
 				_ = ui.text(ctx, "Ring parts", size=15)
 				ring_render(app, ctx)
 			}
 		}
 		_ = ui.text(ctx, fmt.tprintf("Value %.0f%% · phase %.2f", app.value, app.phase),
-			key=alicorn.key_string("progress-parts-status"), size=12,
-			color=alicorn.style_color(ctx, .Muted_Text))
+			key=ui.key_string("progress-parts-status"), size=12,
+			color=ui.style_color(ctx, .Muted_Text))
 	}
 }
 

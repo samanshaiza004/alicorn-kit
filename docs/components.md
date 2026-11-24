@@ -101,12 +101,11 @@ contract coverage, and core-requirement list live in
 ## Published catalog
 
 The static catalog in [`website/`](../website/) renders every component page
-with a native SDL_GPU capture, copyable source, ownership and input contracts,
-theme roles, API reference, and test coverage. Rebuild it with
+with a runnable example link, copyable source, ownership and input contracts,
+theme roles, API reference, and test coverage. Desktop application screenshots
+are not included in the documentation. Rebuild it with
 `cd website && npm ci && npm run build`. The machine-readable registry seed is
-[`components.json`](../components.json), and
-[`tools/capture_catalog.ps1`](../tools/capture_catalog.ps1) regenerates the
-native captures from `out/`.
+[`components.json`](../components.json).
 
 ## Not in AliKit yet
 
@@ -123,6 +122,11 @@ omit optional parts, and add bespoke interactions with ordinary state and
 scoped input. Do not copy a second runtime, state store, or modal policy.
 
 ## Authoring conventions
+
+For practical sizing, alignment, virtual-list, and text-overflow patterns, see the
+[layout cookbook](layout-cookbook.md).
+The component-by-component coverage and validation limits are recorded in the
+[authoring-quality sweep](research/authoring-quality-sweep.md).
 
 AliKit components are ordinary Odin procedures. Keep persistent interaction
 state in an explicit caller-owned `State` only when the component needs it;

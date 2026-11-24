@@ -32,6 +32,7 @@ Files: `data_grid/data_grid.odin`, `data_grid/data_grid_test.odin`,
 `examples/data_grid/main.odin`, `examples/data_grid/theme.json`.
 
 ```odin
+import ui "alicorn:ui"
 import data_grid "alikit:data_grid"
 
 event := data_grid.data_grid(
@@ -42,7 +43,7 @@ event := data_grid.data_grid(
 	app.selection,
 	data_grid.Options{accessible_label="Documents", row_header=true,
 		max_visible_rows=10, row_height=30},
-	key=alicorn.key_string("documents"),
+	key=ui.key_string("documents"),
 	instance_id=1,
 	recipe=app.recipe,
 )

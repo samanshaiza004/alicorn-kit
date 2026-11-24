@@ -6,7 +6,7 @@
   "alicorn": {
     "repository": "https://github.com/Carnival-Science/Alicorn.git",
     "ref": "master",
-    "revision": "47c9d4a7cd1f637876190fec899daeeac00a30ae"
+    "revision": "3c9ccb9df5478008efe66082ef9d0a47b9ae98d6"
   },
   "accesskit_binding": {
     "repository": "https://github.com/samanshaiza004/odin-accesskit.git",
@@ -14,7 +14,6 @@
   },
   "validation": {
     "native": "./tools/test.ps1 -Odin odin",
-    "captures": "./tools/capture_catalog.ps1 -BinDir out -OutDir website/public/captures",
     "externalConsumer": "./tools/validate_external_consumer.ps1 -Odin odin",
     "website": "cd website && npm ci && npm run build"
   },
@@ -34,7 +33,6 @@
         "command_palette/command_palette_test.odin"
       ],
       "example": "examples/command_palette/main.odin",
-      "capture": "website/public/captures/command-palette.png",
       "dependencies": [
         "alikit:palette_model",
         "alikit:palette_parts",
@@ -98,6 +96,9 @@
         "Event",
         "Search_Mode",
         "Status",
+        "Item",
+        "Item_ID",
+        "Match",
         "init",
         "destroy",
         "open_palette",
@@ -132,8 +133,7 @@
       "partExamples": [
         "examples/command_palette_parts/main.odin",
         "examples/command_palette_composition/main.odin"
-      ],
-      "captureNote": "Capture refreshed for the shared result-part row appearance."
+      ]
     },
     {
       "id": "tree-view",
@@ -152,7 +152,6 @@
         "tree_model/model_test.odin"
       ],
       "example": "examples/tree_view/main.odin",
-      "capture": "website/public/captures/tree-view.png",
       "dependencies": [
         "alikit:tree_model",
         "alicorn:runtime",
@@ -243,7 +242,6 @@
         "icon_picker/icon_picker_test.odin"
       ],
       "example": "examples/icon_picker/main.odin",
-      "capture": "website/public/captures/icon-picker.png",
       "dependencies": [
         "alicorn:runtime",
         "alicorn:ui"
@@ -346,8 +344,7 @@
       "partExamples": [
         "examples/icon_picker_parts/main.odin",
         "examples/icon_picker_composition/main.odin"
-      ],
-      "captureNote": "The complete picker appearance is unchanged; parts examples add custom visuals and are not captured separately."
+      ]
     },
     {
       "id": "palette-parts",
@@ -365,7 +362,6 @@
         "command_palette/pilot_test.odin"
       ],
       "example": "examples/palette_parts/main.odin",
-      "capture": "website/public/captures/palette-parts.png",
       "dependencies": [
         "alikit:palette_model",
         "alicorn:runtime",
@@ -482,8 +478,6 @@
         "examples/radio_group_parts/main.odin",
         "examples/radio_group_composition/main.odin"
       ],
-      "capture": "website/public/captures/radio-group.png",
-      "captureNote": "Capture predates the parts examples; re-capture pending.",
       "dependencies": [
         "alikit:selection",
         "alicorn:runtime",
@@ -596,8 +590,6 @@
         "examples/progress_parts/main.odin",
         "examples/progress_composition/main.odin"
       ],
-      "capture": "website/public/captures/progress.png",
-      "captureNote": "Capture predates the parts examples; re-capture pending.",
       "dependencies": [
         "alicorn:runtime",
         "alicorn:ui",
@@ -765,7 +757,6 @@
         "notices/notices_test.odin"
       ],
       "example": "examples/notices/main.odin",
-      "capture": "website/public/captures/notices.png",
       "dependencies": [
         "alicorn:runtime",
         "alicorn:ui",
@@ -845,7 +836,6 @@
         "sidebar/sidebar_test.odin"
       ],
       "example": "examples/sidebar/main.odin",
-      "capture": "website/public/captures/sidebar.png",
       "dependencies": [
         "alikit:selection",
         "alicorn:runtime",
@@ -927,8 +917,7 @@
       "partExamples": [
         "examples/sidebar_parts/main.odin",
         "examples/sidebar_composition/main.odin"
-      ],
-      "captureNote": "The default rail appearance is unchanged; parts examples add custom rows and are not captured separately."
+      ]
     },
     {
       "id": "table",
@@ -945,7 +934,6 @@
         "table/table_test.odin"
       ],
       "example": "examples/table/main.odin",
-      "capture": "website/public/captures/table.png",
       "dependencies": [
         "alikit:table_core",
         "alicorn:runtime",
@@ -1040,8 +1028,6 @@
         "examples/menu_parts/main.odin",
         "examples/menu_composition/main.odin"
       ],
-      "capture": "website/public/captures/menu.png",
-      "captureNote": "Native capture added in the phase 3-4 catalog sync.",
       "dependencies": [
         "alikit:selection",
         "alicorn:runtime",
@@ -1144,8 +1130,6 @@
         "data_grid/data_grid_test.odin"
       ],
       "example": "examples/data_grid/main.odin",
-      "capture": "website/public/captures/data-grid.png",
-      "captureNote": "Native capture added in the phase 3-4 catalog sync.",
       "dependencies": [
         "alikit:table_core",
         "alicorn:runtime",

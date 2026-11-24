@@ -3,8 +3,6 @@ title: Table
 description: A static, non-spanned presentation table with shared column tracks, headers, cell scaffolding, and intrinsic wrapped rows.
 ---
 
-import Capture from '../../../components/Capture.astro';
-
 <div class="lede">
 <code>alikit:table</code> is a static, composable, <strong>non-spanned</strong> presentation table
 for read-oriented data. It owns intrinsic row heights, wrapped cell text, inline icon/detail
@@ -13,12 +11,9 @@ roving navigation, or activation. Column tracks, header parts, and cell semantic
 shared with <a href="../data-grid/">Data Grid</a> through <code>alikit:table_core</code>.
 </div>
 
-## Preview
+## Runnable example
 
-<Capture src="captures/table.png" alt="Native static table window with a documents table, header row, and two-line cells" caption="Native SDL_GPU capture of examples/table at Alicorn 47c9d4a. The application owns the rows and formatting; the table renders the static projection and optional virtual window." />
-
-<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
-real native table.</div>
+The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/table/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
 
 ## Responsibility split
 
@@ -37,6 +32,7 @@ Files: `table/table.odin`, `table/table_test.odin`, `examples/table/main.odin`,
 `examples/table/theme.json`.
 
 ```odin
+import ui "alicorn:ui"
 import table "alikit:table"
 
 table.table(
@@ -50,7 +46,7 @@ table.table(
 		max_visible_rows=10,
 		measure_width=680,
 	},
-	key=alicorn.key_string("documents"),
+	key=ui.key_string("documents"),
 	instance_id=1,
 	recipe=app.table_recipe,
 )
@@ -153,8 +149,8 @@ the contract.
 
 ## Compatibility
 
-<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
-<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<div class="pin-note"><strong>Pin:</strong> built and tested against Alicorn
+<code>3c9ccb9df5478008efe66082ef9d0a47b9ae98d6</code>. See
 <a href="../../compatibility/">Compatibility and pinning</a>.</div>
 
 ## Source map

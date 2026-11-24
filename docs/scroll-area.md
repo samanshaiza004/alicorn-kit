@@ -27,6 +27,7 @@ Files: `scroll_area/scroll_area.odin`, `scroll_area/scroll_area_test.odin`,
 `examples/scroll_area/main.odin`, `examples/scroll_area/theme.json`.
 
 ```odin
+import ui "alicorn:ui"
 import scroll_area "alikit:scroll_area"
 
 if scroll_area.begin(ctx, &app.log,
@@ -38,8 +39,8 @@ if scroll_area.begin(ctx, &app.log,
 		max_height=320,
 		axes=.Vertical,
 	},
-	key=alicorn.key_string("log"), instance_id=1, recipe=app.recipe) {
-	if ui.column(ctx, key=alicorn.key_string("log-lines")) {
+	key=ui.key_string("log"), instance_id=1, recipe=app.recipe) {
+	if ui.column(ctx, key=ui.key_string("log-lines")) {
 		for line in 0..<40 { /* ui.text(... height=24) */ }
 	}
 	scroll_area.end(ctx, &app.log)
@@ -62,6 +63,7 @@ if scroll_area.begin(ctx, &app.log,
 from the registered theme, not per node, so install them at setup:
 
 ```odin
+import alicorn "alicorn:runtime"
 theme := alicorn.DEFAULT_STYLE_THEME
 theme.scrollbar_recipe = scroll_area.theme_scrollbar_recipe(app.recipe)
 id := alicorn.style_theme_register(rt, theme)

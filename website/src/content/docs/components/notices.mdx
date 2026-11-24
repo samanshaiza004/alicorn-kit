@@ -3,8 +3,6 @@ title: Notices
 description: Runtime toast helpers plus copyable card and stack parts for inline banners and application-hosted snackbars.
 ---
 
-import Capture from '../../../components/Capture.astro';
-
 <div class="lede">
 <code>alikit:notices</code> is a presentation layer over Alicorn's notice runtime. It adds
 notice construction, action/deadline helpers, and copyable card/stack parts for inline banners.
@@ -12,12 +10,9 @@ Real toasts stay on Alicorn's built-in overlay, which owns stable-ID deduplicati
 capacity, live-region announcements, and one-shot expiry.
 </div>
 
-## Preview
+## Runnable example
 
-<Capture src="captures/notices.png" alt="Native notices window with Post saved, Post warning, and Post error buttons and an inline offline warning card with Retry and Details actions" caption="Native SDL_GPU capture of examples/notices at Alicorn 47c9d4a. The inline card is an application-owned item; runtime toasts use Alicorn's own overlay and are not a second queue." />
-
-<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
-real native application; toast and card behavior is not recreated in JavaScript.</div>
+The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/notices/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
 
 ## Responsibility split
 
@@ -38,6 +33,7 @@ Files: `notices/notices.odin`, `notices/notices_test.odin`, `examples/notices/ma
 `examples/notices/theme.json`.
 
 ```odin
+import ui "alicorn:ui"
 import notices "alikit:notices"
 
 // Between frames (for example from ui.run on_after_frame), with the host clock:
@@ -57,7 +53,7 @@ if event, found := notices.take_action(rt); found {
 
 // Inline presentation parts:
 if event := notices.stack(ctx, app.card_states[:], app.cards[:],
-	key=alicorn.key_string("notices"), recipe=app.recipe); event.kind != .None {
+	key=ui.key_string("notices"), recipe=app.recipe); event.kind != .None {
 	if event.kind == .Actioned { handle_action(event.action) }
 	if event.kind == .Dismissed { app.cards[0].retiring = true }
 	if event.kind == .Retire_Settled { remove_card(app) }
@@ -157,8 +153,8 @@ inline cards use explicit assertions. There is no negative pattern fixture to ru
 
 ## Compatibility
 
-<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
-<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<div class="pin-note"><strong>Pin:</strong> built and tested against Alicorn
+<code>3c9ccb9df5478008efe66082ef9d0a47b9ae98d6</code>. See
 <a href="../../compatibility/">Compatibility and pinning</a>.</div>
 
 ## Source map

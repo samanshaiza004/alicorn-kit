@@ -1,6 +1,6 @@
 # AliKit catalog website
 
-The first AliKit component catalog: native captures, copyable Odin source, ownership and input
+The AliKit component catalog: runnable Odin examples, copyable source, ownership and input
 contracts, test coverage, theme roles, API references, and known limits.
 
 ## Choice and rationale
@@ -19,22 +19,22 @@ The cost is a Node build toolchain and a dependency lockfile. That is acceptable
 that will gain P1 pages; a plain static site would have been smaller but would have reimplemented
 navigation, search, and page chrome.
 
-## Native captures
+## Local visual checks
 
-The PNGs under `public/captures/` are genuine SDL_GPU windows captured with `PrintWindow`
-(`PW_RENDERFULLCONTENT`) after the real examples were launched and, where needed, driven through
-their ordinary controls. They are not screenshots of a web recreation.
+The documentation does not include screenshots of desktop applications. On Windows, the optional
+capture script can still produce local SDL_GPU screenshots for visual review; they are written to
+`out/catalog-captures/` by default and are not part of the website.
 
 Rebuild the examples and re-capture:
 
 ```powershell
 # From the repository root, with the pinned Alicorn checkout at ./alicorn
 ./tools/test.ps1 -Odin odin
-./tools/capture_catalog.ps1 -BinDir out -OutDir website/public/captures
+./tools/capture_catalog.ps1 -BinDir out -OutDir out/catalog-captures
 ```
 
-The capture script uses the SDL_GPU Direct3D 12 backend on Windows. Captures are pinned to the
-Alicorn revision in `dependencies.lock.json`; update them when the pin changes.
+The capture script uses SDL_GPU Direct3D 12 on Windows and the exact Alicorn pin in
+`dependencies.lock.json`.
 
 ## Develop and build
 
@@ -52,8 +52,8 @@ so the registry download and the catalog cannot drift.
 ## GitHub Pages
 
 The standalone catalog site is **retired**. The catalog is published in the Alicorn documentation
-site at <https://carnival-science.github.io/Alicorn/components/>, which syncs these pages, the
-native captures, and `components.json` at a pinned revision.
+site at <https://carnival-science.github.io/Alicorn/components/>, which syncs these pages and
+`components.json` at a pinned revision.
 
 `.github/workflows/pages.yml` now deploys only `website/redirect/`: an index page and a 404 page
 that forward the old URL — including per-component paths, `manifest/`, and `compatibility/` — to
@@ -68,11 +68,9 @@ standalone site in `dist/`; it is simply no longer what Pages serves.
 - `src/content/docs/index.mdx` — catalog landing page and grid.
 - `src/content/docs/components.mdx` — package catalog and ownership overview.
 - `src/content/docs/components/*.mdx` — one page per component, in the consistent order:
-  preview, responsibility split, copyable implementation, parts, styling/theme, keyboard and
+  runnable example, responsibility split, copyable implementation, parts, styling/theme, keyboard and
   accessibility, conformance tests, API, limits, compatibility, source map.
 - `src/content/docs/compatibility.md` — the Alicorn/AccessKit pin and update procedure.
 - `src/content/docs/manifest.mdx` — the machine-readable registry seed.
-- `public/captures/` — native PNGs.
-
-Interactive WebGPU previews are a later catalog step. The v1 preview is the native capture plus
-the copyable source; the site intentionally does not recreate a component in JavaScript.
+The site publishes source examples and API contracts; it does not recreate components in
+JavaScript or embed desktop screenshots.

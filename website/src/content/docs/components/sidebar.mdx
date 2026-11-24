@@ -3,8 +3,6 @@ title: Sidebar
 description: A flat navigation rail with expanded and collapsed presentations, List_Box semantics, roving focus, and one proposed route.
 ---
 
-import Capture from '../../../components/Capture.astro';
-
 <div class="lede">
 <code>alikit:sidebar</code> is the P0 Sidebar shape: a vertical, icon-led navigation rail with
 expanded and collapsed presentations. It publishes one <code>List_Box</code> with
@@ -12,12 +10,9 @@ expanded and collapsed presentations. It publishes one <code>List_Box</code> wit
 route change on activation.
 </div>
 
-## Preview
+## Runnable example
 
-<Capture src="captures/sidebar.png" alt="Native navigation rail window in the collapsed icon-only presentation, with a Files content pane and a Collapse rail checkbox" caption="Native SDL_GPU capture of examples/sidebar at Alicorn 47c9d4a, shown collapsed. Collapsing changes width and omits visible labels; semantic IDs, selected state, and focus ownership do not change." />
-
-<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
-real native rail; route content and routing stay application-owned.</div>
+The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/sidebar/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
 
 ## Responsibility split
 
@@ -37,7 +32,6 @@ Files: `sidebar/sidebar.odin`, `sidebar/sidebar_test.odin`, `examples/sidebar/ma
 `examples/sidebar/theme.json`.
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import sidebar "alikit:sidebar"
 
@@ -59,7 +53,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 		ROUTES[:],
 		app.selected_key,
 		sidebar.Options{accessible_label="Workspace navigation", collapsed=app.collapsed},
-		key=alicorn.key_string("workspace-rail"),
+		key=ui.key_string("workspace-rail"),
 		instance_id=1,
 	); event.kind == .Selection_Proposed {
 		app.selected_key = event.key
@@ -190,8 +184,8 @@ Alicorn's own `testui` fixture; this package does not duplicate the core fixture
 
 ## Compatibility
 
-<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
-<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<div class="pin-note"><strong>Pin:</strong> built and tested against Alicorn
+<code>3c9ccb9df5478008efe66082ef9d0a47b9ae98d6</code>. See
 <a href="../../compatibility/">Compatibility and pinning</a>.</div>
 
 ## Source map

@@ -140,9 +140,10 @@ validation scripts. Findings fixed in this phase:
   `docs/components.md` and the catalog's component page.
 
 Remaining manifest gap (reported, not fixed): `dialog` and `scroll_area` ship
-sources, tests, docs, and examples but have no `components.json` entries, catalog
-pages, or captures. The harness emits this as a warning. Adding them is a
-catalog task, not a phase-6 copy blocker.
+sources, tests, docs, and examples but have no `components.json` entries or
+catalog pages. The harness emits this as a warning. Adding them is a catalog
+task, not a phase-6 copy blocker. Published catalog pages now link runnable
+examples rather than embedding desktop captures.
 
 ## Friction list
 
@@ -192,7 +193,9 @@ Markdown/MDX text only and the catalog build is a separate check.
 
 ## Follow-ups
 
-- Add `dialog` and `scroll_area` registry entries, catalog pages, and captures.
+- Add `dialog` and `scroll_area` registry entries and catalog pages if they
+  become part of the supported catalog. Desktop captures are no longer a
+  catalog requirement.
 - Apply the `copy` recipe audit to `menu`, `sidebar`, `segmented`, `progress`,
   and `notices` guides, or point every Installation section at the manifest copy
   recipe instead of duplicating file lists.

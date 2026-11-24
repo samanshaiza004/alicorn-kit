@@ -76,17 +76,17 @@ view_copy :: proc(value: u64) -> (title, body: string) {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=alicorn.key_string("segmented-example-root"),
+	if ui.column(ctx, key=ui.key_string("segmented-example-root"),
 		width=-1, height=-1, padding=28, gap=16, align=.Center) {
 		_ = ui.text(ctx, "Segmented Control", size=26)
 		_ = ui.text(ctx, "One keyed single-selection model. The selected indicator moves through paint-only motion.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
+			size=13, color=ui.style_color(ctx, .Muted_Text))
 
 		theme_scope := alicorn.Style_Environment_Scope{}
 		if app.theme_id != 0 {
 			theme_scope = alicorn.style_environment_push(ctx, alicorn.Style_Environment{theme=app.theme_id})
 		}
-		if ui.column(ctx, key=alicorn.key_string("segmented-example-card"), width=560,
+		if ui.column(ctx, key=ui.key_string("segmented-example-card"), width=560,
 			height=alicorn.LAYOUT_SIZE_FIT_CONTENT, padding=22, gap=16) {
 			event := segmented.control(
 				ctx,
@@ -100,24 +100,24 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 					padding=4,
 					selection_mode=app.mode,
 				},
-				key=alicorn.key_string("segmented-example-control"),
+				key=ui.key_string("segmented-example-control"),
 				instance_id=4801,
 				recipe=app.recipe,
 			)
 			if event.kind == .Selection_Proposed { app.selected = event.value }
 
 			title, body := view_copy(app.selected)
-			_ = ui.text(ctx, title, key=alicorn.key_string("segmented-example-title"), size=20)
-			_ = ui.text(ctx, body, key=alicorn.key_string("segmented-example-body"), size=13,
-				color=alicorn.style_color(ctx, .Muted_Text))
+			_ = ui.text(ctx, title, key=ui.key_string("segmented-example-title"), size=20)
+			_ = ui.text(ctx, body, key=ui.key_string("segmented-example-body"), size=13,
+				color=ui.style_color(ctx, .Muted_Text))
 
 			_ = ui.checkbox(ctx, "Activate mode (arrows move focus; Space selects)",
-				&app.activate_mode, key=alicorn.key_string("segmented-example-mode"),
+				&app.activate_mode, key=ui.key_string("segmented-example-mode"),
 				width=340, height=28)
 			if app.activate_mode { app.mode = .Activate } else { app.mode = .Follow_Focus }
 			if app.theme_error {
 				_ = ui.text(ctx, "Optional segmented theme roles are incomplete; core roles are in use.",
-					size=12, color=alicorn.style_color(ctx, .Danger))
+					size=12, color=ui.style_color(ctx, .Danger))
 			}
 		}
 		if theme_scope.active { alicorn.style_environment_pop(ctx, theme_scope) }

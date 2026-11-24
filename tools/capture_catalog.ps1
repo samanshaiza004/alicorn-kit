@@ -1,13 +1,11 @@
 param(
     [string]$BinDir = 'out',
-    [string]$OutDir = 'website/public/captures',
+    [string]$OutDir = 'out/catalog-captures',
     [string]$Only = ''
 )
 
-# Captures genuine native windows for the component catalog. Each example runs
-# through the real SDL_GPU host, then its window is captured with PrintWindow
-# (PW_RENDERFULLCONTENT). No component is recreated in HTML: the PNGs are the
-# native application output.
+# Produces local visual-validation screenshots from real SDL_GPU examples.
+# These files are not embedded in the documentation or copied to the website.
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName UIAutomationClient

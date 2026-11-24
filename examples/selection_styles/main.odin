@@ -78,7 +78,7 @@ draw_item :: proc(
 		label="selection-style-face",
 	)
 	if face == 0 { return }
-	defer alicorn.surface_end(ctx)
+	defer ui.surface_end(ctx)
 	_ = alicorn.visual_part_attach(ctx, face, owner, alicorn.visual_part_core(.Surface))
 
 	text := ui.text(ctx, label, key=ui.key_u64(2), color=ink, font=style.font,

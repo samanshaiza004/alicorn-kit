@@ -9,7 +9,6 @@ package main
 
 import "core:fmt"
 import "core:os"
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import menu "../../menu"
 
@@ -31,20 +30,20 @@ ITEMS :: [6]menu.Item{
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=alicorn.key_string("menu-example-root"), width=-1, height=-1,
+	if ui.column(ctx, key=ui.key_string("menu-example-root"), width=-1, height=-1,
 		padding=24, gap=12) {
 		_ = ui.text(ctx, "Menu", size=26)
 		_ = ui.text(ctx, "Anchored, component-owned dropdown. Escape and outside clicks close it; focus returns to the trigger.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
+			size=13, color=ui.style_color(ctx, .Muted_Text))
 		_ = menu.trigger(ctx, &app.view, "Actions", menu.Options{accessible_label="Actions"},
-			key=alicorn.key_string("menu-example-trigger"))
-		_ = ui.text(ctx, app.status, size=13, color=alicorn.style_color(ctx, .Muted_Text))
+			key=ui.key_string("menu-example-trigger"))
+		_ = ui.text(ctx, app.status, size=13, color=ui.style_color(ctx, .Muted_Text))
 	}
 }
 
 render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 	visible, chosen := menu.popup_begin(ctx, &app.view, app.items[:],
-		menu.Options{accessible_label="Actions"}, key=alicorn.key_string("menu-example-popup"),
+		menu.Options{accessible_label="Actions"}, key=ui.key_string("menu-example-popup"),
 		instance_id=7301)
 	if !visible {
 		if chosen != 0 { apply(app, chosen) }

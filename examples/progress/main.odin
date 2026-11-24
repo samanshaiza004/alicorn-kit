@@ -61,20 +61,20 @@ tick :: proc(app: ^App, rt: ^alicorn.Runtime) {
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
 	if alicorn.container_begin(ctx, .Container, label="progress-example-root",
-		key=alicorn.key_string("progress-example-root"),
+		key=ui.key_string("progress-example-root"),
 		style=alicorn.layout_style(.Column, width=-1, height=-1, grow=1, padding=28, gap=16, align=.Center),
-		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
+		color=ui.style_color(ctx, .Window_Background)) != 0 {
 		_ = ui.text(ctx, "Progress", size=26)
 		_ = ui.text(ctx, "Determinate values publish a numeric range; indeterminate work has no value.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
+			size=13, color=ui.style_color(ctx, .Muted_Text))
 		theme_scope := alicorn.Style_Environment_Scope{}
 		if app.theme_id != 0 {
 			theme_scope = alicorn.style_environment_push(ctx, alicorn.Style_Environment{theme=app.theme_id})
 		}
 		if alicorn.container_begin(ctx, .Container, label="progress-example-card",
-			key=alicorn.key_string("progress-example-card"),
+			key=ui.key_string("progress-example-card"),
 			style=alicorn.layout_style(.Column, width=540, height=330, padding=20, gap=16),
-			color=alicorn.style_color(ctx, .Surface)) != 0 {
+			color=ui.style_color(ctx, .Surface)) != 0 {
 			values := [4]f64{0, 25, 60, 100}
 			for value, index in values {
 				// Each progress instance owns a keyed parent so repeated
@@ -101,7 +101,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 				}
 			}
 			if alicorn.container_begin(ctx, .Container,
-				key=alicorn.key_string("progress-example-loading-scope"),
+				key=ui.key_string("progress-example-loading-scope"),
 				style=alicorn.layout_style(.Row, width=-1,
 					height=alicorn.LAYOUT_SIZE_FIT_CONTENT)) != 0 {
 				progress.progress(
@@ -117,17 +117,17 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 						indeterminate_phase=app.phase,
 						pulse=true,
 					},
-					key=alicorn.key_string("progress-example-loading"),
+					key=ui.key_string("progress-example-loading"),
 					instance_id=4205,
 					recipe=app.recipe,
 				)
 				alicorn.container_end(ctx)
 			}
 			_ = ui.checkbox(ctx, "Animate indeterminate phase", &app.animate,
-				key=alicorn.key_string("progress-example-animate"), width=240, height=28)
+				key=ui.key_string("progress-example-animate"), width=240, height=28)
 			if app.theme_error {
 				_ = ui.text(ctx, "Optional progress theme roles are incomplete; core roles are in use.",
-					size=12, color=alicorn.style_color(ctx, .Danger))
+					size=12, color=ui.style_color(ctx, .Danger))
 			}
 			alicorn.container_end(ctx)
 		}

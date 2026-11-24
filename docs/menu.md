@@ -22,9 +22,6 @@ slot, separators, and an active fill. The parts example replaces each row with
 an icon, two text lines, a custom checkmark, and a danger group. The composition
 example hosts a permission menu inside a share dialog.
 
-Native captures in the catalog predate the parts examples; re-capture is
-pending. The behavior, semantics, and source below are current.
-
 ## Installation
 
 Copy these files into an application or import the package with the AliKit
@@ -38,7 +35,6 @@ collection:
 - `examples/menu_composition/main.odin` (menu inside a dialog)
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import menu "alikit:menu"
 ```
@@ -96,11 +92,11 @@ ITEMS: [3]menu.Item = {
 
 // In the ordinary root:
 _ = menu.trigger(ctx, &app.menu, "Actions", menu.Options{accessible_label="Actions"},
-	key=alicorn.key_string("actions-trigger"))
+	key=ui.key_string("actions-trigger"))
 
 // In render_overlays, after the ordinary root closes:
 visible, chosen := menu.popup_begin(ctx, &app.menu, ITEMS[:],
-	menu.Options{accessible_label="Actions"}, key=alicorn.key_string("actions-popup"),
+	menu.Options{accessible_label="Actions"}, key=ui.key_string("actions-popup"),
 	instance_id=1)
 if !visible {
 	if chosen != 0 { app.run(chosen) }
@@ -121,7 +117,7 @@ The default appearance uses `row_surface`, `check`, `label`, and `shortcut`:
 
 ```odin
 visible, chosen := menu.popup_begin(ctx, &app.menu, ITEMS[:],
-	menu.Options{accessible_label="Actions"}, key=alicorn.key_string("popup"), instance_id=41)
+	menu.Options{accessible_label="Actions"}, key=ui.key_string("popup"), instance_id=41)
 if visible {
 	for item, index in ITEMS {
 		if item.kind == .Separator {
@@ -134,7 +130,7 @@ if visible {
 				menu.check(ctx, row)
 				menu.label(ctx, row)
 				menu.shortcut(ctx, row)
-				alicorn.surface_end(ctx)
+				ui.surface_end(ctx)
 			}
 			if menu.item_end(ctx, row) { app.run(item.key) }
 		}
@@ -159,7 +155,7 @@ for item, index in ITEMS {
 		if item.shortcut != "" {
 			_ = ui.text(ctx, item.shortcut, key=ui.key_u64(6), size=10)
 		}
-		alicorn.surface_end(ctx)
+		ui.surface_end(ctx)
 	}
 	if menu.item_end(ctx, row) { app.run(item.key) }
 }

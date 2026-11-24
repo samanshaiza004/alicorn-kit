@@ -4,17 +4,15 @@ interface Props {
   title: string;
   packageName: string;
   purpose: string;
-  capture: string;
   badges?: string[];
 }
-const { href, title, packageName, purpose, capture, badges = [] } = Astro.props;
+const { href, title, packageName, purpose, badges = [] } = Astro.props;
 const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 const target = href.startsWith('http')
   ? href
   : `${base.replace(/\/$/, '')}/${href.replace(/^\//, '')}`;
 ---
 <a class="component-card" href={target}>
-  <img src={`${base}${capture}`} alt={`${title} native preview`} loading="lazy" />
   <code>{packageName}</code>
   <h3>{title}</h3>
   <p>{purpose}</p>

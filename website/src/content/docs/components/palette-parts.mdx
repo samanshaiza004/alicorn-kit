@@ -3,8 +3,6 @@ title: Palette Parts
 description: A copyable parts-based result list for applications that own the palette shell, query, and ranking.
 ---
 
-import Capture from '../../../components/Capture.astro';
-
 <div class="lede">
 <code>alikit:palette_parts</code> is a copyable, parts-based variant of the command palette's
 result list. It owns the retained virtual list, published <code>List_Box</code> collection,
@@ -13,12 +11,9 @@ activation event. The application owns the query, matching and ranking, commands
 dismissal, and focus restoration.
 </div>
 
-## Preview
+## Runnable example
 
-<Capture src="captures/palette-parts.png" alt="Native palette parts window with a filter field and a six-row result list" caption="Native SDL_GPU capture of examples/palette_parts at Alicorn 47c9d4a. This is the reusable result-list part, not the modal command palette." />
-
-<div class="preview-note">Interactive WebGPU preview is a later catalog step. This capture is the
-real native application; the row list is not recreated in JavaScript.</div>
+The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/palette_parts/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
 
 ## Responsibility split
 
@@ -38,30 +33,30 @@ Files: `palette_parts/parts.odin`, `palette_parts/parts_test.odin`,
 `palette_parts/pilot_test.odin`, `examples/palette_parts/main.odin`.
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
-import model "alikit:palette_model"
+import model "alikit:palette_model" // optional substring-filter helper
 import parts "alikit:palette_parts"
 
-ITEMS := [2]model.Item{
-	{id=model.Item_ID(1), title="Open File", description="Browse the workspace"},
-	{id=model.Item_ID(2), title="Build Project", keywords="compile"},
+ITEMS := [2]parts.Item{
+	{id=parts.Item_ID(1), title="Open File", description="Browse the workspace"},
+	{id=parts.Item_ID(2), title="Build Project", keywords="compile"},
 }
 
 App :: struct {
-	matches: [2]model.Match,
+	query:   ui.Text_Buffer,
+	matches: [2]parts.Match,
 	visible: int,
 	results: parts.State,
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	app.visible, _ = model.filter(ITEMS[:], "", app.matches[:])
+	app.visible, _ = model.filter(ITEMS[:], app.query.text, app.matches[:])
 	event := parts.results(
 		ctx,
 		&app.results,
 		ITEMS[:],
 		app.matches[:app.visible],
-		key=alicorn.key_string("app-palette-results"),
+		key=ui.key_string("app-palette-results"),
 		options=parts.Options{accessible_label="Commands"},
 	)
 	if event.kind == .Activated {
@@ -69,6 +64,10 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 	}
 }
 ```
+
+`parts.Item`, `parts.Item_ID`, and `parts.Match` are the public input types. This example imports
+`palette_model` only for its optional substring-filter helper; matching and ranking remain
+application policy.
 
 Pass a fresh visible slice each description. The part never stores item strings. `handle_key` is
 the application's keyboard path when its query field owns focus:
@@ -179,8 +178,8 @@ focus owner model.
 
 ## Compatibility
 
-<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
-<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<div class="pin-note"><strong>Pin:</strong> built and tested against Alicorn
+<code>3c9ccb9df5478008efe66082ef9d0a47b9ae98d6</code>. See
 <a href="../../compatibility/">Compatibility and pinning</a>.</div>
 
 ## Source map

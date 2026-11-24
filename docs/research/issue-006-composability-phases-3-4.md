@@ -134,9 +134,9 @@ suite now covers:
 
 ## Follow-ups
 
-- Re-capture the command-palette catalog image for the shared row appearance.
-- Add catalog captures/pages for Menu and Data Grid (this sprint seeded pages;
-  captures are pending).
+- Historical follow-up superseded by the authoring-quality sweep: desktop
+  captures were removed from the published catalog, and the pages now link to
+  runnable source examples instead.
 - Add a dedicated `table_core` unit test if a third consumer appears; current
   coverage comes through Table and Data Grid.
 - Menu submenus remain application-composed; revisit only with a nested-overlay

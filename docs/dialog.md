@@ -30,8 +30,9 @@ input and focus.
 Files: `dialog/dialog.odin`, `dialog/dialog_test.odin`, `examples/dialog/main.odin`.
 
 ```odin
+import ui "alicorn:ui"
 // In the ordinary root:
-if ui.button(ctx, "Delete", key=alicorn.key_string("delete")) {
+if ui.button(ctx, "Delete", key=ui.key_string("delete")) {
 	_ = dialog.open(&app.dialog, ctx.runtime)
 }
 
@@ -39,23 +40,23 @@ if ui.button(ctx, "Delete", key=alicorn.key_string("delete")) {
 if app.dialog.open {
 	visible, event := dialog.begin(ctx, &app.dialog, "Delete record",
 		dialog.Options{description="This cannot be undone.",
-			primary_key=alicorn.key_string("confirm")},
-		key=alicorn.key_string("delete-dialog"), instance_id=1)
+			primary_key=ui.key_string("confirm")},
+		key=ui.key_string("delete-dialog"), instance_id=1)
 	if !visible {
 		if event.kind == .Dismissed { /* Escape or backdrop */ }
 		return
 	}
 	dialog.title(ctx, "Delete record")
 	dialog.description(ctx, "This cannot be undone.")
-	if dialog.content_begin(ctx, alicorn.key_string("dialog-content")) {
+	if dialog.content_begin(ctx, ui.key_string("dialog-content")) {
 		/* application content */
 		dialog.content_end(ctx)
 	}
-	if dialog.action_row_begin(ctx, key=alicorn.key_string("dialog-actions")) {
-		if dialog.action(ctx, &app.dialog, "Delete", .Primary, key=alicorn.key_string("confirm")) {
+	if dialog.action_row_begin(ctx, key=ui.key_string("dialog-actions")) {
+		if dialog.action(ctx, &app.dialog, "Delete", .Primary, key=ui.key_string("confirm")) {
 			dialog.dismiss(ctx, &app.dialog, .Action)
 		}
-		if dialog.action(ctx, &app.dialog, "Cancel", .Cancel, key=alicorn.key_string("cancel")) {
+		if dialog.action(ctx, &app.dialog, "Cancel", .Cancel, key=ui.key_string("cancel")) {
 			dialog.dismiss(ctx, &app.dialog, .Action)
 		}
 		dialog.action_row_end(ctx)

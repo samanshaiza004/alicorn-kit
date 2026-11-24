@@ -160,24 +160,24 @@ less :: proc(app: ^App, left, right: data_grid.Row) -> bool {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=alicorn.key_string("table-example-root"), width=-1, height=-1,
+	if ui.column(ctx, key=ui.key_string("table-example-root"), width=-1, height=-1,
 		padding=24, gap=12) {
 		_ = ui.text(ctx, "Data Grid", size=26)
 		_ = ui.text(ctx, "Application-owned filtering and sorting; virtualized rows; nested table semantics.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
-		if ui.row(ctx, key=alicorn.key_string("table-example-controls"), width=-1,
+			size=13, color=ui.style_color(ctx, .Muted_Text))
+		if ui.row(ctx, key=ui.key_string("table-example-controls"), width=-1,
 			height=34, gap=10, align=.Center) {
 			_ = ui.text_field(ctx, "Filter", &app.query,
-				key=alicorn.key_string("table-example-filter"), width=240, height=30)
+				key=ui.key_string("table-example-filter"), width=240, height=30)
 			_ = ui.checkbox(ctx, "Sort by size", &app.sort_by_size,
-				key=alicorn.key_string("table-example-sort"), width=160, height=28)
+				key=ui.key_string("table-example-sort"), width=160, height=28)
 			_ = ui.text(ctx, fmt.tprintf("%d rows", app.visible_count), size=12,
-				color=alicorn.style_color(ctx, .Muted_Text))
+				color=ui.style_color(ctx, .Muted_Text))
 		}
 		rebuild_projection(app)
-		if ui.panel(ctx, key=alicorn.key_string("table-example-panel"), width=-1, height=-1,
-			grow=1, padding=8, fill=alicorn.style_color(ctx, .Surface), radius=10,
-			stroke=ui.border(1, alicorn.style_color(ctx, .Border), .Inside)) {
+		if ui.panel(ctx, key=ui.key_string("table-example-panel"), width=-1, height=-1,
+			grow=1, padding=8, fill=ui.style_color(ctx, .Surface), radius=10,
+			stroke=ui.border(1, ui.style_color(ctx, .Border), .Inside)) {
 			if event := data_grid.data_grid(
 				ctx,
 				&app.view,
@@ -186,7 +186,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 				app.selection,
 				data_grid.Options{accessible_label="Documents", row_header=true,
 					max_visible_rows=10, row_height=30},
-				key=alicorn.key_string("grid-example-grid"),
+				key=ui.key_string("grid-example-grid"),
 				instance_id=7101,
 				recipe=app.recipe,
 				); event.kind == .Activated {
@@ -208,14 +208,14 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 			}
 			if app.theme_error {
 				_ = ui.text(ctx, "Optional table theme roles are incomplete; core roles are in use.",
-					size=12, color=alicorn.style_color(ctx, .Danger))
+					size=12, color=ui.style_color(ctx, .Danger))
 			}
 		}
 		status := "Activate a cell with Return, Space, or the pointer."
 		if app.status_row != 0 {
 			status = fmt.tprintf("Activated row %d, column %d", app.status_row, app.status_col)
 		}
-		_ = ui.text(ctx, status, size=13, color=alicorn.style_color(ctx, .Muted_Text))
+		_ = ui.text(ctx, status, size=13, color=ui.style_color(ctx, .Muted_Text))
 	}
 }
 

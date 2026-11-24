@@ -72,10 +72,10 @@ selected_route :: proc(app: ^App) -> sidebar.Item {
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
 	if alicorn.container_begin(ctx, .Container, label="sidebar-example-root",
-		key=alicorn.key_string("sidebar-example-root"),
+		key=ui.key_string("sidebar-example-root"),
 		style=alicorn.layout_style(.Row, width=-1, height=-1, grow=1, padding=18, gap=18),
-		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
-		if ui.row(ctx, key=alicorn.key_string("sidebar-example-body"), width=-1, height=-1,
+		color=ui.style_color(ctx, .Window_Background)) != 0 {
+		if ui.row(ctx, key=ui.key_string("sidebar-example-body"), width=-1, height=-1,
 			grow=1, gap=18) {
 		theme_scope := alicorn.Style_Environment_Scope{}
 		if app.theme_id != 0 {
@@ -87,25 +87,25 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 			ROUTES[:],
 			app.selected_key,
 			sidebar.Options{accessible_label="Workspace navigation", collapsed=app.collapsed},
-			key=alicorn.key_string("sidebar-example-rail"),
+			key=ui.key_string("sidebar-example-rail"),
 			instance_id=6101,
 			recipe=app.recipe,
 		); event.kind == .Selection_Proposed {
 			app.selected_key = event.key
 		}
 		if theme_scope.active { alicorn.style_environment_pop(ctx, theme_scope) }
-		if ui.column(ctx, key=alicorn.key_string("sidebar-example-content"), width=-1, height=-1,
+		if ui.column(ctx, key=ui.key_string("sidebar-example-content"), width=-1, height=-1,
 			grow=1, padding=24, gap=12, align=.Start) {
 			_ = ui.text(ctx, selected_route(app).label, size=26)
 			_ = ui.text(ctx, selected_route(app).detail, size=14,
-				color=alicorn.style_color(ctx, .Muted_Text))
+				color=ui.style_color(ctx, .Muted_Text))
 			_ = ui.text(ctx, "The application owns the accepted route; the rail only proposes it.",
-				size=13, color=alicorn.style_color(ctx, .Muted_Text))
+				size=13, color=ui.style_color(ctx, .Muted_Text))
 			_ = ui.checkbox(ctx, "Collapse rail", &app.collapsed,
-				key=alicorn.key_string("sidebar-example-collapse"), width=180, height=28)
+				key=ui.key_string("sidebar-example-collapse"), width=180, height=28)
 			if app.theme_error {
 				_ = ui.text(ctx, "Optional sidebar theme roles are incomplete; core roles are in use.",
-					size=12, color=alicorn.style_color(ctx, .Danger))
+					size=12, color=ui.style_color(ctx, .Danger))
 			}
 		}
 		}

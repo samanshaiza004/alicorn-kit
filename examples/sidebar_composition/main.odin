@@ -12,7 +12,6 @@ package main
 
 import "core:fmt"
 import "core:os"
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import segmented "../../segmented"
 import sidebar "../../sidebar"
@@ -40,50 +39,48 @@ App :: struct {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if alicorn.container_begin(ctx, .Container, label="sidebar-composition-root",
-		key=alicorn.key_string("sidebar-composition-root"),
-		style=alicorn.layout_style(.Row, width=-1, height=-1, grow=1, padding=18, gap=18),
-		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
+	if ui.row(ctx, key=ui.key_string("sidebar-composition-root"),
+		width=-1, height=-1, grow=1, padding=18, gap=18,
+		label="sidebar-composition-root") {
 		if event := sidebar.rail(
 			ctx,
 			&app.rail,
 			ROUTES[:],
 			app.route,
 			sidebar.Options{accessible_label="Settings navigation", expanded_width=230},
-			key=alicorn.key_string("sidebar-composition-rail"),
+			key=ui.key_string("sidebar-composition-rail"),
 			instance_id=6301,
 		); event.kind == .Selection_Proposed {
 			app.route = event.key
 			app.status = fmt.tprintf("Route %d accepted; the application owns the content.", event.key)
 		}
-		if ui.column(ctx, key=alicorn.key_string("sidebar-composition-content"), grow=1,
+		if ui.column(ctx, key=ui.key_string("sidebar-composition-content"), grow=1,
 			height=-1, padding=24, gap=14, align=.Start) {
 			_ = ui.text(ctx, route_label(app.route), size=26)
 			_ = ui.text(ctx, "The rail proposes routes; the segmented control owns the section.",
-				size=13, color=alicorn.style_color(ctx, .Muted_Text))
+				size=13, color=ui.style_color(ctx, .Muted_Text))
 			if event := segmented.control(
 				ctx,
 				&app.segments,
 				SECTIONS[:],
 				app.section,
 				segmented.Options{accessible_label="Settings section", width=380, height=34},
-				key=alicorn.key_string("sidebar-composition-sections"),
+				key=ui.key_string("sidebar-composition-sections"),
 				instance_id=6302,
 			); event.kind == .Selection_Proposed {
 				app.section = event.value
 			}
-			if ui.panel(ctx, key=alicorn.key_string("sidebar-composition-card"),
+			if ui.panel(ctx, key=ui.key_string("sidebar-composition-card"),
 				width=-1, height=180, padding=18, gap=8, align=.Start,
-				fill=alicorn.style_color(ctx, .Surface), radius=12,
-				stroke=ui.border(1, alicorn.style_color(ctx, .Border), .Inside)) {
+				fill=ui.style_color(ctx, .Surface), radius=12,
+				stroke=ui.border(1, ui.style_color(ctx, .Border), .Inside)) {
 				_ = ui.text(ctx, section_title(app.section), size=18)
 				_ = ui.text(ctx, section_body(app.section), size=13,
-					color=alicorn.style_color(ctx, .Muted_Text))
+					color=ui.style_color(ctx, .Muted_Text))
 				_ = ui.text(ctx, app.status, size=12,
-					color=alicorn.style_color(ctx, .Muted_Text))
+					color=ui.style_color(ctx, .Muted_Text))
 			}
 		}
-		alicorn.container_end(ctx)
 	}
 }
 

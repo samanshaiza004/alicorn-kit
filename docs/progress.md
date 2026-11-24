@@ -15,9 +15,6 @@ example renders the same numeric range as a linear bar and as a ring donut with
 centered value text; a second ring shows an indeterminate segment. The
 composition example hosts progress parts inside a modal export dialog.
 
-Native captures in the catalog predate the parts examples; re-capture is
-pending. The behavior, semantics, and source below are current.
-
 ## Installation
 
 Copy these files into an application or import the package with the AliKit
@@ -30,7 +27,6 @@ collection:
 - `examples/progress_composition/main.odin` (dialog composition)
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import progress "alikit:progress"
 ```
@@ -75,7 +71,6 @@ end
 ## Minimal example
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import progress "alikit:progress"
 
@@ -90,7 +85,7 @@ progress.progress(
 	&app.upload,
 	app.value, 0, 100,
 	progress.Options{accessible_label="Upload progress", width=320},
-	key=alicorn.key_string("upload"),
+	key=ui.key_string("upload"),
 	instance_id=1,
 )
 ```
@@ -112,7 +107,7 @@ progress.progress(ctx, &app.upload, app.bytes_done, 0, app.bytes_total,
 		value_label=fmt.tprintf("%.1f MB", f64(app.bytes_done)/1e6),
 		width=360,
 	},
-	key=alicorn.key_string("upload"), instance_id=41)
+	key=ui.key_string("upload"), instance_id=41)
 ```
 
 `value_label` overrides the formatted percentage in both the visible value and
@@ -132,7 +127,7 @@ progress.progress(ctx, &app.loading, 0, 0, 1,
 		indeterminate_phase=app.phase, // 0..1, advanced by the application
 		pulse=true,
 	},
-	key=alicorn.key_string("loading"), instance_id=42)
+	key=ui.key_string("loading"), instance_id=42)
 ```
 
 The component never owns a timer. When the host reports Reduce Motion, the
@@ -145,7 +140,7 @@ The default parts:
 ```odin
 part, visible := progress.begin(ctx, &app.upload, app.value, 0, 100,
 	progress.Options{accessible_label="Upload progress", width=320},
-	key=alicorn.key_string("upload"), instance_id=43)
+	key=ui.key_string("upload"), instance_id=43)
 if visible {
 	progress.label(ctx, &part)
 	progress.value_text(ctx, &part)
@@ -162,9 +157,11 @@ if visible {
 A ring donut from the same range uses no track part at all:
 
 ```odin
+import alicorn "alicorn:runtime" // needed for custom ring surfaces
+
 part, visible := progress.begin(ctx, &app.export, app.value, 0, 100,
 	progress.Options{accessible_label="Export", width=180},
-	key=alicorn.key_string("export-ring"), instance_id=44)
+	key=ui.key_string("export-ring"), instance_id=44)
 if visible {
 	if ui.row(ctx, key=ui.key_u64(1), width=160, height=160,
 		align=.Center, justify=.Center) {
@@ -174,10 +171,10 @@ if visible {
 			style=ui.layout_style(.Row, width=160, height=160),
 			shape=alicorn.Surface_Shape{kind=.Circle},
 			fill=alicorn.Color{0,0,0,0},
-			stroke=alicorn.Paint_Stroke{color=alicorn.style_color(ctx, .Border), width=12},
+			stroke=ui.Paint_Stroke{color=ui.style_color(ctx, .Border), width=12},
 			label="ring-track")
 		if track != 0 {
-			alicorn.surface_end(ctx)
+			ui.surface_end(ctx)
 			_ = alicorn.position_child(ctx, track, alicorn.positioned(0, 0))
 		}
 		// The component supplies the fraction-to-arc conversion.
@@ -187,10 +184,10 @@ if visible {
 				style=ui.layout_style(.Row, width=160, height=160),
 				shape=progress.ring_shape(part.normalized),
 				fill=alicorn.Color{0,0,0,0},
-				stroke=alicorn.Paint_Stroke{color=alicorn.style_color(ctx, .Accent), width=12},
+				stroke=ui.Paint_Stroke{color=ui.style_color(ctx, .Accent), width=12},
 				label="ring-arc")
 			if arc != 0 {
-				alicorn.surface_end(ctx)
+				ui.surface_end(ctx)
 				_ = alicorn.position_child(ctx, arc, alicorn.positioned(0, 0))
 			}
 		}
@@ -202,6 +199,8 @@ if visible {
 	progress.end(ctx, &part)
 }
 ```
+import ui "alicorn:ui"
+import alicorn "alicorn:runtime"
 
 Public geometry helpers:
 

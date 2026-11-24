@@ -14,7 +14,7 @@ export default defineConfig({
     starlight({
       title: 'AliKit',
       description:
-        'Reusable, source-level Odin components for Alicorn. Native previews, copyable source, explicit contracts.',
+        'Reusable, source-level Odin components for Alicorn. Runnable examples, copyable source, explicit contracts.',
       tagline: 'Bring the parts that fit. Keep your application policy.',
       favicon: '/favicon.svg',
       customCss: ['./src/styles/catalog.css'],
@@ -35,12 +35,15 @@ export default defineConfig({
             { slug: 'components/palette-parts' },
             { slug: 'components/radio-group' },
             { slug: 'components/progress' },
+            { slug: 'components/segmented' },
             { slug: 'components/notices' },
             { slug: 'components/sidebar' },
             { slug: 'components/table' },
+            { slug: 'components/menu' },
+            { slug: 'components/data-grid' },
           ],
         },
-        { label: 'Reference', items: [{ slug: 'manifest' }, { slug: 'compatibility' }] },
+        { label: 'Reference', items: [{ slug: 'authoring/layout-cookbook' }, { slug: 'manifest' }, { slug: 'compatibility' }] },
       ],
       head: [
         { tag: 'meta', attrs: { name: 'theme-color', content: '#0e1017' } },

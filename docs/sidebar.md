@@ -17,9 +17,6 @@ selected bar. The parts example replaces every row visual with a letter tile, a
 two-line layout, badges, and a selected checkmark. The composition example
 hosts the rail beside a Segmented control in a settings shell.
 
-Native captures in the catalog predate the parts examples; re-capture is
-pending. The behavior, semantics, and source below are current.
-
 ## Installation
 
 Copy these files into an application or import the package with the AliKit
@@ -33,7 +30,6 @@ collection:
 - `examples/sidebar_composition/main.odin` (rail + segmented settings shell)
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import sidebar "alikit:sidebar"
 ```
@@ -95,7 +91,7 @@ if event := sidebar.rail(
 	ROUTES[:],
 	app.selected_key,
 	sidebar.Options{accessible_label="Workspace navigation", collapsed=app.collapsed},
-	key=alicorn.key_string("workspace-rail"),
+	key=ui.key_string("workspace-rail"),
 	instance_id=1,
 ); event.kind == .Selection_Proposed {
 	app.selected_key = event.key
@@ -113,7 +109,7 @@ The default appearance uses `row_surface`, `indicator`, `icon`, `label`, and
 
 ```odin
 rail, visible := sidebar.rail_begin(ctx, &app.rail, ROUTES[:], app.selected_key,
-	label="Workspace navigation", key=alicorn.key_string("rail"), instance_id=41)
+	label="Workspace navigation", key=ui.key_string("rail"), instance_id=41)
 if visible {
 	for route in ROUTES {
 		row, row_visible := sidebar.item_begin(ctx, &rail, route)
@@ -123,7 +119,7 @@ if visible {
 				sidebar.icon(ctx, row)
 				sidebar.label(ctx, row)
 				sidebar.badge(ctx, row)
-				alicorn.surface_end(ctx)
+				ui.surface_end(ctx)
 			}
 			sidebar.item_end(ctx, row)
 		}
@@ -138,7 +134,7 @@ A custom row keeps the semantic owner and owns everything inside it:
 
 ```odin
 rail, visible := sidebar.rail_begin(ctx, &app.rail, ROUTES[:], app.selected_key,
-	label="Workspace navigation", key=alicorn.key_string("rail"), instance_id=42,
+	label="Workspace navigation", key=ui.key_string("rail"), instance_id=42,
 	rail_options=sidebar.Options{expanded_width=260, item_height=58, item_gap=6})
 if visible {
 	for route, index in ROUTES {
@@ -162,6 +158,7 @@ if visible {
 	event := sidebar.rail_end(ctx, &rail)
 }
 ```
+import ui "alicorn:ui"
 
 `Rail_Item` exposes the state a custom row needs:
 
@@ -180,9 +177,9 @@ own the row's outer geometry. The parts retain keyboard navigation, roving
 focus, selected/current publication, the Button owner, and activation parity.
 Omitting visual parts changes only the visual tree.
 
-`row_surface` returns an opened surface. Close it with `alicorn.surface_end`
-after the row content; custom authors that draw their own background simply do
-not call it.
+`row_surface` returns an opened surface. Close it with `ui.surface_end` after
+the row content; custom authors that draw their own background simply do not
+call it.
 
 ## Styling, motion, and theme
 

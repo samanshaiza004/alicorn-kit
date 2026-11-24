@@ -13,7 +13,6 @@ package main
 
 import "core:fmt"
 import "core:os"
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import sidebar "../../sidebar"
 
@@ -36,17 +35,16 @@ App :: struct {
 INITIALS: [5]string = {"IN", "PR", "AU", "AR", "HE"}
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if alicorn.container_begin(ctx, .Container, label="sidebar-parts-example-root",
-		key=alicorn.key_string("sidebar-parts-example-root"),
-		style=alicorn.layout_style(.Row, width=-1, height=-1, grow=1, padding=20, gap=20),
-		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
+	if ui.panel(ctx, key=ui.key_string("sidebar-parts-example-root"),
+		width=-1, height=-1, grow=1, padding=20, gap=20, align=.Stretch,
+		fill=ui.style_color(ctx, .Window_Background), label="sidebar-parts-example-root") {
 		rail_ctx, visible := sidebar.rail_begin(
 			ctx,
 			&app.rail,
 			ROUTES[:],
 			app.selected_key,
 			label="Workspace navigation",
-			key=alicorn.key_string("sidebar-parts-example-rail"),
+			key=ui.key_string("sidebar-parts-example-rail"),
 			instance_id=6201,
 			rail_options=sidebar.Options{collapsed=app.collapsed, expanded_width=260,
 				item_height=58, item_gap=6, padding=8},
@@ -64,58 +62,46 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 				app.status = fmt.tprintf("Route %d proposed by the application-owned rail.", event.key)
 			}
 		}
-		if ui.column(ctx, key=alicorn.key_string("sidebar-parts-example-main"), grow=1,
+		if ui.column(ctx, key=ui.key_string("sidebar-parts-example-main"), grow=1,
 			height=-1, padding=24, gap=12, align=.Start) {
 			_ = ui.text(ctx, "Sidebar parts", size=26)
 			_ = ui.text(ctx, "Every row visual is authored here. The rail still owns semantics, focus, and the proposal.",
-				size=13, color=alicorn.style_color(ctx, .Muted_Text))
+				size=13, color=ui.style_color(ctx, .Muted_Text))
 			_ = ui.checkbox(ctx, "Collapse rail", &app.collapsed,
-				key=alicorn.key_string("sidebar-parts-example-collapse"), width=180, height=28)
+				key=ui.key_string("sidebar-parts-example-collapse"), width=180, height=28)
 			_ = ui.text(ctx, app.status, size=13,
-				color=alicorn.style_color(ctx, .Muted_Text))
+				color=ui.style_color(ctx, .Muted_Text))
 		}
-		alicorn.container_end(ctx)
 	}
 }
 
 custom_row :: proc(ctx: ^ui.UI, app: ^App, row: sidebar.Rail_Item, initials: string) {
-	fill := alicorn.surface_core_color_role(.Surface)
-	if row.selected { fill = alicorn.surface_core_color_role(.Selection) }
-	stroke := alicorn.Paint_Stroke{color=alicorn.style_color(ctx, .Border), width=1}
+	fill := ui.style_color(ctx, .Surface)
+	if row.selected { fill = ui.style_color(ctx, .Selection) }
+	stroke := ui.border(1, ui.style_color(ctx, .Border), .Inside)
 	if row.focus_visible {
-		stroke = alicorn.Paint_Stroke{color=alicorn.style_color(ctx, .Focus), width=2}
+		stroke = ui.border(2, ui.style_color(ctx, .Focus), .Inside)
 	}
-	if alicorn.surface_begin(ctx, fill, key=ui.key_u64(1),
-		style=ui.layout_style(.Row, width=-1, height=-1, padding=10, gap=10, align=.Center),
-		shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=12},
-		stroke=stroke, label="custom-route-row") == 0 {
-		return
-	}
+	if !ui.panel(ctx, key=ui.key_u64(1), width=-1, padding=10, gap=10, align=.Center,
+		fill=fill, radius=12, stroke=stroke, label="custom-route-row") { return }
 	// Letter tile instead of the default icon part.
-	if alicorn.surface_begin(ctx,
-		alicorn.surface_core_color_role(.Accent if row.selected else .Subtle_Surface),
-		key=ui.key_u64(2),
-		style=ui.layout_style(.Row, width=32, height=32, align=.Center, justify=.Center),
-		shape=alicorn.Surface_Shape{kind=.Circle}, label="route-initials") != 0 {
+	if ui.panel(ctx, key=ui.key_u64(2), width=32, height=32, align=.Center, justify=.Center,
+		fill=ui.style_color(ctx, .Accent if row.selected else .Subtle_Surface), radius=16,
+		label="route-initials") {
 		_ = ui.text(ctx, initials, key=ui.key_u64(3), size=11,
-			color=alicorn.style_color(ctx, .Accent_Text if row.selected else .Text))
-		alicorn.surface_end(ctx)
+			color=ui.style_color(ctx, .Accent_Text if row.selected else .Text))
 	}
 	if !app.collapsed {
 		if ui.column(ctx, key=ui.key_u64(4), grow=1, gap=1) {
 			_ = ui.text(ctx, row.item.label, key=ui.key_u64(5), size=14)
 			_ = ui.text(ctx, row.item.detail, key=ui.key_u64(6), size=11,
-				color=alicorn.style_color(ctx, .Muted_Text))
+				color=ui.style_color(ctx, .Muted_Text))
 		}
 		if row.item.badge != "" {
-			if alicorn.surface_begin(ctx, alicorn.surface_core_color_role(.Subtle_Surface),
-				key=ui.key_u64(7),
-				style=ui.layout_style(.Row, padding=5, align=.Center),
-				shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=8},
-				label="route-badge") != 0 {
+			if ui.panel(ctx, key=ui.key_u64(7), padding=5, align=.Center,
+				fill=ui.style_color(ctx, .Subtle_Surface), radius=8, label="route-badge") {
 				_ = ui.text(ctx, row.item.badge, key=ui.key_u64(8), size=10,
-					color=alicorn.style_color(ctx, .Muted_Text))
-				alicorn.surface_end(ctx)
+					color=ui.style_color(ctx, .Muted_Text))
 			}
 		}
 		if row.selected {
@@ -124,9 +110,8 @@ custom_row :: proc(ctx: ^ui.UI, app: ^App, row: sidebar.Rail_Item, initials: str
 	} else if row.selected {
 		// A collapsed custom row keeps a non-color selected cue.
 		_ = ui.text(ctx, "\u2022", key=ui.key_u64(10), size=12,
-			color=alicorn.style_color(ctx, .Accent))
+			color=ui.style_color(ctx, .Accent))
 	}
-	alicorn.surface_end(ctx)
 }
 
 stop :: proc(app: ^App) {

@@ -88,10 +88,10 @@ command services.
 - `notices/` - runtime notice helpers and inline card parts.
 - `sidebar/` - navigation rail.
 - `table/` - virtualized table.
-- `examples/` - native consumers for every component, including the parts-based palette.
+- `examples/` - runnable consumers for every component, including the parts-based palette.
 - `tests/` - the external-consumer fixture templates used by `tools/validate_external_consumer.ps1`.
 - `docs/` - component guides and research records.
-- `website/` - the Astro + Starlight component catalog with native captures.
+- `website/` - the Astro + Starlight component catalog with runnable examples.
 - `components.json` - machine-readable component registry seed.
 
 ## Validation
@@ -125,9 +125,10 @@ paths, and copy recipes before building.
 
 ## Component catalog
 
-The static catalog lives in `website/`. It renders native example captures,
+The static catalog lives in `website/`. It renders runnable example links,
 copyable source, ownership and input contracts, theme roles, API references,
-and test coverage for every component. Build it locally with:
+and test coverage for every component. Desktop application screenshots are
+not included in the documentation. Build it locally with:
 
 ```powershell
 cd website
@@ -135,13 +136,6 @@ npm ci
 npm run build
 ```
 
-Re-capture the native PNGs after a component or pin change:
-
-```powershell
-./tools/capture_catalog.ps1 -BinDir out -OutDir website/public/captures
-```
-
 `components.json` is the machine-readable registry seed. The catalog does not
-recreate a component in JavaScript; interactive WebGPU previews are a later
-step. See [the website README](website/README.md) for the site choice and the
-GitHub Pages workflow note.
+recreate a component in JavaScript. See [the website README](website/README.md)
+for the site choice and the GitHub Pages workflow note.

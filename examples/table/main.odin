@@ -117,37 +117,37 @@ rebuild_projection :: proc(app: ^App) {
 render :: proc(app: ^App, ctx: ^ui.UI) {
 	if app.theme_error {
 		_ = ui.text(ctx, "Table theme contract is not satisfied.", size=15,
-			color=alicorn.style_color(ctx, .Danger))
+			color=ui.style_color(ctx, .Danger))
 		return
 	}
-	if ui.column(ctx, key=alicorn.key_string("table-example-root"), width=-1, height=-1,
+	if ui.column(ctx, key=ui.key_string("table-example-root"), width=-1, height=-1,
 		padding=24, gap=12) {
 		_ = ui.text(ctx, "Table", size=26)
 		_ = ui.text(ctx, "Static presentation: wrapped intrinsic rows, no managed focus or selection.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
-		if ui.row(ctx, key=alicorn.key_string("table-example-controls"), width=-1,
+			size=13, color=ui.style_color(ctx, .Muted_Text))
+		if ui.row(ctx, key=ui.key_string("table-example-controls"), width=-1,
 			height=34, gap=10, align=.Center) {
 			old_query := app.query.text
 			_ = ui.text_field(ctx, "Filter", &app.query,
-				key=alicorn.key_string("table-example-filter"), width=240, height=30)
+				key=ui.key_string("table-example-filter"), width=240, height=30)
 			if app.query.text != old_query { rebuild_projection(app) }
 			if ui.checkbox(ctx, "Sort by name", &app.sort_by_name,
-				key=alicorn.key_string("table-example-sort"), width=150) {
+				key=ui.key_string("table-example-sort"), width=150) {
 				rebuild_projection(app)
 			}
 			_ = ui.text(ctx, fmt.tprintf("%d rows", app.visible_count), size=12,
-				color=alicorn.style_color(ctx, .Muted_Text))
+				color=ui.style_color(ctx, .Muted_Text))
 		}
-		if ui.panel(ctx, key=alicorn.key_string("table-example-panel"), width=-1, height=-1,
-			grow=1, padding=8, fill=alicorn.style_color(ctx, .Surface), radius=10,
-			stroke=ui.border(1, alicorn.style_color(ctx, .Border), .Inside)) {
+		if ui.panel(ctx, key=ui.key_string("table-example-panel"), width=-1, height=-1,
+			grow=1, padding=8, fill=ui.style_color(ctx, .Surface), radius=10,
+			stroke=ui.border(1, ui.style_color(ctx, .Border), .Inside)) {
 			table.table(
 				ctx,
 				COLUMNS[:],
 				app.projection[:app.visible_count],
 				table.Options{accessible_label="Documents", row_header=true,
 					alternate_rows=true, max_visible_rows=10, measure_width=680},
-				key=alicorn.key_string("table-example-table"),
+				key=ui.key_string("table-example-table"),
 				instance_id=7101,
 				recipe=app.recipe,
 			)

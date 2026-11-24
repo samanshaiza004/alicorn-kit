@@ -10,6 +10,7 @@ import parts "alikit:palette_parts"
 
 Item_ID :: palette.Item_ID
 Item :: palette.Item
+Match :: palette.Match
 Event_Kind :: enum {None, Activated}
 
 Search_Mode :: enum {
@@ -39,7 +40,7 @@ Result_Group :: parts.Group
 State :: struct {
 	query:          ui.Text_Buffer,
 	allocator:      mem.Allocator,
-	matches:        []palette.Match,
+	matches:        []Match,
 	matches_capacity: int,
 	match_count:    int,
 	selection:      palette.Selection,
@@ -236,7 +237,7 @@ refresh_matches :: proc(state: ^State, items: []Item) -> bool {
 	if state == nil || !state.initialized { return false }
 	state.last_status = .Ready
 	if state.matches_capacity < len(items) {
-		new_matches, err := make([]palette.Match, len(items), state.allocator)
+		new_matches, err := make([]Match, len(items), state.allocator)
 		if err != nil {
 			state.match_count = 0
 			state.selection = {}
@@ -418,7 +419,7 @@ list_begin :: proc(
 	ctx: ^ui.UI,
 	state: ^State,
 	items: []Item,
-	visible: []palette.Match,
+	visible: []Match,
 	key: ui.UI_Key,
 	options: Options = {},
 ) -> (list: Result_List, opened: bool) {

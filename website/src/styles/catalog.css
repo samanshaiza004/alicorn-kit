@@ -38,16 +38,6 @@
   transform: translateY(-1px);
 }
 
-.component-card img {
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  object-fit: contain;
-  object-position: top center;
-  border-radius: 0.45rem;
-  border: 1px solid var(--sl-color-gray-6);
-  background: #0b0d13;
-}
-
 .component-card h3 {
   margin: 0;
   font-size: var(--sl-text-h5);
@@ -84,31 +74,6 @@
 }
 
 /* Component pages -------------------------------------------------------- */
-
-.capture {
-  display: block;
-  width: 100%;
-  max-width: 60rem;
-  margin: 1rem 0 0.5rem;
-  border: 1px solid var(--sl-color-gray-5);
-  border-radius: 0.6rem;
-  background: #0b0d13;
-}
-
-.capture-caption {
-  margin: 0 0 1.5rem;
-  color: var(--sl-color-gray-3);
-  font-size: var(--sl-text-sm);
-}
-
-.preview-note {
-  border-left: 3px solid var(--sl-color-accent);
-  padding: 0.5rem 0.9rem;
-  background: var(--sl-color-gray-6);
-  border-radius: 0 0.4rem 0.4rem 0;
-  font-size: var(--sl-text-sm);
-  color: var(--sl-color-gray-2);
-}
 
 .pin-note {
   border: 1px dashed var(--sl-color-gray-5);

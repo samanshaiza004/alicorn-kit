@@ -3,8 +3,6 @@ title: Progress
 description: Determinate and indeterminate progress with Progress semantics, a numeric range, and caller-driven motion.
 ---
 
-import Capture from '../../../components/Capture.astro';
-
 <div class="lede">
 <code>alikit:progress</code> presents determinate or indeterminate work. A determinate bar
 publishes role <code>Progress</code>, a visible percentage, and a numeric
@@ -12,13 +10,9 @@ value/minimum/maximum. An indeterminate bar publishes no numeric value. The appl
 value, range, and indeterminate phase.
 </div>
 
-## Preview
+## Runnable example
 
-<Capture src="captures/progress.png" alt="Native progress window showing four determinate downloads at 0, 25, 60, and 100 percent plus an indeterminate Loading workspace bar" caption="Native SDL_GPU capture of examples/progress at Alicorn 47c9d4a. The example theme supplies the track and teal fill roles; the value text and segment geometry carry the state." />
-
-<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
-real native component; the bar is not recreated in JavaScript. The capture predates the parts
-examples; re-capture is pending.</div>
+The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/progress/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
 
 ## Responsibility split
 
@@ -38,7 +32,6 @@ Files: `progress/progress.odin`, `progress/progress_test.odin`,
 `examples/progress/main.odin`, `examples/progress/theme.json`.
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import progress "alikit:progress"
 
@@ -53,7 +46,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 		&app.upload,
 		app.value, 0, 100,
 		progress.Options{accessible_label="Upload progress", width=320},
-		key=alicorn.key_string("upload"),
+		key=ui.key_string("upload"),
 		instance_id=1,
 	)
 }
@@ -68,9 +61,10 @@ example does this for its four download bars and the loading bar.
 `progress` is a convenience wrapper over the public parts. A linear bar keeps the default parts:
 
 ```odin
+import ui "alicorn:ui"
 part, visible := progress.begin(ctx, &app.upload, app.value, 0, 100,
 	progress.Options{accessible_label="Upload progress", width=320},
-	key=alicorn.key_string("upload"), instance_id=43)
+	key=ui.key_string("upload"), instance_id=43)
 if visible {
 	progress.label(ctx, &part)
 	progress.value_text(ctx, &part)
@@ -87,9 +81,10 @@ A ring donut uses the same `begin` and semantics but owns its surfaces. The comp
 fraction-to-arc math:
 
 ```odin
+import ui "alicorn:ui"
 part, visible := progress.begin(ctx, &app.export, app.value, 0, 100,
 	progress.Options{accessible_label="Export", width=180},
-	key=alicorn.key_string("export-ring"), instance_id=44)
+	key=ui.key_string("export-ring"), instance_id=44)
 if visible {
 	// ... a circle track surface, then:
 	arc := progress.ring_shape(part.normalized) // Arc Surface_Shape
@@ -215,8 +210,8 @@ contract; explicit semantic assertions are the appropriate conformance check.
 
 ## Compatibility
 
-<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
-<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<div class="pin-note"><strong>Pin:</strong> built and tested against Alicorn
+<code>3c9ccb9df5478008efe66082ef9d0a47b9ae98d6</code>. See
 <a href="../../compatibility/">Compatibility and pinning</a>.</div>
 
 ## Source map

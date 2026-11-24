@@ -16,9 +16,7 @@ selected surface that translates to the active segment. The example toggles
 between `Follow_Focus` and `Activate` modes, disables one segment, and shows the
 application-owned view below.
 
-A native SDL_GPU capture is at
-`website/public/captures/segmented.png`; regenerate it with
-`tools/capture_catalog.ps1 -Only segmented`.
+The complete runnable consumer is `examples/segmented/main.odin`.
 
 ## Installation
 
@@ -31,7 +29,6 @@ collection:
 - `examples/segmented/theme.json`
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import segmented "alikit:segmented"
 ```
@@ -69,7 +66,6 @@ interaction state and diagnostic indicator geometry.
 ## Minimal example
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import segmented "alikit:segmented"
 
@@ -85,7 +81,7 @@ if event := segmented.control(
 	app.items[:],
 	app.selected,
 	segmented.Options{accessible_label="Workspace view", width=480},
-	key=alicorn.key_string("view"),
+	key=ui.key_string("view"),
 	instance_id=1,
 ); event.kind == .Selection_Proposed {
 	app.selected = event.value
@@ -102,6 +98,7 @@ new segment immediately. With `Selection_Mode.Activate`, arrows move only the
 roving focus; Space, Return, pointer, or semantic `Select` proposes a value.
 
 ```odin
+import ui "alicorn:ui"
 event := segmented.control(ctx, &app.view, app.items[:], app.selected,
 	segmented.Options{
 		accessible_label="Workspace view",
@@ -109,7 +106,7 @@ event := segmented.control(ctx, &app.view, app.items[:], app.selected,
 		selection_mode=.Activate,
 		no_wrap=true,
 	},
-	key=alicorn.key_string("view"), instance_id=41)
+	key=ui.key_string("view"), instance_id=41)
 switch event.kind {
 case .Selection_Proposed:
 	app.selected = event.value
@@ -128,6 +125,8 @@ segment widths to translate predictably. Customize it with `Options` and
 `Recipe`:
 
 ```odin
+import ui "alicorn:ui"
+import alicorn "alicorn:runtime"
 control := segmented.control(ctx, &app.state, app.items[:], app.selected,
 	segmented.Options{
 		accessible_label="Density",
@@ -137,7 +136,7 @@ control := segmented.control(ctx, &app.state, app.items[:], app.selected,
 		corner_radius=12,
 		label_size=13,
 	},
-	key=alicorn.key_string("density"), instance_id=42,
+	key=ui.key_string("density"), instance_id=42,
 	recipe=segmented.Recipe{
 		track_surface_role=alicorn.style_extension_color_role_id("vendor.app.segmented", "track"),
 		indicator_surface_role=alicorn.style_extension_color_role_id("vendor.app.segmented", "indicator"),

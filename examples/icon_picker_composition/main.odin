@@ -12,7 +12,6 @@ package main
 
 import "core:fmt"
 import "core:os"
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import dialog "../../dialog"
 import picker "../../icon_picker"
@@ -45,19 +44,17 @@ App :: struct {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if alicorn.container_begin(ctx, .Container, label="icon-picker-composition-root",
-		key=alicorn.key_string("icon-picker-composition-root"),
-		style=alicorn.layout_style(.Column, width=-1, height=-1, grow=1, padding=24, gap=12),
-		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
+	if ui.panel(ctx, key=ui.key_string("icon-picker-composition-root"),
+		width=-1, height=-1, grow=1, padding=24, gap=12,
+		fill=ui.style_color(ctx, .Window_Background), label="icon-picker-composition-root") {
 		_ = ui.text(ctx, "Icon Picker + Dialog", size=26)
 		_ = ui.text(ctx, "Dialog owns modal policy; Segmented owns the appearance; Picker owns search and grid navigation.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
-		if ui.button(ctx, "Choose icon", key=alicorn.key_string("icon-picker-composition-open"),
+			size=13, color=ui.style_color(ctx, .Muted_Text))
+		if ui.button(ctx, "Choose icon", key=ui.key_string("icon-picker-composition-open"),
 			width=150, height=34) {
 			_ = dialog.open(&app.view, ctx.runtime)
 		}
-		_ = ui.text(ctx, app.status, size=13, color=alicorn.style_color(ctx, .Muted_Text))
-		alicorn.container_end(ctx)
+		_ = ui.text(ctx, app.status, size=13, color=ui.style_color(ctx, .Muted_Text))
 	}
 }
 
@@ -65,22 +62,22 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 	if !app.view.open { return }
 	visible, event := dialog.begin(ctx, &app.view, "Choose an icon",
 		dialog.Options{description="Pick the icon to insert into the document.",
-			primary_key=alicorn.key_string("icon-picker-composition-close")},
-		key=alicorn.key_string("icon-picker-composition-dialog"), instance_id=8201)
+			primary_key=ui.key_string("icon-picker-composition-close")},
+		key=ui.key_string("icon-picker-composition-dialog"), instance_id=8201)
 	if !visible {
 		if event.kind == .Dismissed { app.status = "Icon chooser dismissed." }
 		return
 	}
 	dialog.title(ctx, "Choose an icon")
 	dialog.description(ctx, "Search by name or keyword. The segmented control switches the appearance.")
-	if dialog.content_begin(ctx, key=alicorn.key_string("icon-picker-composition-content")) {
+	if dialog.content_begin(ctx, key=ui.key_string("icon-picker-composition-content")) {
 		if segmented_event := segmented.control(
 			ctx,
 			&app.segments,
 			VIEWS[:],
 			app.appearance,
 			segmented.Options{accessible_label="Icon appearance", width=220, height=32},
-			key=alicorn.key_string("icon-picker-composition-appearance"),
+			key=ui.key_string("icon-picker-composition-appearance"),
 			instance_id=8202,
 		); segmented_event.kind == .Selection_Proposed {
 			app.appearance = segmented_event.value
@@ -92,7 +89,7 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 			picker.Options{accessible_label="Icon choices",
 				appearance=.List if app.appearance == 2 else .Grid,
 				columns=5, cell_size=44, cell_gap=6, row_height=34, max_visible_rows=4},
-			key=alicorn.key_string("icon-picker-composition-picker"),
+			key=ui.key_string("icon-picker-composition-picker"),
 			instance_id=8203,
 		)
 		if picker_event.kind == .Activated {
@@ -102,9 +99,9 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 		}
 		dialog.content_end(ctx)
 	}
-	if dialog.action_row_begin(ctx, key=alicorn.key_string("icon-picker-composition-actions")) {
+	if dialog.action_row_begin(ctx, key=ui.key_string("icon-picker-composition-actions")) {
 		if dialog.action(ctx, &app.view, "Cancel", .Cancel,
-			key=alicorn.key_string("icon-picker-composition-cancel")) {
+			key=ui.key_string("icon-picker-composition-cancel")) {
 			app.status = "Icon chooser cancelled."
 			dialog.dismiss(ctx, &app.view, .Action)
 		}

@@ -2,9 +2,10 @@
 
 `alikit:command_palette` provides a themed modal palette over a caller-owned
 action list. `alikit:palette_model` contains the filtering and selection rules
-without a UI dependency. `command_palette` re-exports `Item` and `Item_ID`, so
-a default palette consumer imports `palette_model` only when using its
-independent model helpers. The result list is built from the same public parts as
+without a UI dependency. `command_palette` re-exports `Item`, `Item_ID`, and
+`Match`, so a consumer can compose its public input/result APIs without importing
+model types. Import `palette_model` only when using its independent model helpers.
+The result list is built from the same public parts as
 `alikit:palette_parts`, so a complete palette and an application-owned shell
 share one result contract.
 
@@ -20,9 +21,8 @@ query shell and draws custom result rows with groups, descriptions, chips, and
 checks. The composition example pairs the palette with a Segmented search
 scope.
 
-The result rows now use the public parts (leading icon, title, description,
-selected check). Native captures predate that row appearance; re-capture is
-pending.
+The result rows use the public parts (leading icon, title, description, selected
+check). The page links to runnable examples instead of embedding desktop captures.
 
 ## Installation
 
@@ -88,7 +88,7 @@ SAMPLE_ITEMS :: [2]palette.Item{
 }
 
 App :: struct {
-	palette: palette.State,
+	palette_state: palette.State,
 	items:   [2]palette.Item,
 }
 
@@ -97,8 +97,8 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 }
 
 render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
-	if !app.palette.open { return }
-	event := palette.build(ctx, &app.palette, app.items[:],
+	if !app.palette_state.open { return }
+	event := palette.build(ctx, &app.palette_state, app.items[:],
 		ui.key_string("app-palette"),
 		palette.Options{title="Example Actions"})
 	if event.kind == .Activated {
@@ -107,16 +107,16 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 }
 
 on_key :: proc(app: ^App, rt: ^ui.Runtime, key: ui.Application_Key) -> bool {
-	if !app.palette.open && key == .Open_Command_Palette {
-		return palette.open_palette(&app.palette, rt)
+	if !app.palette_state.open && key == .Open_Command_Palette {
+		return palette.open_palette(&app.palette_state, rt)
 	}
 	return false
 }
 
 main :: proc() {
 	app := App{items=SAMPLE_ITEMS}
-	if !palette.init(&app.palette) { return }
-	defer palette.destroy(&app.palette)
+	if !palette.init(&app.palette_state) { return }
+	defer palette.destroy(&app.palette_state)
 	ui.run(&app, render,
 		title="AliKit Command Palette",
 		width=760,
@@ -137,11 +137,11 @@ valid and the modal shows `Options.allocation_error_message`.
 An application can own the shell and still use the palette's public parts:
 
 ```odin
-_, _ = palette.input(ctx, &app.palette, palette.Options{hide_title=true},
+_, _ = palette.input(ctx, &app.palette_state, palette.Options{hide_title=true},
 	key=ui.key_string("app-query"))
 
-count, _ := model.filter(ITEMS[:], palette.query_text(&app.palette), app.matches[:])
-list, opened := palette.list_begin(ctx, &app.palette, ITEMS[:], app.matches[:count],
+count, _ := model.filter(ITEMS[:], palette.query_text(&app.palette_state), app.matches[:])
+list, opened := palette.list_begin(ctx, &app.palette_state, ITEMS[:], app.matches[:count],
 	key=ui.key_string("app-results"), options=palette.Options{hide_title=true})
 if !opened {
 	_ = palette.empty(ctx, palette.Options{hide_title=true})
@@ -152,17 +152,18 @@ if !opened {
 		if surface := parts.row_surface(ctx, row); surface != 0 {
 			// Ordinary Alicorn layout; use row.item, row.selected, row.disabled.
 			_ = ui.text(ctx, row.item.title, key=ui.key_u64(1))
-			alicorn.surface_end(ctx)
+			ui.surface_end(ctx)
 		}
-		if palette.item_end(ctx, &app.palette, &list, row) {
+		if palette.item_end(ctx, &app.palette_state, &list, row) {
 			app.dispatch(row.item.id)
 		}
 	}
-	if event := palette.list_end(ctx, &app.palette, &list); event.kind == .Activated {
+	if event := palette.list_end(ctx, &app.palette_state, &list); event.kind == .Activated {
 		app.dispatch(event.item_id)
 	}
 }
 ```
+import ui "alicorn:ui"
 
 The public result types are `Result_List`, `Result_Row`, and `Result_Group`;
 their visual helpers come from `alikit:palette_parts` (`row_surface`, `icon`,

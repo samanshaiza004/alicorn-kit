@@ -32,6 +32,7 @@ Files: `table/table.odin`, `table/table_test.odin`, `examples/table/main.odin`,
 `examples/table/theme.json`.
 
 ```odin
+import ui "alicorn:ui"
 import table "alikit:table"
 
 table.table(
@@ -45,7 +46,7 @@ table.table(
 		max_visible_rows=10,
 		measure_width=680,
 	},
-	key=alicorn.key_string("documents"),
+	key=ui.key_string("documents"),
 	instance_id=1,
 	recipe=app.table_recipe,
 )

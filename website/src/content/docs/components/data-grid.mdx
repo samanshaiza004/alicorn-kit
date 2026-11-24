@@ -3,8 +3,6 @@ title: Data Grid
 description: An interactive dataset grid with one Tab stop, roving cell focus, selection publication, and sort proposals.
 ---
 
-import Capture from '../../../components/Capture.astro';
-
 <div class="lede">
 <code>alikit:data_grid</code> is an interactive, virtualized, <strong>non-spanned</strong> grid over
 Alicorn's compound table roles. The application owns columns, rows, comparators, filters, and the
@@ -13,12 +11,9 @@ publication, sort-header proposals, and one cell activation proposal. Shared col
 headers, and cell scaffolding come from <code>alikit:table_core</code>.
 </div>
 
-## Preview
+## Runnable example
 
-<Capture src="captures/data-grid.png" alt="Native data grid window with a filter field and an interactive document grid with selected row and cell" caption="Native SDL_GPU capture of examples/data_grid at Alicorn 47c9d4a. The application filters and sorts its own dataset; the grid owns roving focus, reveal, and proposals." />
-
-<div class="preview-note">The capture is the real native grid; the interactive contract is
-documented and tested in the package.</div>
+The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/data_grid/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
 
 ## Responsibility split
 
@@ -38,6 +33,7 @@ Files: `data_grid/data_grid.odin`, `data_grid/data_grid_test.odin`, `examples/da
 `examples/data_grid/theme.json`.
 
 ```odin
+import ui "alicorn:ui"
 import data_grid "alikit:data_grid"
 
 event := data_grid.data_grid(
@@ -48,7 +44,7 @@ event := data_grid.data_grid(
 	app.selection,
 	data_grid.Options{accessible_label="Documents", row_header=true,
 		max_visible_rows=10, row_height=30},
-	key=alicorn.key_string("documents"),
+	key=ui.key_string("documents"),
 	instance_id=1,
 	recipe=app.recipe,
 )
@@ -149,7 +145,7 @@ There is no `testui` data-grid pattern at the pinned revision; explicit drive as
 ## Compatibility
 
 <div class="pin-note"><strong>Pin:</strong> built against Alicorn
-<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<code>3c9ccb9df5478008efe66082ef9d0a47b9ae98d6</code>. See
 <a href="../../compatibility/">Compatibility and pinning</a>.</div>
 
 ## Source map

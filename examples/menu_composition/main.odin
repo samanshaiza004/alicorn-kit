@@ -12,7 +12,6 @@ package main
 
 import "core:fmt"
 import "core:os"
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import dialog "../../dialog"
 import menu "../../menu"
@@ -33,16 +32,16 @@ App :: struct {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=alicorn.key_string("menu-composition-root"), width=-1, height=-1,
+	if ui.column(ctx, key=ui.key_string("menu-composition-root"), width=-1, height=-1,
 		padding=24, gap=12) {
 		_ = ui.text(ctx, "Menu + Dialog", size=26)
 		_ = ui.text(ctx, "The dialog owns its modal policy; the menu inside it owns an anchored popup.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
-		if ui.button(ctx, "Share file", key=alicorn.key_string("menu-composition-open"),
+			size=13, color=ui.style_color(ctx, .Muted_Text))
+		if ui.button(ctx, "Share file", key=ui.key_string("menu-composition-open"),
 			width=140, height=34) {
 			_ = dialog.open(&app.view, ctx.runtime)
 		}
-		_ = ui.text(ctx, app.status, size=13, color=alicorn.style_color(ctx, .Muted_Text))
+		_ = ui.text(ctx, app.status, size=13, color=ui.style_color(ctx, .Muted_Text))
 	}
 }
 
@@ -50,24 +49,24 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 	if app.view.open {
 		visible, event := dialog.begin(ctx, &app.view, "Share file",
 			dialog.Options{description="Choose who can open this file.",
-				primary_key=alicorn.key_string("menu-composition-done")},
-			key=alicorn.key_string("menu-composition-dialog"), instance_id=7601)
+				primary_key=ui.key_string("menu-composition-done")},
+			key=ui.key_string("menu-composition-dialog"), instance_id=7601)
 		if !visible {
 			if event.kind == .Dismissed { app.status = "Share dialog dismissed." }
 			return
 		}
 		dialog.title(ctx, "Share file")
 		dialog.description(ctx, "The permission menu is an anchored component popup over the dialog.")
-		if dialog.content_begin(ctx, key=alicorn.key_string("menu-composition-content")) {
-			_ = ui.text(ctx, "Permission", size=12, color=alicorn.style_color(ctx, .Muted_Text))
+		if dialog.content_begin(ctx, key=ui.key_string("menu-composition-content")) {
+			_ = ui.text(ctx, "Permission", size=12, color=ui.style_color(ctx, .Muted_Text))
 			_ = menu.trigger(ctx, &app.permissions, permission_label(app.permission),
 				menu.Options{accessible_label="Link permission"},
-				key=alicorn.key_string("menu-composition-trigger"))
+				key=ui.key_string("menu-composition-trigger"))
 			dialog.content_end(ctx)
 		}
-		if dialog.action_row_begin(ctx, key=alicorn.key_string("menu-composition-actions")) {
+		if dialog.action_row_begin(ctx, key=ui.key_string("menu-composition-actions")) {
 			if dialog.action(ctx, &app.view, "Done", .Primary,
-				key=alicorn.key_string("menu-composition-done")) {
+				key=ui.key_string("menu-composition-done")) {
 				app.status = fmt.tprintf("Shared with permission %d.", app.permission)
 				dialog.dismiss(ctx, &app.view, .Action)
 			}
@@ -80,7 +79,7 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 	// menu's own modal scope owns input while it is open.
 	visible, chosen := menu.popup_begin(ctx, &app.permissions, PERMISSIONS[:],
 		menu.Options{accessible_label="Link permission"},
-		key=alicorn.key_string("menu-composition-popup"), instance_id=7602)
+		key=ui.key_string("menu-composition-popup"), instance_id=7602)
 	if !visible {
 		if chosen != 0 {
 			app.permission = chosen

@@ -85,13 +85,13 @@ settings_panel :: proc(app: ^App, ctx: ^ui.UI) {
 	if app.theme_id != 0 {
 		theme_scope = alicorn.style_environment_push(ctx, alicorn.Style_Environment{theme=app.theme_id})
 	}
-	if ui.panel(ctx, key=alicorn.key_string("radio-example-card"), width=520,
+	if ui.panel(ctx, key=ui.key_string("radio-example-card"), width=520,
 		height=alicorn.LAYOUT_SIZE_FIT_CONTENT, padding=20, gap=16,
-		fill=alicorn.style_color(ctx, .Surface), radius=12,
-		stroke=ui.border(1, alicorn.style_color(ctx, .Border), .Inside)) {
+		fill=ui.style_color(ctx, .Surface), radius=12,
+		stroke=ui.border(1, ui.style_color(ctx, .Border), .Inside)) {
 		_ = ui.text(ctx, "Reading preferences", size=20)
 		if alicorn.container_begin(ctx, .Container,
-			key=alicorn.key_string("radio-example-size-scope"),
+			key=ui.key_string("radio-example-size-scope"),
 			style=alicorn.layout_style(.Row, width=480,
 				height=alicorn.LAYOUT_SIZE_FIT_CONTENT)) != 0 {
 			if event := radio.radio_group(
@@ -101,7 +101,7 @@ settings_panel :: proc(app: ^App, ctx: ^ui.UI) {
 				app.text_size,
 				radio.Options{accessible_label="Interface text size", orientation=.Vertical,
 					item_min_width=480},
-				key=alicorn.key_string("radio-example-size"),
+				key=ui.key_string("radio-example-size"),
 				instance_id=4101,
 				recipe=app.recipe,
 			); event.kind == .Selection_Proposed {
@@ -109,9 +109,9 @@ settings_panel :: proc(app: ^App, ctx: ^ui.UI) {
 			}
 			alicorn.container_end(ctx)
 		}
-		_ = ui.text(ctx, "Density", size=13, color=alicorn.style_color(ctx, .Muted_Text))
+		_ = ui.text(ctx, "Density", size=13, color=ui.style_color(ctx, .Muted_Text))
 		if alicorn.container_begin(ctx, .Container,
-			key=alicorn.key_string("radio-example-density-scope"),
+			key=ui.key_string("radio-example-density-scope"),
 			style=alicorn.layout_style(.Row, width=480,
 				height=alicorn.LAYOUT_SIZE_FIT_CONTENT)) != 0 {
 			if event := radio.radio_group(
@@ -121,7 +121,7 @@ settings_panel :: proc(app: ^App, ctx: ^ui.UI) {
 				app.density,
 				radio.Options{accessible_label="Interface density", orientation=.Horizontal,
 					item_min_width=160},
-				key=alicorn.key_string("radio-example-density"),
+				key=ui.key_string("radio-example-density"),
 				instance_id=4102,
 				recipe=app.recipe,
 			); event.kind == .Selection_Proposed {
@@ -130,11 +130,11 @@ settings_panel :: proc(app: ^App, ctx: ^ui.UI) {
 			alicorn.container_end(ctx)
 		}
 		label := fmt.tprintf("Text size %d · density %d", app.text_size, app.density)
-		_ = ui.text(ctx, label, key=alicorn.key_string("radio-example-value"), size=13,
-			color=alicorn.style_color(ctx, .Muted_Text))
+		_ = ui.text(ctx, label, key=ui.key_string("radio-example-value"), size=13,
+			color=ui.style_color(ctx, .Muted_Text))
 		if app.theme_error {
 			_ = ui.text(ctx, "The optional radio theme roles are incomplete; core roles are in use.",
-				size=12, color=alicorn.style_color(ctx, .Danger))
+				size=12, color=ui.style_color(ctx, .Danger))
 		}
 	}
 	if theme_scope.active { alicorn.style_environment_pop(ctx, theme_scope) }
@@ -142,12 +142,12 @@ settings_panel :: proc(app: ^App, ctx: ^ui.UI) {
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
 	if alicorn.container_begin(ctx, .Container, label="radio-example-root",
-		key=alicorn.key_string("radio-example-root"),
+		key=ui.key_string("radio-example-root"),
 		style=alicorn.layout_style(.Column, width=-1, height=-1, grow=1, padding=28, gap=14, align=.Center),
-		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
+		color=ui.style_color(ctx, .Window_Background)) != 0 {
 		_ = ui.text(ctx, "Radio Group", size=26)
 		_ = ui.text(ctx, "One controlled value per group. Arrows move and select; disabled options are skipped.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
+			size=13, color=ui.style_color(ctx, .Muted_Text))
 		settings_panel(app, ctx)
 		alicorn.container_end(ctx)
 	}

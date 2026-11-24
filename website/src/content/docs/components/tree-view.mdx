@@ -3,8 +3,6 @@ title: Tree View
 description: A virtualized, keyboard-navigable tree over an application-provided visible-row projection.
 ---
 
-import Capture from '../../../components/Capture.astro';
-
 <div class="lede">
 <code>alikit:tree_view</code> renders and navigates a stable, preorder projection of visible tree
 rows. The application owns the hierarchy, expansion and loading policy, mutations, selection
@@ -12,12 +10,9 @@ policy, and commands. AliKit owns fixed-row virtualization, indentation, focus r
 traversal, Tree semantics, and optional row-anchored context menus.
 </div>
 
-## Preview
+## Runnable example
 
-<Capture src="captures/tree-view.png" alt="Native tree view window showing src, main.odin, ui, theme.odin, and README.md rows with folder and file icons" caption="Native SDL_GPU capture of examples/tree_view at Alicorn 47c9d4a. Expanded folders are application state; the row projection is rebuilt after each expansion event." />
-
-<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture is the
-real native window; no tree behavior is recreated in JavaScript.</div>
+The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/tree_view/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
 
 ## Responsibility split
 
@@ -34,7 +29,6 @@ Files: `tree_view/tree_view.odin`, `tree_model/model.odin`,
 `examples/tree_view/main.odin`.
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import tree_view "alikit:tree_view"
 import model "alikit:tree_model"
@@ -59,7 +53,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 		items=app.rows[:app.row_count],
 	}
 	event := tree_view.build(ctx, &app.view, window,
-		alicorn.key_string("project-tree"),
+		ui.key_string("project-tree"),
 		tree_view.Options{accessible_label="Project files", selection_enabled=true})
 	if event.kind == .Expand_Requested {
 		// Update application expansion state and rebuild the visible projection.
@@ -169,8 +163,8 @@ assertions instead of claiming `.Roving_List` (which requires a `List_Box` conta
 
 ## Compatibility
 
-<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
-<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. See
+<div class="pin-note"><strong>Pin:</strong> built and tested against Alicorn
+<code>3c9ccb9df5478008efe66082ef9d0a47b9ae98d6</code>. See
 <a href="../../compatibility/">Compatibility and pinning</a>.</div>
 
 ## Source map

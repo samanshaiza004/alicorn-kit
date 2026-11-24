@@ -3,21 +3,17 @@ title: Command Palette
 description: A native modal command palette with caller-owned items, stable IDs, virtualized results, and focus restoration.
 ---
 
-import Capture from '../../../components/Capture.astro';
-
 <div class="lede">
 <code>alikit:command_palette</code> provides a themed modal palette for searching and activating a
 caller-owned action list. The application owns command discovery, stable IDs, ranking policy, and
 dispatch; AliKit owns the palette interaction, presentation, and focus restoration. The component
-re-exports `Item` and `Item_ID`, so a default consumer does not import the model package.
+re-exports `Item`, `Item_ID`, and `Match`, so consumers can use its public input and result APIs
+without importing model types. Import `palette_model` only when using its independent helpers.
 </div>
 
-## Preview
+## Runnable example
 
-<Capture src="captures/command-palette.png" alt="Native command palette window showing the Example Actions modal, a query field, and four results" caption="Native SDL_GPU capture of examples/command_palette at Alicorn 47c9d4a. The host command-palette shortcut or the example button opens the modal." />
-
-<div class="preview-note">Interactive WebGPU preview is a later catalog step. The capture uses the
-shared public result parts (leading tile, title/description, selection check).</div>
+The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
 
 ## Responsibility split
 
@@ -45,7 +41,7 @@ SAMPLE_ITEMS :: [2]palette.Item{
 }
 
 App :: struct {
-	palette: palette.State,
+	palette_state: palette.State,
 	items:   [2]palette.Item,
 }
 
@@ -54,8 +50,8 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 }
 
 render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
-	if !app.palette.open { return }
-	event := palette.build(ctx, &app.palette, app.items[:],
+	if !app.palette_state.open { return }
+	event := palette.build(ctx, &app.palette_state, app.items[:],
 		ui.key_string("app-palette"),
 		palette.Options{title="Example Actions"})
 	if event.kind == .Activated {
@@ -64,16 +60,16 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 }
 
 on_key :: proc(app: ^App, rt: ^ui.Runtime, key: ui.Application_Key) -> bool {
-	if !app.palette.open && key == .Open_Command_Palette {
-		return palette.open_palette(&app.palette, rt)
+	if !app.palette_state.open && key == .Open_Command_Palette {
+		return palette.open_palette(&app.palette_state, rt)
 	}
 	return false
 }
 
 main :: proc() {
 	app := App{items=SAMPLE_ITEMS}
-	if !palette.init(&app.palette) { return }
-	defer palette.destroy(&app.palette)
+	if !palette.init(&app.palette_state) { return }
+	defer palette.destroy(&app.palette_state)
 	ui.run(&app, render,
 		title="AliKit Command Palette",
 		width=760,
@@ -206,8 +202,8 @@ frame.
 
 ## Compatibility
 
-<div class="pin-note"><strong>Pin:</strong> built and captured against Alicorn
-<code>47c9d4a7cd1f637876190fec899daeeac00a30ae</code>. AliKit is source-level; see
+<div class="pin-note"><strong>Pin:</strong> built and tested against Alicorn
+<code>3c9ccb9df5478008efe66082ef9d0a47b9ae98d6</code>. AliKit is source-level; see
 <a href="../../compatibility/">Compatibility and pinning</a> before updating the pair.</div>
 
 ## Source map

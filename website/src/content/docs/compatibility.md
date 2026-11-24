@@ -12,11 +12,11 @@ repository records the exact upstream revisions in
 
 | Dependency | Repository | Revision |
 | --- | --- | --- |
-| Alicorn | `https://github.com/Carnival-Science/Alicorn.git` | `47c9d4a7cd1f637876190fec899daeeac00a30ae` (`master`) |
+| Alicorn | `https://github.com/Carnival-Science/Alicorn.git` | `3c9ccb9df5478008efe66082ef9d0a47b9ae98d6` (`master`) |
 | AccessKit binding | `https://github.com/samanshaiza004/odin-accesskit.git` | `e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b` |
 
-The native captures in this catalog were produced from the examples built against that Alicorn
-revision with the SDL_GPU Direct3D 12 backend on Windows.
+The examples and tests are validated against that Alicorn revision. The documentation does not
+embed desktop application screenshots.
 
 ## What "source-level" means
 
@@ -34,8 +34,8 @@ revision with the SDL_GPU Direct3D 12 backend on Windows.
 3. Run `./tools/test.ps1 -Odin odin` on Windows. It checks the models, retained component
    behavior, every native example, theme contracts, the `.Roving_List` and `.Modal_Dialog`
    pattern checks, and a copied-source build.
-4. Rebuild the examples and re-capture the catalog with
-   `./tools/capture_catalog.ps1 -BinDir out -OutDir website/public/captures`.
+4. Rebuild the examples and, when a Windows display is available, create local-only visual
+   captures with `./tools/capture_catalog.ps1 -BinDir out -OutDir out/catalog-captures`.
 5. Update `components.json` and this table with the new revision.
 
 Headless tests do not validate operating-system IME candidate windows, physical screen-reader

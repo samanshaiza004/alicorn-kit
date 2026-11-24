@@ -128,6 +128,7 @@ test_segmented_semantics_keyboard_and_activation_parity :: proc(t: ^testing.T) {
 		"Down should be scoped to the control")
 	testing.expect_value(t, app.selected, u64(30))
 	testing.expect_value(t, app.last, u64(30))
+	testui.destroy_find_result(&files)
 	files = find_segment(&handle, "Files")
 	testing.expect(t, files.element.collection_selected && files.element.collection_current,
 		"the accepted proposal should update Selected and Current")
@@ -143,9 +144,11 @@ test_segmented_semantics_keyboard_and_activation_parity :: proc(t: ^testing.T) {
 	testing.expect_value(t, app.selected, u64(40))
 
 	// Pointer and semantic activation agree with the keyboard path.
+	testui.destroy_find_result(&overview)
 	overview = find_segment(&handle, "Overview")
 	_ = testui.click(&handle, &overview.element)
 	testing.expect_value(t, app.selected, u64(10))
+	testui.destroy_find_result(&files)
 	files = find_segment(&handle, "Files")
 	status := testui.step(&handle, testui.Input{
 		kind=.Semantic_Action,
@@ -158,6 +161,7 @@ test_segmented_semantics_keyboard_and_activation_parity :: proc(t: ^testing.T) {
 
 	// The disabled Activity segment rejects both paths.
 	_ = testui.step(&handle, testui.Input{kind=.Key, key=.Home})
+	testui.destroy_find_result(&activity)
 	activity = find_segment(&handle, "Activity")
 	_ = testui.click(&handle, &activity.element)
 	testing.expect_value(t, app.selected, u64(10))

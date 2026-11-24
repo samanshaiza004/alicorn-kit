@@ -115,7 +115,11 @@ parts_open :: proc(app: ^Parts_App, t: ^testing.T) -> (testui.Test_Handle(Parts_
 test_icon_picker_parts_custom_grid_preserves_semantics_and_activation :: proc(t: ^testing.T) {
 	app := Parts_App{}
 	handle, ok := parts_open(&app, t)
-	if !ok { return }
+	if !ok {
+		destroy(&app.state)
+		return
+	}
+	defer destroy(&app.state)
 	defer testui.close(&handle)
 
 	list := testui.find(&handle, testui.Query{role=.List_Box, name="Icon choices",
@@ -158,7 +162,11 @@ test_icon_picker_parts_custom_list_row_and_search_part :: proc(t: ^testing.T) {
 	app.options = Options{accessible_label="Icon choices", search_accessible_name="Search icons",
 		appearance=.List, columns=2, cell_size=44, cell_gap=6, row_height=40, max_visible_rows=3}
 	handle, ok := parts_open(&app, t)
-	if !ok { return }
+	if !ok {
+		destroy(&app.state)
+		return
+	}
+	defer destroy(&app.state)
 	defer testui.close(&handle)
 
 	search_field := testui.find(&handle, testui.Query{role=.Text_Field, name="Search icons",

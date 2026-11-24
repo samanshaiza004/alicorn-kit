@@ -13,7 +13,6 @@ package main
 
 import "core:fmt"
 import "core:os"
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import palette "alikit:command_palette"
 import segmented "../../segmented"
@@ -44,7 +43,7 @@ NAVIGATION: [3]palette.Item = {
 }
 
 App :: struct {
-	palette:  palette.State,
+	palette_state: palette.State,
 	segments: segmented.State,
 	scope:    u64,
 	last:     palette.Item_ID,
@@ -68,43 +67,41 @@ scope_label :: proc(scope: u64) -> string {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if alicorn.container_begin(ctx, .Container, label="command-palette-composition-root",
-		key=alicorn.key_string("command-palette-composition-root"),
-		style=alicorn.layout_style(.Column, width=-1, height=-1, grow=1, padding=24, gap=12),
-		color=alicorn.style_color(ctx, .Window_Background)) != 0 {
+	if ui.column(ctx, key=ui.key_string("command-palette-composition-root"),
+		width=-1, height=-1, grow=1, padding=24, gap=12,
+		label="command-palette-composition-root") {
 		_ = ui.text(ctx, "Palette + Segmented", size=26)
 		_ = ui.text(ctx, "The segmented control owns the search scope; the palette searches that application-owned set.",
-			size=13, color=alicorn.style_color(ctx, .Muted_Text))
+			size=13, color=ui.style_color(ctx, .Muted_Text))
 		if event := segmented.control(
 			ctx,
 			&app.segments,
 			SCOPES[:],
 			app.scope,
 			segmented.Options{accessible_label="Search scope", width=360, height=34},
-			key=alicorn.key_string("command-palette-composition-scope"),
+			key=ui.key_string("command-palette-composition-scope"),
 			instance_id=7701,
 		); event.kind == .Selection_Proposed {
 			app.scope = event.value
 			app.status = fmt.tprintf("Search scope: %s.", scope_label(event.value))
 		}
-		if !app.palette.open {
-			if ui.button(ctx, "Search", key=alicorn.key_string("command-palette-composition-open"),
+		if !app.palette_state.open {
+			if ui.button(ctx, "Search", key=ui.key_string("command-palette-composition-open"),
 				width=140, height=32, variant=.Primary) {
-				_ = palette.open_palette(&app.palette, ctx.runtime, .Caller_Filtered)
+				_ = palette.open_palette(&app.palette_state, ctx.runtime, .Caller_Filtered)
 			}
 		}
-		_ = ui.text(ctx, app.status, size=13, color=alicorn.style_color(ctx, .Muted_Text))
-		alicorn.container_end(ctx)
+		_ = ui.text(ctx, app.status, size=13, color=ui.style_color(ctx, .Muted_Text))
 	}
 }
 
 render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
-	if !app.palette.open { return }
+	if !app.palette_state.open { return }
 	event := palette.build(
 		ctx,
-		&app.palette,
+		&app.palette_state,
 		scope_items(app.scope),
-		key=alicorn.key_string("command-palette-composition-palette"),
+		key=ui.key_string("command-palette-composition-palette"),
 		options=palette.Options{
 			title=fmt.tprintf("Search %s", scope_label(app.scope)),
 			results_accessible_name=fmt.tprintf("%s results", scope_label(app.scope)),
@@ -130,8 +127,8 @@ main :: proc() {
 		if argument == "--smoke" { smoke = true }
 	}
 	app := App{scope=1, status="Choose a scope, then open the palette.", smoke=smoke}
-	if !palette.init(&app.palette) { return }
-	defer palette.destroy(&app.palette)
+	if !palette.init(&app.palette_state) { return }
+	defer palette.destroy(&app.palette_state)
 	ui.run(&app, render, title="Alicorn - Command Palette Composition", width=760, height=520,
 		render_overlays=render_overlays, on_stop=stop, smoke=smoke)
 }

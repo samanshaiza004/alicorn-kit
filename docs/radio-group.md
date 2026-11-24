@@ -15,15 +15,11 @@ The parts example renders the same component as price cards with a picture,
 title, description, and selected checkmark; the default dot is omitted.
 The composition example hosts the radio parts inside a modal dialog form.
 
-Native captures in the catalog predate the parts examples; re-capture is
-pending. The behavior, semantics, and source below are current.
-
 ## Installation
 
 Import the package through the AliKit collection:
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import radio "alikit:radio_group"
 ```
@@ -93,7 +89,6 @@ group_end    -> one Selection_Proposed event
 ## Minimal example
 
 ```odin
-import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import radio "alikit:radio_group"
 
@@ -110,7 +105,7 @@ if event := radio.radio_group(
 	app.options[:],
 	app.selected,
 	radio.Options{accessible_label="Text size", orientation=.Vertical},
-	key=alicorn.key_string("text-size"),
+	key=ui.key_string("text-size"),
 	instance_id=1,
 ); event.kind == .Selection_Proposed {
 	app.selected = event.value
@@ -133,7 +128,7 @@ event := radio.radio_group(ctx, &app.group, app.options[:], app.size,
 		selection_mode=.Activate, // arrows move focus; activation selects
 		no_wrap=true,
 	},
-	key=alicorn.key_string("size"), instance_id=41)
+	key=ui.key_string("size"), instance_id=41)
 switch event.kind {
 case .Selection_Proposed:
 	app.size = event.value        // accept, reject, or map to a command
@@ -159,7 +154,7 @@ The default appearance uses the indicator and label parts:
 
 ```odin
 group, visible := radio.group_begin(ctx, &app.group, app.options[:], app.selected,
-	label="Text size", key=alicorn.key_string("size"), instance_id=41)
+	label="Text size", key=ui.key_string("size"), instance_id=41)
 if visible {
 	for option in app.options {
 		item, item_visible := radio.item_begin(ctx, &group, option)
@@ -192,7 +187,7 @@ inside it:
 
 ```odin
 group, visible := radio.group_begin(ctx, &app.group, options, app.selected,
-	label="Plan", key=alicorn.key_string("plan"), instance_id=42,
+	label="Plan", key=ui.key_string("plan"), instance_id=42,
 	group_options=radio.Options{item_height=104, item_padding=0, item_gap=10})
 if visible {
 	for plan in app.plans {
@@ -214,6 +209,7 @@ if visible {
 	event := radio.group_end(ctx, &group)
 }
 ```
+import ui "alicorn:ui"
 
 The parts own keyboard navigation, roving focus, checked-state publication, the
 Button owner, and activation parity. Omitting `indicator` or `label` changes only
