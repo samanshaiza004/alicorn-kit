@@ -21,6 +21,12 @@ an icon, label, and detail. The parts example replaces both with application
 visuals (letter tiles or custom rows). The composition example hosts the picker
 inside a dialog and uses a Segmented control for the appearance.
 
+The authoring-quality follow-up includes an [authored list-appearance visual
+target](research/authoring-reliability/references/icon-picker.svg), not a
+desktop capture. The example switches between Grid and List with Ctrl+2. The
+new retained-output checks verify that the search query and List row name/detail
+produce visible glyphs, including after resizing.
+
 ## Installation
 
 Copy these files into an application or import the package with the AliKit
@@ -278,9 +284,10 @@ runs 14 external-package tests: token matching, identity,
 keyboard/pointer/semantic activation parity, focus versus selection, disabled
 skipping, removal and reorder reconciliation, appearance identity, filtering and
 IME yield, search-focus key yield (arrows and Space), 200-choice virtualization
-and reveal, the `.Modal_Dialog` pattern check, Escape/outside-click/nested
-overlay dismissal, teardown idle, an application Ctrl+F focus interaction, and
-the public parts with custom grid cells and list rows.
+and reveal, visible query and List-row glyph checks, narrow-resize containment,
+the `.Modal_Dialog` pattern check, Escape/outside-click/nested overlay
+dismissal, teardown idle, an application Ctrl+F focus interaction, and the
+public parts with custom grid cells and list rows.
 
 Known limits:
 

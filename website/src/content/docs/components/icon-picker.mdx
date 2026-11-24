@@ -16,6 +16,8 @@ Alicorn's public UI and runtime APIs. <code>picker()</code> is a convenience wra
 
 The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
 
+The [authored List appearance target](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/references/icon-picker.svg) is a visual reference, not a desktop capture. The default example switches between Grid and List with Ctrl+2; retained-output tests verify the query and list text remain drawable after filtering and resizing.
+
 ## Responsibility split
 
 | Layer | Responsibility |
@@ -133,7 +135,7 @@ has no theme contract. Appearance is controlled by `Options.appearance`:
 
 ## Conformance tests
 
-`icon_picker/icon_picker_test.odin` runs eleven external-package tests:
+`icon_picker/icon_picker_test.odin` runs fourteen external-package tests:
 
 - token matching, stable identity, and selection reconciliation;
 - keyboard, pointer, and semantic activation parity;
@@ -141,6 +143,7 @@ has no theme contract. Appearance is controlled by `Options.appearance`:
 - appearance switch with identical cell identity and bounds change;
 - filtering, IME yield, and search-focus arrow/Space yield;
 - 200-choice virtualization and reveal;
+- visible committed query, narrow resize containment, and visible List row name/detail glyphs;
 - the `.Modal_Dialog` pattern check with a positive run and a negative control;
 - Escape, outside-click, and nested overlay dismissal with focus restoration;
 - teardown idle and an application `Ctrl+F` focus interaction.
@@ -180,7 +183,7 @@ Headless tests do not exercise OS IME candidate windows, native accessibility br
 ## Compatibility
 
 <div class="pin-note"><strong>Pin:</strong> built and tested against Alicorn
-<code>3c9ccb9df5478008efe66082ef9d0a47b9ae98d6</code>. See
+<code>4e0862f368cb638b7aece0bad9dd82cae0c3d8c4</code>. See
 <a href="../../compatibility/">Compatibility and pinning</a>.</div>
 
 ## Source map

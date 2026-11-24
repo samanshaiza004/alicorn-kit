@@ -509,6 +509,17 @@ test_icon_picker_search_filters_and_ime_yields_navigation :: proc(t: ^testing.T)
 
 	_ = testui.step(&handle, testui.Input{kind=.Text_Commit, text="term"})
 	testing.expect_value(t, app.picker.match_count, 1)
+	search_field := testui.find(&handle, testui.Query{
+		role=.Text_Field, name="Search icons", match_role=true, match_name=true,
+	})
+	if !testing.expect(t, search_field.match == .Unique, "the controlled search field should be realized") {
+		testui.destroy_find_result(&search_field)
+		return
+	}
+	visible_query := testui.expect_visible_text(&handle, &search_field.element, "term")
+	testing.expect(t, visible_query.ok, testui.visible_text_diagnostic(visible_query))
+	initial_search_width := search_field.element.bounds.w
+	testui.destroy_find_result(&search_field)
 	terminal := find_cell(&handle, "Terminal")
 	testing.expect(t, terminal.match == .Unique, "the filtered cell should remain named")
 	testui.destroy_find_result(&terminal)
@@ -528,6 +539,55 @@ test_icon_picker_search_filters_and_ime_yields_navigation :: proc(t: ^testing.T)
 	_ = testui.step(&handle, testui.Input{kind=.Text_Commit, text="inal"})
 	testing.expect_value(t, query_text(&app.picker), "terminal")
 	testing.expect_value(t, app.picker.match_count, 1)
+	search_field = testui.find(&handle, testui.Query{
+		role=.Text_Field, name="Search icons", match_role=true, match_name=true,
+	})
+	if !testing.expect(t, search_field.match == .Unique, "the search field should remain after IME commit") {
+		testui.destroy_find_result(&search_field)
+		return
+	}
+	visible_query = testui.expect_visible_text(&handle, &search_field.element, "terminal")
+	testing.expect(t, visible_query.ok, testui.visible_text_diagnostic(visible_query))
+	testui.destroy_find_result(&search_field)
+
+	if !testing.expect(t, testui.resize(&handle, 420, 400) == .Ok,
+		"the inline picker should accept a narrower viewport") { return }
+	search_field = testui.find(&handle, testui.Query{
+		role=.Text_Field, name="Search icons", match_role=true, match_name=true,
+	})
+	if !testing.expect(t, search_field.match == .Unique, "the search field should remain after resize") {
+		testui.destroy_find_result(&search_field)
+		return
+	}
+	viewport := alicorn.Rect{0, 0, 420, 400}
+	search_inside_viewport := search_field.element.bounds.x >= viewport.x &&
+		search_field.element.bounds.y >= viewport.y &&
+		search_field.element.bounds.x+search_field.element.bounds.w <= viewport.x+viewport.w &&
+		search_field.element.bounds.y+search_field.element.bounds.h <= viewport.y+viewport.h
+	testing.expect(t, search_inside_viewport,
+		"the resized search field should remain inside the 420 × 400 logical viewport")
+	testing.expect(t, search_field.element.bounds.w < initial_search_width-100,
+		"the search field should follow the narrower available width")
+	visible_query = testui.expect_visible_text(&handle, &search_field.element, "terminal")
+	testing.expect(t, visible_query.ok, testui.visible_text_diagnostic(visible_query))
+	testui.destroy_find_result(&search_field)
+
+	// The List appearance draws names and details; assert those glyphs are
+	// actually available in the retained output instead of trusting semantics.
+	app.appearance = .List
+	_ = set_query(&app.picker, nil, "")
+	alicorn.invalidate_root(handle.runtime, "fixture switched to visible list presentation")
+	_ = testui.describe_once(&handle)
+	home := find_cell(&handle, "Home")
+	if !testing.expect(t, home.match == .Unique, "the first list row should be realized") {
+		testui.destroy_find_result(&home)
+		return
+	}
+	visible_name := testui.expect_visible_text(&handle, &home.element, "Home")
+	testing.expect(t, visible_name.ok, testui.visible_text_diagnostic(visible_name))
+	visible_detail := testui.expect_visible_text(&handle, &home.element, "Go to the workspace home")
+	testing.expect(t, visible_detail.ok, testui.visible_text_diagnostic(visible_detail))
+	testui.destroy_find_result(&home)
 }
 
 @(test)

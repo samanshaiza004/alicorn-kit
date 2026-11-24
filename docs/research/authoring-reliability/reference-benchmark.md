@@ -122,6 +122,14 @@ visible-text/resize assertion plus an authored Scroll Area target were added.
 See the separate [Scroll Area follow-up](results/scroll-area.md); it is not part
 of the three reference attempt counts.
 
+The Icon Picker follow-up added an actual visible-glyph regression after an
+initially empty search and after IME commit, checked that a narrow resize keeps
+the field inside the viewport, and found that List rows placed their icon,
+label, and detail as vertical siblings inside a 30 px row. The default row now
+uses a centered icon tile and a horizontal text layout. See the separate
+[Icon Picker follow-up](results/icon-picker.md); it is not part of the three
+reference attempt counts.
+
 For each of the three reference implementations, keep one result file under `results/` with this table and its attempt notes:
 
 | Measure | Result |

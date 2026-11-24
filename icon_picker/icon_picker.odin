@@ -887,43 +887,58 @@ row :: proc(ctx: ^ui.UI, item: Grid_Item) {
 		key=ui.key_u64(1),
 		width=-1,
 		height=item.grid.options.row_height-2,
-		padding=6,
-		gap=8,
+		padding=4,
 		align=.Center,
 		fill=fill,
 		radius=6,
 		stroke=ui.border(stroke_width, stroke_color, .Inside),
 		label="icon-picker-row",
 	) {
-		icon_surface := ui.box(ctx, key=ui.key_u64(2), size=22,
-			fill=alicorn.style_color(ctx, .Subtle_Surface), radius=5)
-		if icon_surface != 0 {
-			_ = alicorn.visual_part_attach(ctx, icon_surface, item.owner, alicorn.visual_part_core(.Icon))
-		}
-		_ = ui.icon(ctx, item.choice.icon, key=ui.key_u64(3), size=16, color_role=.Text)
-		text_color := alicorn.style_color(ctx, .Text)
-		if item.choice.disabled { text_color = alicorn.style_color(ctx, .Muted_Text) }
-		label := ui.text(ctx, item.choice.label,
-			key=ui.key_u64(4),
-			style=ui.layout_style(.Row, grow=1),
-			color=text_color,
-			decorative=true,
-			text_style=alicorn.Text_Style{font_weight=alicorn.FONT_WEIGHT_MEDIUM, overflow=.Ellipsis},
-		)
-		if label != 0 { _ = alicorn.visual_part_attach(ctx, label, item.owner, alicorn.visual_part_core(.Label)) }
-		if item.choice.detail != "" {
-			detail := ui.text(ctx, item.choice.detail,
-				key=ui.key_u64(5),
-				color=alicorn.style_color(ctx, .Muted_Text),
+		if ui.row(ctx, key=ui.key_u64(7), width=-1, height=-1, gap=8, align=.Center) {
+			if ui.panel(ctx, key=ui.key_u64(2), width=22, height=22,
+				align=.Center, justify=.Center,
+				fill=alicorn.style_color(ctx, .Subtle_Surface), radius=5,
+				label="icon-picker-row-icon") {
+				icon_color := alicorn.Style_Color_Role.Text
+				if item.choice.disabled {
+					icon_color = .Muted_Text
+				} else if item.selected {
+					icon_color = .Accent_Text
+				}
+				icon := ui.icon(ctx, item.choice.icon, key=ui.key_u64(3), size=16,
+					color_role=icon_color)
+				if icon != 0 {
+					_ = alicorn.visual_part_attach(ctx, icon, item.owner, alicorn.visual_part_core(.Icon))
+				}
+			}
+			text_color := alicorn.style_color(ctx, .Text)
+			if item.choice.disabled { text_color = alicorn.style_color(ctx, .Muted_Text) }
+			label := ui.text(ctx, item.choice.label,
+				key=ui.key_u64(4),
+				style=ui.layout_style(.Row, grow=1),
+				size=14,
+				color=text_color,
 				decorative=true,
-				text_style=alicorn.Text_Style{overflow=.Ellipsis},
+				text_style=alicorn.Text_Style{font_weight=alicorn.FONT_WEIGHT_MEDIUM, overflow=.Ellipsis},
 			)
-			if detail != 0 { _ = alicorn.visual_part_attach(ctx, detail, item.owner, alicorn.visual_part_core(.Content)) }
-		}
-		if item.selected {
-			check := ui.icon(ctx, .Check, key=ui.key_u64(6), size=14, color_role=.Accent_Text)
-			if check != 0 {
-				_ = alicorn.visual_part_attach(ctx, check, item.owner, alicorn.visual_part_core(.Selected_Indicator))
+			if label != 0 { _ = alicorn.visual_part_attach(ctx, label, item.owner, alicorn.visual_part_core(.Label)) }
+			if item.choice.detail != "" {
+				detail := ui.text(ctx, item.choice.detail,
+					key=ui.key_u64(5),
+					size=12,
+					color=alicorn.style_color(ctx, .Muted_Text),
+					decorative=true,
+					text_style=alicorn.Text_Style{overflow=.Ellipsis},
+				)
+				if detail != 0 {
+					_ = alicorn.visual_part_attach(ctx, detail, item.owner, alicorn.visual_part_core(.Content))
+				}
+			}
+			if item.selected {
+				check := ui.icon(ctx, .Check, key=ui.key_u64(6), size=14, color_role=.Accent_Text)
+				if check != 0 {
+					_ = alicorn.visual_part_attach(ctx, check, item.owner, alicorn.visual_part_core(.Selected_Indicator))
+				}
 			}
 		}
 	}
