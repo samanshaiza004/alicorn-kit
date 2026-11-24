@@ -241,10 +241,13 @@ header_begin :: proc(
 	slot: alicorn.Node_ID
 	if gutter > 0 {
 		// Keep the header surface full width for a continuous background and
-		// reserve the scrollbar only from the child track grid.
-		slot = alicorn.container_begin(ctx, .Container,
+		// reserve the scrollbar only from the child track grid. The slot is
+		// identity-transparent so adding or removing this conditional layout
+		// wrapper does not recreate keyed header tracks or interaction owners.
+		slot = alicorn.transparent_container_begin(ctx, .Container,
 			label="table-header-scroll-slot",
-			key=ui.key_string("alikit-table-header-scroll-slot"),
+			key="alikit-table-header-scroll-slot",
+			explicit_key=true,
 			style=ui.layout_style(.Row, width=-1, height=config.height, align=.Stretch))
 		if slot == 0 {
 			alicorn.surface_end(ctx)
@@ -402,7 +405,7 @@ header_end :: proc(ctx: ^ui.UI, header: ^Header) {
 				style=ui.layout_style(.Column, width=gutter, height=header.config.height))
 			if gutter_node != 0 { alicorn.container_end(ctx) }
 		}
-		alicorn.container_end(ctx)
+		alicorn.transparent_container_end(ctx)
 	}
 	alicorn.surface_end(ctx)
 	header.open = false

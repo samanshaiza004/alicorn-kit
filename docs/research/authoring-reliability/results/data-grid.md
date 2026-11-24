@@ -13,7 +13,7 @@ rows. The vector reference is not a desktop capture.
 | 1280 × 800, 960 × 720, 760 × 640 | Headless checks pass at all three viewports for a 200-row grid. The test checks header/body edges, first-row containment in the scroll viewport, and visible cell text. |
 | 1×, 1.25×, 1.5×, 2× DPI | TestUI scale checks pass at all four scales. These are logical presentation checks, not native display DPI captures. |
 | Visual match to SVG target | Unverified: this environment did not provide a native display capture for side-by-side pixel review. |
-| Existing behavior and accessibility | Data Grid package tests pass: stable row/column identities, table semantics, disabled-row navigation, selected/current publication, sorting proposals, keyboard activation, 200-row virtualization, and Page Down reveal. The example keeps sorting, filtering, and accepted selection application-owned. |
+| Existing behavior and accessibility | Data Grid package tests pass: stable row/column identities, table semantics, disabled-row navigation, selected/current publication, sorting proposals, keyboard activation, 200-row virtualization, Page Down reveal, and header identity across scrollbar transitions. The example keeps sorting, filtering, and accepted selection application-owned. |
 
 ## Attempt log
 
@@ -39,6 +39,22 @@ rows. The vector reference is not a desktop capture.
 6. The gutter slot moved inside the surface; the geometry check now verifies
    both its full-width background extent and the shared column track. The final
    Data Grid and shared Table package suites pass, as does the example build.
+
+## Follow-up: scrollbar transition identity
+
+A transition regression extended the reference check from separate short and
+long fixtures to one retained grid moving from nine rows (scrollbar present) to
+eight rows (no scrollbar) and back. Before the fix, the transition away from
+the scrollbar changed the retained IDs of the header track grid, sortable Name
+cell, and Name label, even though their semantic IDs stayed stable.
+
+The conditional header slot now uses Alicorn's identity-transparent container.
+It remains a layout parent for the track grid, while its appearance no longer
+changes descendant identity. The regression checks the header surface, track
+grid, sortable cell, and label IDs in both directions, as well as the slot's
+parent change. It passes with the Data Grid suite at 7/7; the shared Table suite
+passes at 3/3. The original six recreation passes remain unchanged; this is a
+post-benchmark correctness follow-up.
 
 ## Scrollbar negative control
 
@@ -77,7 +93,7 @@ odin build examples/data_grid \
   -out:/private/tmp/alikit-data-grid-reference
 ```
 
-The Data Grid suite finished with 6/6 tests passing; the shared Table suite
+The Data Grid suite finished with 7/7 tests passing; the shared Table suite
 finished with 3/3 passing. The example build exited
 successfully; Odin emitted unrelated large-stack test warnings from Alicorn
 and the macOS linker warned about duplicate `-lobjc` libraries. No native

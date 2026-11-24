@@ -140,7 +140,8 @@ claimed as a pattern.
   `Sort_Proposed`;
 - 200-row virtualization with virtual semantic rows and Page Down reveal;
 - shared header/body tracks with and without a scrollbar, first-row clipping,
-  and visible cell text at 1280, 960, and 760 px widths;
+  visible cell text at 1280, 960, and 760 px widths, and retained header
+  identity across scrollbar appearance/disappearance;
 - fractional TestUI presentation scales at 1×, 1.25×, 1.5×, and 2×;
 - the runnable example build against the pinned Alicorn and AccessKit collections.
 

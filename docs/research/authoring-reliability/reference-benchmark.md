@@ -105,7 +105,10 @@ headless retained-output checks as visual-match evidence.
   text owner; growing the shared row surface fixed both geometry and drawable text.
 - The Data Grid reference exposed a 12 px header/body track mismatch when the body
   scrollbar consumed width. The shared header now reserves Alicorn's scrollbar
-  thickness inside its full-width background only when rows can scroll.
+  thickness inside its full-width background only when rows can scroll. A later
+  transition test found that this conditional wrapper recreated the keyed header
+  grid and sortable cells when the scrollbar appeared or disappeared; using
+  Alicorn's identity-transparent container preserves those node IDs.
 - Dialog's public action helper fixes its button height at 32 px; reaching the
   target's 40 px uses ordinary `ui.button` controls inside the public action row.
 - The custom Command Palette shell needs runtime exports for modal overlay and

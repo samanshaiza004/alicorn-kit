@@ -323,6 +323,115 @@ test_short_dataset_does_not_reserve_scrollbar_gutter :: proc(t: ^testing.T) {
 	check_large_grid_geometry(t, &handle, &fixture)
 }
 
+Header_Identity_Probe :: struct {
+	surface:    alicorn.Node_ID,
+	grid:       alicorn.Node_ID,
+	name_cell:  alicorn.Node_ID,
+	name_text:  alicorn.Node_ID,
+	header_semantic: alicorn.Semantic_ID,
+	cell_semantic:   alicorn.Semantic_ID,
+}
+
+@(private)
+probe_header_identity :: proc(
+	t: ^testing.T,
+	handle: ^testui.Test_Handle(Large_Fixture),
+) -> (probe: Header_Identity_Probe, ok: bool) {
+	header_row := find_role(handle, .Table_Row, "Columns")
+	if !testing.expect(t, header_row.match == .Unique, "the header row should stay published") {
+		testui.destroy_find_result(&header_row)
+		return
+	}
+	probe.surface = header_row.element.visual_node
+	probe.header_semantic = header_row.element.semantic_id
+	testui.destroy_find_result(&header_row)
+
+	name_header := find_role(handle, .Table_Column_Header, "Name")
+	if !testing.expect(t, name_header.match == .Unique, "the Name header should stay published") {
+		testui.destroy_find_result(&name_header)
+		return
+	}
+	probe.name_cell = name_header.element.visual_node
+	probe.cell_semantic = name_header.element.semantic_id
+	testui.destroy_find_result(&name_header)
+
+	probe.grid, _ = alicorn.node_by_key(handle.runtime, ui.key_u64(0xA11C_6A11), .Grid)
+	probe.name_text, _ = alicorn.node_by_key(handle.runtime,
+		ui.key_pair(0xA11C_6A04, 10), .Text)
+	ok = probe.surface != 0 && probe.grid != 0 && probe.name_cell != 0 && probe.name_text != 0
+	testing.expect(t, ok, "the header surface, grid, cell, and label should have retained nodes")
+	return
+}
+
+@(test)
+test_header_identity_survives_scrollbar_gutter_transitions :: proc(t: ^testing.T) {
+	columns := fixture_columns()
+	cells: [9][3]Cell
+	rows: [9]Row
+	for index in 0..<len(rows) {
+		cells[index] = {{text=fixture_row_name(index)}, {text="1 KB"}, {text="file"}}
+		rows[index] = Row{key=u64(1000+index), cells=cells[index][:]}
+	}
+	fixture := Large_Fixture{columns=columns[:], rows=rows[:]}
+	_ = request_focus(&fixture.state)
+	handle, status := testui.open(&fixture, large_render, width=1280, height=800)
+	if !testing.expectf(t, status == .Ok, "the scrollbar transition fixture should open: %v %s",
+		status, testui.last_turn_diagnostic(&handle)) {
+		if handle.runtime != nil { testui.close(&handle) }
+		return
+	}
+	defer testui.close(&handle)
+
+	before, before_ok := probe_header_identity(t, &handle)
+	if !before_ok { return }
+	before_grid_info, before_grid_found := alicorn.node_info(handle.runtime, before.grid)
+	_, gutter_present := alicorn.node_by_key(handle.runtime,
+		ui.key_string("alikit-table-header-scrollbar-gutter"), .Container)
+	if !testing.expect(t, before_grid_found && before_grid_info.parent != before.surface && gutter_present,
+		"nine rows should place header tracks inside the slot before its gutter") { return }
+
+	// Eight rows exactly fill the configured viewport, so the scrollbar and
+	// conditional header wrappers should disappear without replacing the header.
+	fixture.rows = rows[:8]
+	alicorn.invalidate_root(handle.runtime, "data-grid scrollbar removed at viewport capacity")
+	if !testing.expect(t, testui.describe_once(&handle), "the no-scroll frame should describe") { return }
+	after, after_ok := probe_header_identity(t, &handle)
+	if !after_ok { return }
+	after_grid_info, after_grid_found := alicorn.node_info(handle.runtime, after.grid)
+	_, gutter_present = alicorn.node_by_key(handle.runtime,
+		ui.key_string("alikit-table-header-scrollbar-gutter"), .Container)
+	testing.expect(t, after_grid_found && after_grid_info.parent == after.surface && !gutter_present,
+		"eight rows should remove the slot and gutter and attach tracks directly to the header surface")
+	testing.expect(t, before.surface == after.surface,
+		"the retained header surface should keep its identity")
+	testing.expect(t, before.header_semantic == after.header_semantic &&
+		before.cell_semantic == after.cell_semantic,
+		"semantic header identities should remain stable across the parent change")
+	testing.expect(t, before.grid == after.grid,
+		"the header track grid should keep its identity across the parent change")
+	testing.expect(t, before.name_cell == after.name_cell,
+		"the sortable header cell should keep its identity across the parent change")
+	testing.expect(t, before.name_text == after.name_text,
+		"the header label should keep its identity across the parent change")
+
+	fixture.rows = rows[:9]
+	alicorn.invalidate_root(handle.runtime, "data-grid scrollbar restored beyond viewport capacity")
+	if !testing.expect(t, testui.describe_once(&handle), "the scrolling frame should describe again") { return }
+	restored, restored_ok := probe_header_identity(t, &handle)
+	if !restored_ok { return }
+	restored_grid_info, restored_grid_found := alicorn.node_info(handle.runtime, restored.grid)
+	testing.expect(t, restored_grid_found && restored_grid_info.parent == before_grid_info.parent,
+		"the restored header should reuse the original slot node")
+	testing.expect(t, before.surface == restored.surface,
+		"the header surface should keep its identity when scrolling returns")
+	testing.expect(t, before.grid == restored.grid,
+		"the header track grid should keep its identity when scrolling returns")
+	testing.expect(t, before.name_cell == restored.name_cell,
+		"the sortable header should keep its identity when scrolling returns")
+	testing.expect(t, before.name_text == restored.name_text,
+		"the header label should keep its identity when scrolling returns")
+}
+
 @(test)
 test_table_virtualizes_and_reveals_large_rows :: proc(t: ^testing.T) {
 	columns := fixture_columns()
