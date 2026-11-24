@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800" role="img" aria-labelledby="title desc">
+  <title id="title">Data Grid visual reference</title>
+  <desc id="desc">A dark project dashboard with a searchable, sortable, vertically scrollable grid, aligned shared columns, visible selected row and focused cell, and a row count.</desc>
+  <defs>
+    <style>
+      text { font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .body { fill: #e7eaf0; }
+      .muted { fill: #a4adbb; }
+      .quiet { fill: #778292; }
+    </style>
+  </defs>
+  <rect width="1280" height="800" fill="#12151a"/>
+  <rect width="1280" height="54" fill="#191d24"/>
+  <circle cx="24" cy="27" r="6" fill="#f07972"/><circle cx="44" cy="27" r="6" fill="#e9be5b"/><circle cx="64" cy="27" r="6" fill="#64bd77"/>
+  <text x="96" y="33" class="body" font-size="15" font-weight="600">Northstar</text>
+  <rect x="0" y="54" width="72" height="746" fill="#171b21"/>
+  <rect x="19" y="88" width="34" height="34" rx="9" fill="#4d85cf"/>
+  <path d="M29 105h14M36 98v14" stroke="#f4f7ff" stroke-width="1.7" stroke-linecap="round"/>
+  <rect x="18" y="148" width="36" height="36" rx="8" fill="#282f39"/>
+  <path d="M27 157h18v18H27zM31 161h10M31 165h10" fill="none" stroke="#b9c2cf" stroke-width="1.4"/>
+  <rect x="18" y="199" width="36" height="36" rx="8" fill="transparent"/>
+  <circle cx="36" cy="217" r="8" fill="none" stroke="#8793a2" stroke-width="1.6"/><path d="M42 223l5 5" stroke="#8793a2" stroke-width="1.6"/>
+  <text x="110" y="101" class="body" font-size="25" font-weight="600">Projects</text>
+  <text x="110" y="128" class="muted" font-size="14">27 projects in this workspace</text>
+  <rect x="910" y="80" width="116" height="36" rx="7" fill="#252b35" stroke="#3b424e"/>
+  <text x="939" y="103" class="body" font-size="13">Export</text>
+  <rect x="1038" y="80" width="132" height="36" rx="7" fill="#4d85cf"/>
+  <text x="1066" y="103" fill="#fff" font-size="13" font-weight="600">New project</text>
+  <rect x="110" y="153" width="1060" height="566" rx="10" fill="#1b2028" stroke="#343b47"/>
+  <rect x="126" y="169" width="320" height="38" rx="7" fill="#151920" stroke="#343b47"/>
+  <circle cx="145" cy="187" r="6" fill="none" stroke="#a5afbd" stroke-width="1.4"/><path d="M150 192l4 4" stroke="#a5afbd" stroke-width="1.4"/>
+  <text x="166" y="192" class="muted" font-size="12">Filter projects</text>
+  <text x="956" y="193" class="muted" font-size="12">27 rows</text>
+  <rect x="126" y="224" width="1028" height="42" rx="5" fill="#242a33"/>
+  <text x="146" y="250" class="muted" font-size="12" font-weight="650">NAME</text>
+  <text x="564" y="250" class="muted" font-size="12" font-weight="650">OWNER</text>
+  <text x="764" y="250" class="muted" font-size="12" font-weight="650">UPDATED</text>
+  <text x="974" y="250" class="muted" font-size="12" font-weight="650">STATUS</text>
+  <path d="M192 239l4 5 4-5" fill="none" stroke="#9ebbe4" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="126" y="266" width="1028" height="48" fill="#29384d"/>
+  <rect x="126" y="266" width="3" height="48" fill="#79aaf0"/>
+  <text x="146" y="296" class="body" font-size="13" font-weight="600">Quarterly planning</text>
+  <text x="564" y="296" class="body" font-size="13">Nora Kim</text>
+  <text x="764" y="296" class="body" font-size="13">Today, 10:42</text>
+  <rect x="968" y="278" width="74" height="24" rx="6" fill="#243d35"/>
+  <circle cx="982" cy="290" r="3" fill="#77d2a2"/><text x="991" y="294" fill="#a8e4c4" font-size="11">Ready</text>
+  <rect x="135" y="270" width="402" height="40" rx="5" fill="none" stroke="#a8c9ff" stroke-width="2"/>
+  <line x1="126" y1="314" x2="1154" y2="314" stroke="#343b47"/>
+  <text x="146" y="344" class="body" font-size="13">Mobile launch</text><text x="564" y="344" class="muted" font-size="13">Eli Turner</text><text x="764" y="344" class="muted" font-size="13">Yesterday</text>
+  <rect x="968" y="326" width="82" height="24" rx="6" fill="#382f25"/><circle cx="982" cy="338" r="3" fill="#e6bd73"/><text x="991" y="342" fill="#f0d39d" font-size="11">Review</text>
+  <line x1="126" y1="362" x2="1154" y2="362" stroke="#343b47"/>
+  <text x="146" y="392" class="body" font-size="13">Spring campaign</text><text x="564" y="392" class="muted" font-size="13">Mina Patel</text><text x="764" y="392" class="muted" font-size="13">Mon, 16:08</text>
+  <rect x="968" y="374" width="74" height="24" rx="6" fill="#243d35"/><circle cx="982" cy="386" r="3" fill="#77d2a2"/><text x="991" y="390" fill="#a8e4c4" font-size="11">Ready</text>
+  <line x1="126" y1="410" x2="1154" y2="410" stroke="#343b47"/>
+  <text x="146" y="440" class="body" font-size="13">Research &amp; insights</text><text x="564" y="440" class="muted" font-size="13">Nora Kim</text><text x="764" y="440" class="muted" font-size="13">Jun 11</text>
+  <rect x="968" y="422" width="82" height="24" rx="6" fill="#382f25"/><circle cx="982" cy="434" r="3" fill="#e6bd73"/><text x="991" y="438" fill="#f0d39d" font-size="11">Review</text>
+  <line x1="126" y1="458" x2="1154" y2="458" stroke="#343b47"/>
+  <text x="146" y="488" class="body" font-size="13">Brand refresh 2027</text><text x="564" y="488" class="muted" font-size="13">Eli Turner</text><text x="764" y="488" class="muted" font-size="13">Jun 10</text>
+  <rect x="968" y="470" width="79" height="24" rx="6" fill="#362b3a"/><circle cx="982" cy="482" r="3" fill="#c39ce6"/><text x="991" y="486" fill="#dcc0f1" font-size="11">Blocked</text>
+  <line x1="126" y1="506" x2="1154" y2="506" stroke="#343b47"/>
+  <text x="146" y="536" class="body" font-size="13">Website migration</text><text x="564" y="536" class="muted" font-size="13">Mina Patel</text><text x="764" y="536" class="muted" font-size="13">Jun 9</text>
+  <rect x="968" y="518" width="74" height="24" rx="6" fill="#243d35"/><circle cx="982" cy="530" r="3" fill="#77d2a2"/><text x="991" y="534" fill="#a8e4c4" font-size="11">Ready</text>
+  <line x1="126" y1="554" x2="1154" y2="554" stroke="#343b47"/>
+  <text x="146" y="584" class="body" font-size="13">Workspace cleanup</text><text x="564" y="584" class="muted" font-size="13">Nora Kim</text><text x="764" y="584" class="muted" font-size="13">Jun 7</text>
+  <rect x="968" y="566" width="82" height="24" rx="6" fill="#382f25"/><circle cx="982" cy="578" r="3" fill="#e6bd73"/><text x="991" y="582" fill="#f0d39d" font-size="11">Review</text>
+  <line x1="126" y1="602" x2="1154" y2="602" stroke="#343b47"/>
+  <text x="146" y="632" class="body" font-size="13">Customer interviews</text><text x="564" y="632" class="muted" font-size="13">Eli Turner</text><text x="764" y="632" class="muted" font-size="13">Jun 5</text>
+  <rect x="968" y="614" width="74" height="24" rx="6" fill="#243d35"/><circle cx="982" cy="626" r="3" fill="#77d2a2"/><text x="991" y="630" fill="#a8e4c4" font-size="11">Ready</text>
+  <rect x="1144" y="276" width="4" height="395" rx="2" fill="#303741"/><rect x="1144" y="278" width="4" height="106" rx="2" fill="#687383"/>
+  <text x="24" y="778" class="quiet" font-size="11">VISUAL REFERENCE · NOT A CAPTURE</text>
+</svg>

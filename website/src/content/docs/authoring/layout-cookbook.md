@@ -168,3 +168,42 @@ For each repeated or responsive component, check:
 
 Headless layout and component tests can verify bounds, identity, semantics, and invalidation. They
 do not replace native pixel inspection, operating-system input testing, or a physical DPI matrix.
+
+## Make layout intent measurable
+
+Use `alicorn:testui` in component tests to turn the intended geometry and visible output into
+assertions. These helpers inspect finalized logical bounds and the retained shaped-text/paint
+stream; they do not claim GPU pixel verification.
+
+```odin
+import testui "alicorn:testui"
+
+panel := testui.find(&h, testui.Query{
+    role=.Dialog, name="Search", match_role=true, match_name=true,
+})
+query := testui.find(&h, testui.Query{
+    role=.Text_Field, name="Search commands", match_role=true, match_name=true,
+})
+defer testui.destroy_find_result(&panel)
+defer testui.destroy_find_result(&query)
+
+inside := testui.expect_inside(&h, &query.element, &panel.element)
+testing.expect(t, inside.ok, testui.layout_check_diagnostic(inside))
+fills := testui.expect_fills_width(&h, &query.element, &panel.element)
+testing.expect(t, fills.ok, testui.layout_check_diagnostic(fills))
+visible := testui.expect_visible_text(&h, &query.element, "build")
+testing.expect(t, visible.ok, testui.visible_text_diagnostic(visible))
+```
+
+`expect_aligned` checks a center or edge against another queried element.
+`expect_no_overflow` checks against the immediate retained parent; use `expect_inside` for a
+different ancestor. Re-query after each input or resize so assertions never use stale snapshots.
+Pair these checks with native screenshots at the target logical size and fractional display scales:
+headless geometry cannot detect antialiasing, glyph residency, clipping mistakes in the GPU path,
+or platform-specific font fallback.
+
+For the Command Palette, Dialog, and Data Grid reference examples, record failed geometry checks
+and code/test iterations as attempts. Count an initial implementation as attempt 1; every later
+implementation pass needed to make a failed check pass increments the count. Record imports,
+fixed dimensions, and layout workarounds separately so a visually correct result does not hide an
+unnecessarily difficult authoring path.
