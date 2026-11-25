@@ -157,12 +157,16 @@ different orders):
 | Allocations | 790 | 1,465 |
 | Bytes | 941,273 | 1,436,019 |
 | p50 turn | 93,100 ns | 228,100 ns |
-| p95 turn | 364,100 ns | 512,100 ns |
+| Maximum of six timed turns (earlier output mislabeled this p95) | 364,100 ns | 512,100 ns |
 | Idle wakes after settle (`advance_time`, 16 ms) | 0 | 0 |
 
 Both settle with no scheduled descriptions or retained presentation. The parts
 variant allocates more per frame because each row is an application subtree;
 the shared font setup dominates neither total.
+
+These allocation and timing figures are the original one-run observation at
+the earlier pin. Keep them as historical data; the current-pinned repeat below
+uses a later Alicorn and Odin and is not a before/after comparison.
 
 ### Semantic parity
 
@@ -173,6 +177,61 @@ selected/current identity. It does not claim to be semantically identical to
 the stock palette because the stock palette publishes no collection; the added
 structure is part of the parts recipe. Rows keep the accessible title, `Selected`
 state, and `Select`/`Focus` actions.
+
+### Current-pinned repeat (2026-11-25)
+
+The existing pilot was built and run in five fresh test-runner processes with
+the fixed test seed `1729`. Each process measures the same six input turns. The
+report gives the median and range across the five process-level measurements;
+allocations and TestUI counters were identical in every run.
+
+Environment: Odin `dev-2026-11:9a6991685`, Alicorn
+`4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`, AccessKit binding
+`e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b`. The AliKit source was the working
+tree based on `df76112` plus the timing-label correction recorded here.
+
+| Measure | Stock palette | Parts variant |
+|---|---:|---:|
+| Per-process p50 turn, median (range) | 366 µs (360.5–514 µs) | 260.5 µs (242–309.5 µs) |
+| Maximum of six turns, median (range) | 832 µs (749–2,048 µs) | 594 µs (579–668 µs) |
+| Allocations, each process | 1,550 | 1,365 |
+| Allocated bytes, each process | 1,360,475 | 1,270,064 |
+| Idle wakes after settle, each process | 0 | 0 |
+
+The stable work counters were:
+
+| Counter | Stock | Parts |
+|---|---:|---:|
+| Descriptions emitted / reused | 344 / 314 | 210 / 181 |
+| Reconcile nodes visited | 344 | 210 |
+| Measure nodes examined | 4 | 2 |
+| Layout nodes visited | 211 | 199 |
+| Paint nodes visited | 67 | 64 |
+| Composition nodes visited | 177 | 160 |
+| Text-shape requests | 16 | 15 |
+| Semantic structure / property changes | 25 / 22 | 16 / 17 |
+
+The prior code called the slowest of its six timed turns `p95`; that label was
+incorrect at this sample size. It now reports the within-process median and
+maximum explicitly. The process-level spread above, including a 2.048 ms stock
+maximum, shows why these microsecond-scale TestUI timings should remain
+diagnostic. This synthetic 12-item test has no GPU presentation and is not a
+native application latency result or a longitudinal performance win.
+
+To reproduce, use the locked dependency collections from the test setup and
+build/run the test executable five times with one thread and the fixed seed:
+
+```sh
+odin test command_palette -keep-executable \
+  -out:/private/tmp/alikit-cp-pilot-tests \
+  -collection:alicorn=/private/tmp/alicorn-textfield-render \
+  -collection:alikit=. \
+  -collection:accesskit=/private/tmp/acetate-alicorn-master-3d49b8b/.deps/odin-accesskit \
+  -collection:accesskit_c=/private/tmp/alicorn-textfield-render/.deps/accesskit/accesskit-c-0.23.1/lib/macos/arm64/static \
+  -define:ODIN_TEST_THREADS=1 -define:ODIN_TEST_RANDOM_SEED=1729
+
+for run in 1 2 3 4; do /private/tmp/alikit-cp-pilot-tests; done
+```
 
 ## Novel composite (issue step 3)
 

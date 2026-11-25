@@ -139,7 +139,7 @@ pilot_measure_step :: proc(metrics: ^Pilot_Metrics, handle: ^testui.Test_Handle(
 	return status
 }
 
-pilot_percentile :: proc(values: []u64, fraction: f64) -> u64 {
+pilot_median :: proc(values: []u64) -> u64 {
 	if len(values) == 0 { return 0 }
 	for index in 1..<len(values) {
 		value := values[index]
@@ -150,8 +150,16 @@ pilot_percentile :: proc(values: []u64, fraction: f64) -> u64 {
 		}
 		values[cursor] = value
 	}
-	index := int(fraction*f64(len(values)-1)+0.5)
-	return values[clamp(index, 0, len(values)-1)]
+	middle := len(values)/2
+	if len(values)%2 == 1 { return values[middle] }
+	return values[middle-1] + (values[middle]-values[middle-1])/2
+}
+
+pilot_max :: proc(values: []u64) -> u64 {
+	if len(values) == 0 { return 0 }
+	result := values[0]
+	for value in values[1:] { result = max(result, value) }
+	return result
 }
 
 // Stock fixture: the existing AliKit command palette.
@@ -375,8 +383,8 @@ pilot_print :: proc(label: string, metrics: Pilot_Metrics, allocation: Pilot_All
 	latency_values := metrics.latencies
 	count := min(metrics.turns, len(latency_values))
 	fmt.println("PILOT", label, "allocations", allocation.allocations, "allocated_bytes", allocation.bytes,
-		"p50_turn_ns", pilot_percentile(latency_values[:count], 0.50),
-		"p95_turn_ns", pilot_percentile(latency_values[:count], 0.95),
+		"p50_turn_ns", pilot_median(latency_values[:count]),
+		"max_turn_ns", pilot_max(latency_values[:count]),
 		"idle_wakes", metrics.idle_wakes)
 }
 
