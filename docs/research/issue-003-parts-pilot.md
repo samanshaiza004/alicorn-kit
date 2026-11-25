@@ -156,13 +156,13 @@ different orders):
 |---|---:|---:|
 | Allocations | 790 | 1,465 |
 | Bytes | 941,273 | 1,436,019 |
-| p50 turn | 93,100 ns | 228,100 ns |
+| Upper middle of six timed turns (earlier output mislabeled this p50) | 93,100 ns | 228,100 ns |
 | Maximum of six timed turns (earlier output mislabeled this p95) | 364,100 ns | 512,100 ns |
 | Idle wakes after settle (`advance_time`, 16 ms) | 0 | 0 |
 
-Both settle with no scheduled descriptions or retained presentation. The parts
-variant allocates more per frame because each row is an application subtree;
-the shared font setup dominates neither total.
+Both settle with no scheduled descriptions or retained presentation. In this
+historical six-turn run, the parts variant allocated more because each row is
+an application subtree; the shared font setup dominates neither total.
 
 These allocation and timing figures are the original one-run observation at
 the earlier pin. Keep them as historical data; the current-pinned repeat below
@@ -194,8 +194,8 @@ tree based on `df76112` plus the timing-label correction recorded here.
 |---|---:|---:|
 | Per-process p50 turn, median (range) | 366 µs (360.5–514 µs) | 260.5 µs (242–309.5 µs) |
 | Maximum of six turns, median (range) | 832 µs (749–2,048 µs) | 594 µs (579–668 µs) |
-| Allocations, each process | 1,550 | 1,365 |
-| Allocated bytes, each process | 1,360,475 | 1,270,064 |
+| Allocations, each six-turn run | 1,550 | 1,365 |
+| Allocated bytes, each six-turn run | 1,360,475 | 1,270,064 |
 | Idle wakes after settle, each process | 0 | 0 |
 
 The stable work counters were:
@@ -211,12 +211,13 @@ The stable work counters were:
 | Text-shape requests | 16 | 15 |
 | Semantic structure / property changes | 25 / 22 | 16 / 17 |
 
-The prior code called the slowest of its six timed turns `p95`; that label was
-incorrect at this sample size. It now reports the within-process median and
-maximum explicitly. The process-level spread above, including a 2.048 ms stock
-maximum, shows why these microsecond-scale TestUI timings should remain
-diagnostic. This synthetic 12-item test has no GPU presentation and is not a
-native application latency result or a longitudinal performance win.
+The prior code called the slowest of its six timed turns `p95` and selected the
+upper middle turn as `p50`; neither summary was correctly labeled. It now
+reports the within-process median and maximum explicitly. The process-level
+spread above, including a 2.048 ms stock maximum, shows why these microsecond-
+scale TestUI timings should remain diagnostic. This synthetic 12-item test has
+no GPU presentation and is not a native application latency result or a
+longitudinal performance win.
 
 To reproduce, use the locked dependency collections from the test setup and
 build/run the test executable five times with one thread and the fixed seed:
