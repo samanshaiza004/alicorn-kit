@@ -70,7 +70,7 @@ dialog and scroll-area packages, and the selection-style example.
 ## Validation
 
 - Alicorn `ui` tests: **63/63 passed** at the pinned revision.
-- AliKit matrix: **110/110 passed**. After the public type alias and snapshot
+- At the original sweep, the AliKit matrix was **110/110 passed**. After the public type alias and snapshot
   cleanup changes, Command Palette **8/8**, Radio Group **8/8**, and Segmented
   Control **5/5** were rerun successfully.
 - Native example builds: **27/27 passed** during the sweep. The final affected
@@ -82,6 +82,25 @@ dialog and scroll-area packages, and the selection-style example.
 - `npm run build` could not complete because the website checkout has no
   installed Astro executable (`astro: command not found`). Dependencies were
   not installed as part of this sweep.
+
+### Current component-suite retest (2026-11-25)
+
+All 14 catalog component packages, four supporting packages, and the Selection
+Styles example passed a fresh headless retest: **116/116 tests across 19 test
+targets**. The per-package counts were Command Palette
+9, Tree View 6, Icon Picker 14, Palette Parts 7, Radio Group 8, Progress 9,
+Segmented Control 5, Notices 3, Sidebar 8, Table 3, Menu 6, Data Grid 7,
+Dialog 6, Scroll Area 5, Palette Model 4, Tree Model 8, Theme Contract 2,
+Selection 5, and Selection Styles 1.
+
+The run used Odin `dev-2026-11:9a6991685`, Alicorn
+`4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`, AccessKit binding
+`e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b`, one test thread, and seed `1729`.
+Each package was invoked with `odin test <package>`, the pinned `alicorn`,
+`alikit`, `accesskit`, and `accesskit_c` collections, and those two test
+defines. This retest establishes headless suite status only; it does not rerun
+the native example build matrix, external-consumer build, website build, or
+native pixel/DPI captures.
 
 ## Limits and known constraints
 
