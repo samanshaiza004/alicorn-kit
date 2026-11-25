@@ -4,6 +4,9 @@ This experiment asks whether Alicorn's cookbook and public APIs let a developer
 recreate a common interface with correct geometry, behavior, and responsive
 presentation without learning runtime internals.
 
+Apply the shared [authoring-quality charter](../authoring-quality-charter.md)
+when judging attempts, implementation tradeoffs, and performance evidence.
+
 Keep the benchmark references separate from introductory examples. The
 Command Palette now has a minimal Quick Start, its existing parts/composition
 examples, and the full reference application. Dialog and Data Grid each have a

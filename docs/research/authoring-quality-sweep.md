@@ -1,5 +1,9 @@
 # AliKit catalog authoring-quality sweep
 
+The ongoing component work follows the [authoring-quality charter](authoring-quality-charter.md),
+which keeps simplicity, composability, visible-output correctness, and evidence
+standards explicit.
+
 This first catalog sweep covered the 12 components registered at the time in
 [`components.json`](../../components.json). The existing Dialog package was
 subsequently added as a thirteenth catalog component; its reference experiment
