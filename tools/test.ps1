@@ -461,6 +461,15 @@ try {
     & $OdinPath @IconPickerExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native icon picker example failed to compile.' }
 
+    $IconPickerQuickStartArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\icon_picker_quick_start'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'icon_picker_quick_start.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @IconPickerQuickStartArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit icon picker quick-start failed to compile.' }
+
     $IconPickerPartsExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\icon_picker_parts'),
         $AlicornCollection,

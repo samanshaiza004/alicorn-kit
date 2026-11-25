@@ -12,9 +12,11 @@ Alicorn's public UI and runtime APIs. <code>picker()</code> is a convenience wra
 <code>item_end</code>, and <code>grid_end</code>.
 </div>
 
-## Runnable example
+## Examples
 
-The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
+Start with the [minimal Quick Start](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker_quick_start/main.odin): an inline grid with eight caller-owned choices and stable-key selection. It imports only `alicorn:ui` and `alikit:icon_picker`.
+
+The [reference application](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker/main.odin) demonstrates the complete copyable composite inside a modal, including Grid/List switching and focus restoration. The [parts](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker_parts/main.odin) and [composition](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker_composition/main.odin) examples show custom rendering and dialog composition.
 
 The [authored List appearance target](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/references/icon-picker.svg) is a visual reference, not a desktop capture. The default example switches between Grid and List with Ctrl+2; retained-output tests verify the query and list text remain drawable after filtering and resizing.
 
@@ -192,6 +194,7 @@ Headless tests do not exercise OS IME candidate windows, native accessibility br
 - [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/icon_picker/icon_picker_test.odin)
 - [Parts tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/icon_picker/icon_picker_parts_test.odin)
 - [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker/main.odin)
+- [Quick Start](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker_quick_start/main.odin)
 - [Parts example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker_parts/main.odin)
 - [Composition example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker_composition/main.odin)
 - [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/icon-picker.md)

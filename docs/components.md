@@ -62,7 +62,9 @@ is the shortest complete example of an application using AliKit. The separate
 shows a custom presentation, optional appearance settings, and a full workspace
 scene. The [Dialog](../examples/dialog_quick_start/main.odin) and
 [Data Grid](../examples/data_grid_quick_start/main.odin) guides also link to
-small runnable examples alongside their larger reference applications.
+small runnable examples alongside their larger reference applications. The
+[Icon Picker Quick Start](../examples/icon_picker_quick_start/main.odin) shows
+the stock inline composite without importing `alicorn:runtime`.
 
 The tree example shows how an application builds a visible preorder projection
 and handles expansion while AliKit owns reusable navigation and presentation:

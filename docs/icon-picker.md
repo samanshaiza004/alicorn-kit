@@ -27,6 +27,18 @@ desktop capture. The example switches between Grid and List with Ctrl+2. The
 new retained-output checks verify that the search query and List row name/detail
 produce visible glyphs, including after resizing.
 
+## Runnable examples
+
+- [Quick Start](../examples/icon_picker_quick_start/main.odin): the default
+  inline grid, eight caller-owned choices, and controlled stable-key selection.
+  It imports only `alicorn:ui` and `alikit:icon_picker`.
+- [Reference application](../examples/icon_picker/main.odin): the complete
+  copyable composite in a modal, with Grid/List switching, focus restoration,
+  and nested-dialog behavior.
+- [Parts](../examples/icon_picker_parts/main.odin) and
+  [Composition](../examples/icon_picker_composition/main.odin) show custom
+  row/cell drawing and a dialog-hosted picker.
+
 ## Installation
 
 Copy these files into an application or import the package with the AliKit
@@ -35,6 +47,7 @@ collection:
 - `icon_picker/icon_picker.odin`
 - `icon_picker/icon_picker_test.odin` (default composite)
 - `icon_picker/icon_picker_parts_test.odin` (public parts)
+- `examples/icon_picker_quick_start/main.odin` (minimal inline consumer)
 - `examples/icon_picker/main.odin` (default composite)
 - `examples/icon_picker_parts/main.odin` (custom cells/rows)
 - `examples/icon_picker_composition/main.odin` (dialog + segmented host)

@@ -10,6 +10,8 @@ examples, and the full reference application. Dialog and Data Grid each have a
 minimal Quick Start alongside their full reference application. These small
 examples are not part of the reference-attempt counts below; they serve as the
 first-use path, while the larger scenes exercise their broader contracts.
+The catalog follow-up also adds an inline Icon Picker Quick Start while
+preserving its modal reference, parts, and composition examples.
 
 It starts with three components that exercise different layout contracts:
 
