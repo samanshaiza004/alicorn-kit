@@ -819,7 +819,7 @@ row_surface :: proc(ctx: ^ui.UI, row: MenuItem, options: Options = {}, recipe: R
 		fill_role,
 		fallback,
 		key=ui.key_pair(ITEM_KEY+1, row.item.key),
-		layout=ui.layout_style(.Row, width=-1, height=-1, padding=6, gap=8, align=.Center),
+		layout=ui.layout_style(.Row, width=-1, height=-1, grow=1, padding=6, gap=8, align=.Center),
 		shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle,
 			corner_radius=max(resolved_style.corner_radius-3, 2)},
 		stroke={},

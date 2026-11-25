@@ -23,7 +23,7 @@ Test_App :: struct {
 }
 
 fixture_render :: proc(app: ^Test_App, ctx: ^ui.UI) {
-	if ui.row(ctx, key=alicorn.key_string("sidebar-fixture-root"), width=-1, height=-1) {
+	if ui.row(ctx, key=alicorn.key_string("sidebar-fixture-root"), width=-1, height=-1, grow=1) {
 		event := rail(
 			ctx,
 			&app.rail,
@@ -121,6 +121,8 @@ test_sidebar_semantics_navigation_and_activation :: proc(t: ^testing.T) {
 
 	files := find_item(&handle, "Files")
 	if testing.expect(t, files.match == .Unique, "Files should be realized") {
+		visible_label := testui.expect_visible_text(&handle, &files.element, "Files")
+		testing.expect(t, visible_label.ok, testui.visible_text_diagnostic(visible_label))
 		testing.expect(t, files.element.collection_selected && files.element.collection_current,
 			"the accepted route should be Selected and Current")
 	}

@@ -90,7 +90,7 @@ Card_App :: struct {
 
 card_render :: proc(app: ^Card_App, ctx: ^ui.UI) {
 	if ui.column(ctx, key=alicorn.key_string("notice-card-fixture-root"), width=-1, height=-1,
-		padding=20, gap=10, align=.End) {
+		grow=1, padding=20, gap=10, align=.End) {
 		app.items[0] = Item{
 			key=1,
 			title="Couldn't refresh folder",
@@ -135,13 +135,22 @@ test_card_parts_publish_status_actions_and_retire :: proc(t: ^testing.T) {
 	if !ok { return }
 	defer testui.close(&handle)
 
+	if !testing.expect(t, testui.advance_time(&handle, 500_000_000) == .Ok,
+		"notice reveal motion should advance before checking visible card text") { return }
 	warning := testui.find(&handle, testui.Query{role=.Status, name="Couldn't refresh folder", match_role=true, match_name=true})
 	if !testing.expect(t, warning.match == .Unique, "the warning card should publish Status") {
 		testui.destroy_find_result(&warning)
 		return
 	}
+	testing.expect(t, warning.element.has_bounds && warning.element.bounds.h > 0,
+		"the Status owner should cover the visible notice card")
 	testing.expect_value(t, warning.element.value, "The folder's contents may be out of date.")
 	testing.expect_value(t, warning.element.description, "Network timeout after 30 seconds.")
+	visible_title := testui.expect_visible_text(&handle, &warning.element, "Couldn't refresh folder")
+	testing.expect(t, visible_title.ok, testui.visible_text_diagnostic(visible_title))
+	visible_message := testui.expect_visible_text(&handle, &warning.element,
+		"The folder's contents may be out of date.")
+	testing.expect(t, visible_message.ok, testui.visible_text_diagnostic(visible_message))
 	testui.destroy_find_result(&warning)
 
 	retry := testui.find(&handle, testui.Query{role=.Button, name="Retry", match_role=true, match_name=true})

@@ -116,6 +116,8 @@ test_segmented_semantics_keyboard_and_activation_parity :: proc(t: ^testing.T) {
 	defer testui.destroy_find_result(&files)
 	if !testing.expect(t, overview.match == .Unique && activity.match == .Unique && files.match == .Unique,
 		"all segments should be realized") { return }
+	visible_label := testui.expect_visible_text(&handle, &overview.element, "Overview")
+	testing.expect(t, visible_label.ok, testui.visible_text_diagnostic(visible_label))
 	testing.expect(t, overview.element.collection_selected && overview.element.collection_current,
 		"the initial selection should be Selected and Current")
 	testing.expect(t, alicorn.semantic_states_has(activity.element.states, .Disabled),

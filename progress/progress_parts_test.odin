@@ -133,6 +133,15 @@ test_progress_parts_ring_preserves_semantics_identity_and_value :: proc(t: ^test
 	if !ok { return }
 	defer testui.close(&handle)
 
+	progress_node := testui.find(&handle, testui.Query{
+		role=.Progress, name="Storage used", match_role=true, match_name=true,
+	})
+	if testing.expect(t, progress_node.match == .Unique, "the ring should expose its visual owner") {
+		visible_value := testui.expect_visible_text(&handle, &progress_node.element, "75%")
+		testing.expect(t, visible_value.ok, testui.visible_text_diagnostic(visible_value))
+	}
+	testui.destroy_find_result(&progress_node)
+
 	node, found := alicorn.semantic_node_lookup(handle.runtime, progress_semantic_id(9501))
 	if !testing.expect(t, found, "the custom ring should publish the stable progress identity") { return }
 	testing.expect_value(t, node.role, alicorn.Semantic_Role.Progress)

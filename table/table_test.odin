@@ -125,6 +125,8 @@ test_static_table_semantics_wrapped_rows_and_no_managed_focus :: proc(t: ^testin
 
 	cell := find_role(&handle, .Table_Cell, "12 KB")
 	if testing.expect(t, cell.match == .Unique, "body cells publish Table_Cell") {
+		visible_cell_text := testui.expect_visible_text(&handle, &cell.element, "12 KB")
+		testing.expect(t, visible_cell_text.ok, testui.visible_text_diagnostic(visible_cell_text))
 		testing.expect(t, !cell.element.collection_selected && !cell.element.collection_current,
 			"a static cell must not publish selected/current state")
 	}

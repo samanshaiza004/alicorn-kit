@@ -2,6 +2,7 @@ package tree_view
 
 import "core:testing"
 import alicorn "alicorn:runtime"
+import testui "alicorn:testui"
 import ui "alicorn:ui"
 import model "alikit:tree_model"
 
@@ -10,6 +11,35 @@ tree_view_test_items :: [3]Item{
 	{ id=Item_ID(101), label="src", expandable=true, expanded=true },
 	{ id=Item_ID(102), parent_id=Item_ID(101), label="main.odin", depth=1 },
 	{ id=Item_ID(103), label="disabled", disabled=true },
+}
+
+Tree_View_Visible_App :: struct {
+	state: State,
+	items: [3]Item,
+}
+
+tree_view_visible_render :: proc(app: ^Tree_View_Visible_App, ctx: ^ui.UI) {
+	window := Window{total_count=len(app.items), revision=1, items=app.items[:]}
+	_ = build(ctx, &app.state, window, alicorn.key_string("tree-visible-fixture"),
+		Options{accessible_label="Project files"})
+}
+
+@(test)
+test_tree_view_realized_row_has_visible_label :: proc(t: ^testing.T) {
+	app := Tree_View_Visible_App{items=tree_view_test_items}
+	handle, status := testui.open(&app, tree_view_visible_render, width=360, height=220)
+	if !testing.expectf(t, status == .Ok, "the visible tree fixture should open: %v %s",
+		status, testui.last_turn_diagnostic(&handle)) {
+		if handle.runtime != nil { testui.close(&handle) }
+		return
+	}
+	defer testui.close(&handle)
+
+	row := testui.find(&handle, testui.Query{role=.Tree_Item, name="main.odin", match_role=true, match_name=true})
+	defer testui.destroy_find_result(&row)
+	if !testing.expect(t, row.match == .Unique, "the realized child row should publish its label") { return }
+	visible := testui.expect_visible_text(&handle, &row.element, "main.odin")
+	testing.expect(t, visible.ok, testui.visible_text_diagnostic(visible))
 }
 
 @(private)

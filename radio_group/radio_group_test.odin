@@ -125,6 +125,10 @@ test_radio_group_semantics_and_roving_activation_parity :: proc(t: ^testing.T) {
 	defer testui.destroy_find_result(&small)
 	defer testui.destroy_find_result(&medium)
 	defer testui.destroy_find_result(&large)
+	if testing.expect(t, small.match == .Unique, "the selected option should be realized") {
+		visible_label := testui.expect_visible_text(&handle, &small.element, "Small")
+		testing.expect(t, visible_label.ok, testui.visible_text_diagnostic(visible_label))
+	}
 	testing.expect(t, small.element.collection_selected && small.element.collection_current,
 		"the controlled selection should be Checked/Selected and Current")
 	testing.expect(t, small.element.parent_semantic_id == group.element.semantic_id,

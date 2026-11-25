@@ -725,7 +725,7 @@ row_surface :: proc(ctx: ^ui.UI, row: Rail_Item) -> alicorn.Node_ID {
 		fill_role,
 		fallback,
 		key=ui.key_pair(ITEM_KEY+1, row.item.key),
-		style=ui.layout_style(.Row, width=-1, height=-1, padding=8, gap=8, align=.Center),
+		style=ui.layout_style(.Row, width=-1, height=-1, grow=1, padding=8, gap=8, align=.Center),
 		shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=style.corner_radius},
 		stroke=alicorn.Paint_Stroke{color=alicorn.style_color(ctx, stroke_role), width=stroke_width},
 		label="sidebar-item-surface",

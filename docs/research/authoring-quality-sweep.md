@@ -86,12 +86,17 @@ dialog and scroll-area packages, and the selection-style example.
 ### Current component-suite retest (2026-11-25)
 
 All 14 catalog component packages, four supporting packages, and the Selection
-Styles example passed a fresh headless retest: **116/116 tests across 19 test
+Styles example passed a fresh headless retest: **117/117 tests across 19 test
 targets**. The per-package counts were Command Palette
-9, Tree View 6, Icon Picker 14, Palette Parts 7, Radio Group 8, Progress 9,
+9, Tree View 7, Icon Picker 14, Palette Parts 7, Radio Group 8, Progress 9,
 Segmented Control 5, Notices 3, Sidebar 8, Table 3, Menu 6, Data Grid 7,
 Dialog 6, Scroll Area 5, Palette Model 4, Tree Model 8, Theme Contract 2,
 Selection 5, and Selection Styles 1.
+
+Each of the 14 UI component suites now includes a TestUI assertion that checks
+representative text is shaped and visible within its retained element bounds.
+This verifies headless text output and layout bounds; it does not replace native
+pixel captures or DPI validation.
 
 The run used Odin `dev-2026-11:9a6991685`, Alicorn
 `4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`, AccessKit binding

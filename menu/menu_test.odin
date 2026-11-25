@@ -128,6 +128,8 @@ test_menu_trigger_semantics_keyboard_choice_and_focus_restore :: proc(t: ^testin
 
 	checked := find_item(&handle, "Duplicate")
 	if testing.expect(t, checked.match == .Unique, "the checked item should be realized") {
+		visible_label := testui.expect_visible_text(&handle, &checked.element, "Duplicate")
+		testing.expect(t, visible_label.ok, testui.visible_text_diagnostic(visible_label))
 		testing.expect(t, alicorn.semantic_states_has(checked.element.states, .Checked),
 			"a checked menu item should publish Checked")
 		testing.expect(t, alicorn.semantic_actions_has(checked.element.actions, .Press),
