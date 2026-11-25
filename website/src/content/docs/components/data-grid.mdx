@@ -11,9 +11,11 @@ publication, sort-header proposals, and one cell activation proposal. Shared col
 headers, and cell scaffolding come from <code>alikit:table_core</code>.
 </div>
 
-## Runnable example
+## Examples
 
-The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/data_grid/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
+Start with the [minimal Quick Start](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/data_grid_quick_start/main.odin), which demonstrates controlled selection over three caller-owned rows without a surrounding application shell.
+
+The [reference application](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/data_grid/main.odin) is a larger runnable consumer with filtering, sorting, responsive columns, and 200 rows.
 
 The authoring-reliability target is an [authored Data Grid SVG](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/references/data-grid.svg), not a desktop capture. The example and its result log are linked from the [reference benchmark](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/reference-benchmark.md).
 
@@ -43,7 +45,7 @@ datasets do not leave a blank scrollbar strip. Both components use the shared he
 
 ## Copyable implementation
 
-Files: `data_grid/data_grid.odin`, `data_grid/data_grid_test.odin`, `examples/data_grid/main.odin`,
+Files: `data_grid/data_grid.odin`, `data_grid/data_grid_test.odin`, `examples/data_grid_quick_start/main.odin`, `examples/data_grid/main.odin`,
 `examples/data_grid/theme.json`.
 
 ```odin
@@ -171,5 +173,6 @@ There is no `testui` data-grid pattern at the pinned revision; explicit drive as
 - [Shared presentation](https://github.com/samanshaiza004/alicorn-kit/blob/main/table_core/table_core.odin)
 - [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/data_grid/data_grid_test.odin)
 - [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/data_grid/main.odin)
+- [Quick Start](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/data_grid_quick_start/main.odin)
 - [Theme JSON](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/data_grid/theme.json)
 - [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/data-grid.md)

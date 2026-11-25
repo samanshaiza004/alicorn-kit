@@ -26,6 +26,14 @@ it does not import `alicorn:runtime`. The application owns the 200-row fixture,
 search projection, sorting, and responsive column widths. It reads the current
 viewport through the UI callback context to choose a bounded visible-row count.
 
+## Runnable examples
+
+- [Quick Start](../examples/data_grid_quick_start/main.odin): three caller-owned
+  rows, two columns, and controlled selection. It is the smallest complete
+  consumer and imports only `alicorn:ui` and `alikit:data_grid`.
+- [Reference application](../examples/data_grid/main.odin): a filterable,
+  sortable 200-row project list used by the authoring-reliability benchmark.
+
 `alikit:table_core` is the shared presentation layer used by both this grid and
 [Table](table.md). It owns the common data shapes, column tracks, header parts,
 and cell semantic scaffolding; `data_grid` keeps its distinct managed-focus,
@@ -41,7 +49,8 @@ strip. Both components use the same header slot in `table_core`.
 ## Copyable implementation
 
 Files: `data_grid/data_grid.odin`, `data_grid/data_grid_test.odin`,
-`examples/data_grid/main.odin`, `examples/data_grid/theme.json`.
+`examples/data_grid_quick_start/main.odin`, `examples/data_grid/main.odin`,
+`examples/data_grid/theme.json`.
 
 ```odin
 import ui "alicorn:ui"

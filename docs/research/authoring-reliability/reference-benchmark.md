@@ -4,6 +4,13 @@ This experiment asks whether Alicorn's cookbook and public APIs let a developer
 recreate a common interface with correct geometry, behavior, and responsive
 presentation without learning runtime internals.
 
+Keep the benchmark references separate from introductory examples. The
+Command Palette now has a minimal Quick Start, its existing parts/composition
+examples, and the full reference application. Dialog and Data Grid each have a
+minimal Quick Start alongside their full reference application. These small
+examples are not part of the reference-attempt counts below; they serve as the
+first-use path, while the larger scenes exercise their broader contracts.
+
 It starts with three components that exercise different layout contracts:
 
 | Reference | Primary layout challenge | Visual target |

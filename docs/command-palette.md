@@ -29,6 +29,19 @@ Its vector target is
 The docs link to the authored target and runnable source instead of embedding
 desktop application screenshots.
 
+## Runnable examples
+
+- [Quick Start](../examples/command_palette_quick_start/main.odin): the stock
+  palette, two caller-owned actions, and ID-based dispatch. It imports only
+  `alicorn:ui` and `alikit:command_palette`.
+- [Reference application](../examples/command_palette/main.odin): the full
+  Northstar workspace scene and custom palette presentation used by the
+  authoring-reliability benchmark.
+- [Composition](../examples/command_palette_composition/main.odin): a palette
+  paired with a segmented search scope.
+- [Parts](../examples/command_palette_parts/main.odin): an application-owned
+  shell with AliKit's reusable result-list parts.
+
 ## Installation
 
 Copy these files into an application or import the package with the AliKit
@@ -39,6 +52,7 @@ collection:
 - `command_palette/command_palette_parts_test.odin` (public part behavior)
 - `command_palette/visual_output_test.odin` (reference geometry, visible text, filtering, and focus)
 - `command_palette/pilot_test.odin` (stock-vs-parts measurement)
+- `examples/command_palette_quick_start/main.odin` (minimal stock consumer)
 - `examples/command_palette/main.odin` (workspace scene and reference shell; use `--reference` to open it)
 - `examples/command_palette_parts/main.odin` (application-owned shell)
 - `examples/command_palette_composition/main.odin` (palette + segmented scope)

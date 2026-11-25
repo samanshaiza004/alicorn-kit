@@ -25,9 +25,18 @@ input and focus.
 `State` is caller-owned and needs no init/destroy. Use `open` (or
 `open_from_node`) when opening and `close`/`dismiss` when resolving.
 
+## Runnable examples
+
+- [Quick Start](../examples/dialog_quick_start/main.odin): one message dialog
+  with an application-owned opener and acknowledgement.
+- [Reference application](../examples/dialog/main.odin): project settings,
+  destructive-confirmation focus, and Alert_Dialog behavior used by the
+  authoring-reliability benchmark.
+
 ## Copyable implementation
 
-Files: `dialog/dialog.odin`, `dialog/dialog_test.odin`, `examples/dialog/main.odin`.
+Files: `dialog/dialog.odin`, `dialog/dialog_test.odin`,
+`examples/dialog_quick_start/main.odin`, `examples/dialog/main.odin`.
 
 The authoring-reliability reference is [a vector design target](research/authoring-reliability/references/dialog.svg),
 not a desktop capture. The example uses a 516 px width to match that target and

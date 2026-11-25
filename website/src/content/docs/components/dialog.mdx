@@ -9,11 +9,13 @@ The application owns when to open, the dialog copy and content, action meaning, 
 component owns modal dismissal policy, initial focus, focus restoration, and dialog semantics.
 </div>
 
-## Runnable example
+## Examples
 
-The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/dialog/main.odin)
+Start with the [minimal Quick Start](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/dialog_quick_start/main.odin), a message dialog with an application-owned opener and acknowledgement.
+
+The [reference application](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/dialog/main.odin)
 shows a destructive confirmation, an Alert Dialog, and an application-authored project settings
-surface. The example imports only <code>alicorn:ui</code> and <code>alikit:dialog</code>; tests use
+surface. Both examples import only <code>alicorn:ui</code> and <code>alikit:dialog</code>; tests use
 the runtime package for focused-node and retained-output assertions.
 
 ## Focus and dismissal
@@ -51,6 +53,7 @@ not a screenshot of a running desktop app.
 - [Package](https://github.com/samanshaiza004/alicorn-kit/blob/main/dialog/dialog.odin)
 - [Tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/dialog/dialog_test.odin)
 - [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/dialog/main.odin)
+- [Quick Start](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/dialog_quick_start/main.odin)
 
 The panel uses a themed container because the pinned runtime's surface fit-content path does not
 measure arbitrary children. Headless tests verify retained geometry and drawable shaped text, not

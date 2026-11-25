@@ -11,9 +11,11 @@ re-exports `Item`, `Item_ID`, and `Match`, so consumers can use its public input
 without importing model types. Import `palette_model` only when using its independent helpers.
 </div>
 
-## Runnable example
+## Examples
 
-The [Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette/main.odin) is a runnable consumer of this package. Run it with `--reference` to open the authoring-reliability scene and prefill its query with `export`. Its visual target is the authored [Command Palette SVG](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/references/command-palette.svg); this page does not embed desktop application screenshots.
+Start with the [minimal Quick Start](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette_quick_start/main.odin): it uses the stock palette with two caller-owned actions and needs only `alicorn:ui` and `alikit:command_palette`.
+
+The separate [reference application](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette/main.odin) runs with `--reference` to show the full Northstar workspace scene and prefill its query with `export`. Its visual target is the authored [Command Palette SVG](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/references/command-palette.svg); this page does not embed desktop application screenshots.
 
 The reference test checks the modal's 660 × 576 logical bounds at 1280 × 800, 960 × 720, and 760 × 640, plus query/result visibility, containment, filtering, selection semantics, activation, and focus restoration. TestUI observes retained text and geometry, not GPU pixels. Native pixel matching and DPI captures remain unverified.
 
@@ -35,7 +37,9 @@ those are application or other-component concerns.
 ## Copyable implementation
 
 Files: `command_palette/command_palette.odin`,
-`command_palette/command_palette_test.odin`, `examples/command_palette/main.odin`.
+`command_palette/command_palette_test.odin`,
+`examples/command_palette_quick_start/main.odin`,
+`examples/command_palette/main.odin`.
 
 ```odin
 import ui "alicorn:ui"
@@ -224,6 +228,7 @@ frame.
 - [Parts tests](https://github.com/samanshaiza004/alicorn-kit/blob/main/command_palette/command_palette_parts_test.odin)
 - [Reference output test](https://github.com/samanshaiza004/alicorn-kit/blob/main/command_palette/visual_output_test.odin)
 - [Example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette/main.odin)
+- [Quick Start](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette_quick_start/main.odin)
 - [Parts example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette_parts/main.odin)
 - [Composition example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette_composition/main.odin)
 - [Guide](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/command-palette.md)

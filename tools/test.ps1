@@ -228,6 +228,15 @@ try {
     & $OdinPath @ExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native example failed to compile.' }
 
+    $CommandPaletteQuickStartArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\command_palette_quick_start'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'command_palette_quick_start.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @CommandPaletteQuickStartArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit command palette quick-start failed to compile.' }
+
     $CommandPalettePartsExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\command_palette_parts'),
         $AlicornCollection,
@@ -372,6 +381,15 @@ try {
     & $OdinPath @DataGridExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native data grid example failed to compile.' }
 
+    $DataGridQuickStartArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\data_grid_quick_start'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'data_grid_quick_start.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @DataGridQuickStartArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit data grid quick-start failed to compile.' }
+
     $ScrollAreaExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\scroll_area'),
         $AlicornCollection,
@@ -416,6 +434,15 @@ try {
     ) + $CompilerArguments
     & $OdinPath @DialogExampleArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native dialog example failed to compile.' }
+
+    $DialogQuickStartArgs = @(
+        'build', (Join-Path $RepoRoot 'examples\dialog_quick_start'),
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'dialog_quick_start.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @DialogQuickStartArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit dialog quick-start failed to compile.' }
     $PalettePartsExampleArgs = @(
         'build', (Join-Path $RepoRoot 'examples\palette_parts'),
         $AlicornCollection,

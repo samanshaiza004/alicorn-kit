@@ -56,10 +56,14 @@ the exact package dependencies for every entry.
 generates a standalone project outside the repository, builds both the
 collection-import path and the radio-group copy path, and runs native smokes.
 
-The command-palette example is the canonical starting point for a small
-Alicorn application using AliKit. It shows application-owned actions, optional
-appearance settings, `ui.run` input routing, state initialization, and cleanup:
-[`examples/command_palette`](../examples/command_palette/main.odin).
+The [Command Palette Quick Start](../examples/command_palette_quick_start/main.odin)
+is the shortest complete example of an application using AliKit. The separate
+[Command Palette reference application](../examples/command_palette/main.odin)
+shows a custom presentation, optional appearance settings, and a full workspace
+scene. The [Dialog](../examples/dialog_quick_start/main.odin) and
+[Data Grid](../examples/data_grid_quick_start/main.odin) guides also link to
+small runnable examples alongside their larger reference applications.
+
 The tree example shows how an application builds a visible preorder projection
 and handles expansion while AliKit owns reusable navigation and presentation:
 [`examples/tree_view`](../examples/tree_view/main.odin).
