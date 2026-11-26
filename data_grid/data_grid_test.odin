@@ -200,9 +200,11 @@ test_table_semantics_headers_coordinates_and_navigation :: proc(t: ^testing.T) {
 LARGE_ROW_COUNT :: 200
 
 Large_Fixture :: struct {
-	state:   State,
-	columns: []Column,
-	rows:    []Row,
+	state:          State,
+	columns:        []Column,
+	rows:           []Row,
+	sort_proposals: int,
+	last_sort:      u64,
 }
 
 large_render :: proc(fixture: ^Large_Fixture, ctx: ^ui.UI) {
@@ -213,11 +215,15 @@ large_render :: proc(fixture: ^Large_Fixture, ctx: ^ui.UI) {
 		if ui.panel(ctx, key=ui.key_string("grid-large-panel"), width=-1, height=-1,
 			grow=1, padding=8, gap=8, fill=ui.style_color(ctx, .Surface), radius=8,
 			stroke=ui.border(1, ui.style_color(ctx, .Border), .Inside)) {
-			_ = data_grid(ctx, &fixture.state, fixture.columns, fixture.rows,
+			event := data_grid(ctx, &fixture.state, fixture.columns, fixture.rows,
 				Selection{row_key=1000, column_key=10},
 				Options{accessible_label="Files", row_header=true,
 					max_visible_rows=visible_rows, row_height=48, header_height=42},
 				key=alicorn.key_string("grid-large-fixture"), instance_id=9102)
+			if event.kind == .Sort_Proposed {
+				fixture.sort_proposals += 1
+				fixture.last_sort = event.column_key
+			}
 		}
 	}
 }
@@ -398,6 +404,30 @@ test_header_identity_survives_scrollbar_gutter_transitions :: proc(t: ^testing.T
 		ui.key_string("alikit-table-header-scrollbar-gutter"), .Container)
 	if !testing.expect(t, before_grid_found && before_grid_info.parent != before.surface && gutter_present,
 		"nine rows should place header tracks inside the slot before its gutter") { return }
+	name_header := find_role(&handle, .Table_Column_Header, "Name")
+	if !testing.expect(t, name_header.match == .Unique,
+		"the sortable header should be available before changing the gutter") {
+		testui.destroy_find_result(&name_header)
+		return
+	}
+	header_owner := name_header.element.visual_node
+	header_bounds := name_header.element.bounds
+	move_status := testui.step(&handle, testui.Input{kind=.Pointer, pointer=alicorn.Pointer_Event{
+		kind=.Move,
+		x=header_bounds.x+header_bounds.w*0.5,
+		y=header_bounds.y+header_bounds.h*0.5,
+	}})
+	if !testing.expectf(t, move_status == .Ok,
+		"the pointer should hover the sortable header before transition: %v", move_status) {
+		testui.destroy_find_result(&name_header)
+		return
+	}
+	if !testing.expect(t, alicorn.visual_part_owner_hovered(handle.runtime, header_owner),
+		"the sortable header should enter its hovered state before transition") {
+		testui.destroy_find_result(&name_header)
+		return
+	}
+	testui.destroy_find_result(&name_header)
 
 	// Eight rows exactly fill the configured viewport, so the scrollbar and
 	// conditional header wrappers should disappear without replacing the header.
@@ -425,6 +455,18 @@ test_header_identity_survives_scrollbar_gutter_transitions :: proc(t: ^testing.T
 	testing.expect(t, before.focus_owner == after.focus_owner &&
 		alicorn.focused_node(handle.runtime) == before.focus_owner,
 		"removing the scrollbar gutter should preserve keyboard focus on the grid")
+	testing.expect(t, alicorn.visual_part_owner_hovered(handle.runtime, after.name_cell),
+		"removing the scrollbar gutter should preserve hover on the sortable header owner")
+
+	name_header = find_role(&handle, .Table_Column_Header, "Name")
+	if testing.expect(t, name_header.match == .Unique,
+		"the sortable header should remain available after the gutter disappears") {
+		click := testui.click(&handle, &name_header.element)
+		testing.expectf(t, click == .Ok, "the transitioned header should still accept clicks: %v", click)
+		testing.expect(t, fixture.sort_proposals == 1 && fixture.last_sort == 10,
+			"the transitioned header should still propose sorting its stable Name column")
+	}
+	testui.destroy_find_result(&name_header)
 
 	fixture.rows = rows[:9]
 	alicorn.invalidate_root(handle.runtime, "data-grid scrollbar restored beyond viewport capacity")
@@ -445,6 +487,17 @@ test_header_identity_survives_scrollbar_gutter_transitions :: proc(t: ^testing.T
 	testing.expect(t, before.focus_owner == restored.focus_owner &&
 		alicorn.focused_node(handle.runtime) == before.focus_owner,
 		"restoring the scrollbar gutter should preserve keyboard focus on the grid")
+	testing.expect(t, alicorn.visual_part_owner_hovered(handle.runtime, restored.name_cell),
+		"restoring the scrollbar gutter should preserve hover on the sortable header owner")
+	name_header = find_role(&handle, .Table_Column_Header, "Name")
+	if testing.expect(t, name_header.match == .Unique,
+		"the sortable header should remain available after the gutter returns") {
+		click := testui.click(&handle, &name_header.element)
+		testing.expectf(t, click == .Ok, "the restored header should still accept clicks: %v", click)
+		testing.expect(t, fixture.sort_proposals == 2 && fixture.last_sort == 10,
+			"the restored header should still propose sorting its stable Name column")
+	}
+	testui.destroy_find_result(&name_header)
 }
 
 @(test)

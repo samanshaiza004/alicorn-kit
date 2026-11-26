@@ -83,10 +83,13 @@ It remains a layout parent for the track grid, while its appearance no longer
 changes descendant identity. The regression checks the header surface, track
 grid, sortable cell, and label IDs in both directions, as well as the slot's
 parent change. It also verifies that the grid's stable root remains the
-keyboard focus owner as the scrollbar disappears and returns. It passes with
-the Data Grid suite at 7/7; the shared Table suite passes at 3/3. The original
-six recreation passes remain unchanged; this is a post-benchmark correctness
-follow-up.
+keyboard focus owner as the scrollbar disappears and returns. The regression
+also hovers the sortable Name header before the transition, checks that its
+hover state remains on the same owner, and clicks it after the gutter disappears
+and returns; both clicks still propose the stable Name column key. It passes
+with the Data Grid suite at 7/7; the shared Table suite passes at 3/3. The
+original six recreation passes remain unchanged; this is a post-benchmark
+correctness follow-up.
 
 ## Scrollbar negative control
 

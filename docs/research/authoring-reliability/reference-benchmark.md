@@ -205,10 +205,11 @@ headless retained-output checks as pixel-match evidence.
   thickness inside its full-width background only when rows can scroll. A later
   transition test found that this conditional wrapper recreated the keyed header
   grid and sortable cells when the scrollbar appeared or disappeared; using
-  Alicorn's identity-transparent container preserves those node IDs. The full
-  reference-app check later caught unclosed empty layout scopes, a collapsed
-  panel width, and a semantic Table owner that did not cover its virtualized
-  rows; all three now have permanent regression assertions.
+  Alicorn's identity-transparent container preserves those node IDs, hover, and
+  sort interaction across both transitions. The full reference-app check later
+  caught unclosed empty layout scopes, a collapsed panel width, and a semantic
+  Table owner that did not cover its virtualized rows; all three now have
+  permanent regression assertions.
 - Dialog's public action helper fixes its button height at 32 px; reaching the
   target's 40 px uses ordinary `ui.button` controls inside the public action row.
 - The custom Command Palette shell needs runtime exports for modal overlay and

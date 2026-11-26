@@ -136,7 +136,8 @@ matrix used Odin `dev-2026-11:9a6991685`, Alicorn
 `e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b`, with one test thread. It includes
 the Command Palette and Dialog 1×, 1.25×, 1.5×, and 2× TestUI presentation-scale
 matrices, the Data Grid scrollbar-transition identity regression and
-full-reference layout check, and all Dialog interaction tests.
+full-reference layout check, sortable-header hover/click continuity through
+both scrollbar transitions, and all Dialog interaction tests.
 
 The PowerShell validation wrapper was unavailable on this macOS host, so the
 20 Odin test targets were invoked directly with the same pinned collections,
