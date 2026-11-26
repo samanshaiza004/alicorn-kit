@@ -90,6 +90,12 @@ documentation.
   and the Alert Dialog centered over its backdrop. The accessibility tree
   exposed the dialog, title, description, and OK action; activating OK closed
   the modal and restored the page with its acknowledgement text.
+- A fresh review of the current Dialog build opened the destructive
+  confirmation. Its title, wrapped warning, detail summary, Cancel/Delete
+  actions, and visible Cancel focus outline appeared; the accessibility tree
+  exposed the dialog content and both actions. This is qualitative review at
+  one output size, not a pixel comparison or physical-DPI result. No screenshot
+  was added to the documentation.
 - This was a qualitative native review at one captured output size. It does
   not establish SVG pixel equivalence, the display's physical scaling factor,
   fractional-DPI rendering, or platform screen-reader announcements. No
