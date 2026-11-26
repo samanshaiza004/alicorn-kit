@@ -20,6 +20,11 @@ desktop application screenshot.
 | Visual match to SVG target | Unverified. The modal bounds and retained visible text are checked headlessly; no native pixel comparison was captured. |
 | Existing behavior and accessibility | Passed in the reference test: query focus and visible typed text, three matching results, selected/current semantics, title/description/shortcut drawable text, one-result filtering, Return activation, close, and focus restoration. The existing component suite covers keyboard navigation, disabled items, Escape, IME composition, modal containment, semantic activation, and idle return. |
 
+The matched baseline/candidate component-pipeline probe is documented in
+[Command Palette and Dialog performance results](reference-components-performance.md).
+It uses a smaller stock palette fixture and is not a native or full-reference-app
+performance comparison.
+
 ## Attempt log
 
 1. **Initial custom shell.** The example compiled. The first TestUI run rejected

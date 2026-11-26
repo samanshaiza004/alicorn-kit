@@ -25,6 +25,11 @@ around the dark dialog and making the surrounding application text low-contrast.
 | Visual match to vector reference | Logical containment/alignment and text checks pass; pixel match unverified |
 | Behavior and accessibility | Dialog suite 7/7 passed, including four-scale reference output, Cancel-first focus, Return safety, modal focus behavior, dismissal, restoration, and nested/Alert contracts |
 
+The matched baseline/candidate component-pipeline probe is documented in
+[Command Palette and Dialog performance results](reference-components-performance.md).
+It uses a smaller stock dialog fixture and is not a native or full-reference-app
+performance comparison.
+
 ## Attempt log
 
 1. The initial implementation did not compile because the existing button-query
