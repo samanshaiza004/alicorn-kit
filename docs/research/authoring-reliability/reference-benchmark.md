@@ -15,6 +15,9 @@ examples are not part of the reference-attempt counts below; they serve as the
 first-use path, while the larger scenes exercise their broader contracts.
 The catalog follow-up also adds an inline Icon Picker Quick Start while
 preserving its modal reference, parts, and composition examples.
+Each of the three reference apps and Quick Starts paints its root surface with
+`Window_Background`, so the native host's default clear color cannot show
+through the application content.
 
 It starts with three components that exercise different layout contracts:
 

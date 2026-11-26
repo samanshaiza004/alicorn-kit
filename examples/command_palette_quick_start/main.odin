@@ -17,8 +17,9 @@ App :: struct {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=ui.key_string("quick-start-root"), width=-1,
-		height=-1, padding=24, gap=12) {
+	if ui.panel(ctx, key=ui.key_string("quick-start-root"), width=-1,
+		height=-1, padding=24, gap=12,
+		fill=ui.style_color(ctx, .Window_Background), label="quick-start-root") {
 		_ = ui.text(ctx, "Command Palette", size=24)
 		_ = ui.text(ctx, "Open the palette and choose an action.", size=14)
 		if ui.button(ctx, "Open commands", key=ui.key_string("quick-start-open")) {

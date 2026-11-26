@@ -6,6 +6,10 @@ Headless layout, visible-text, focus, and behavior checks pass. Native visual
 match and DPI capture remain **unverified** because SDL could not initialize a
 display in this environment.
 
+The reference app and Quick Start now paint their root surface with
+`Window_Background`. This prevents the host's default clear color from showing
+around the dark dialog and making the surrounding application text low-contrast.
+
 ## Measures
 
 | Measure | Result |
@@ -52,6 +56,10 @@ resolve a failed acceptance check or change geometry.
   **passed**. The linker reports a duplicate `-lobjc` warning.
 - `/private/tmp/alikit-dialog-reference --smoke`:
   **could not run**. SDL reported `The video driver did not add any displays`.
+- The updated reference also builds successfully to
+  `/private/tmp/alikit-dialog-reference-rootfix`; its `--smoke` run still exits
+  with `SDL_Init failed: The video driver did not add any displays`. No native
+  pixels or DPI captures were produced.
 - No desktop screenshots were added to documentation.
 
 ## Evidence boundary

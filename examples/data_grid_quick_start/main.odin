@@ -32,8 +32,9 @@ initialize :: proc(app: ^App) {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=ui.key_string("quick-start-root"), width=-1,
-		height=-1, padding=24, gap=12) {
+	if ui.panel(ctx, key=ui.key_string("quick-start-root"), width=-1,
+		height=-1, padding=24, gap=12,
+		fill=ui.style_color(ctx, .Window_Background), label="quick-start-root") {
 		_ = ui.text(ctx, "Recent files", size=24)
 		_ = ui.text(ctx, "Use the arrow keys to move through the grid.", size=14)
 		if event := data_grid.data_grid(ctx, &app.grid, app.columns[:], app.rows[:],

@@ -18,8 +18,9 @@ App :: struct {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=ui.key_string("dialog-example-root"), width=-1, height=-1,
-		padding=24, gap=12) {
+	if ui.panel(ctx, key=ui.key_string("dialog-example-root"), width=-1, height=-1,
+		padding=24, gap=12, fill=ui.style_color(ctx, .Window_Background),
+		label="dialog-example-root") {
 		if ui.row(ctx, key=ui.key_string("dialog-example-heading"), width=-1,
 			height=42, align=.Center, justify=.Space_Between) {
 			_ = ui.text(ctx, "Project settings", size=25)

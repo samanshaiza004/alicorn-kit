@@ -167,7 +167,8 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 	status := fmt.tprintf("%d projects in this workspace", app.visible_count)
 	if app.status != "" { status = app.status }
 
-	if ui.column(ctx, key=ui.key_string("grid-example-window"), width=-1, height=-1, grow=1) {
+	if ui.panel(ctx, key=ui.key_string("grid-example-window"), width=-1, height=-1, grow=1,
+		fill=ui.style_color(ctx, .Window_Background), label="grid-example-window") {
 		if ui.panel(ctx, key=ui.key_string("grid-example-titlebar"), width=-1, height=54,
 			fill=ui.style_color(ctx, .Subtle_Surface)) {
 			if ui.row(ctx, key=ui.key_string("grid-example-brand"), width=-1,
