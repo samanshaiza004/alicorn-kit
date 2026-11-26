@@ -1,6 +1,7 @@
 package data_grid
 
 import "core:testing"
+import "core:math"
 import alicorn "alicorn:runtime"
 import testui "alicorn:testui"
 import ui "alicorn:ui"
@@ -81,6 +82,16 @@ find_grid :: proc(handle: ^testui.Test_Handle(Test_App)) -> testui.Find_Result {
 @(private)
 find_role :: proc(handle: ^testui.Test_Handle($T), role: alicorn.Semantic_Role, name: string) -> testui.Find_Result {
 	return testui.find(handle, testui.Query{role=role, name=name, match_role=true, match_name=true})
+}
+
+@(test)
+test_data_grid_options_reject_non_finite_text_sizes :: proc(t: ^testing.T) {
+	resolved := options_resolve(Options{
+		header_text_size=math.nan_f32(),
+		cell_text_size=math.inf_f32(1),
+	})
+	testing.expect_value(t, resolved.header_text_size, DEFAULT_OPTIONS.header_text_size)
+	testing.expect_value(t, resolved.cell_text_size, DEFAULT_OPTIONS.cell_text_size)
 }
 
 @(test)

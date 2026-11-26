@@ -213,8 +213,12 @@ options_resolve :: proc(options: Options) -> Options {
 	if result.cell_padding < 0 || math.is_nan(result.cell_padding) || math.is_inf(result.cell_padding) {
 		result.cell_padding = DEFAULT_OPTIONS.cell_padding
 	}
-	if result.header_text_size <= 0 { result.header_text_size = DEFAULT_OPTIONS.header_text_size }
-	if result.cell_text_size <= 0 { result.cell_text_size = DEFAULT_OPTIONS.cell_text_size }
+	if result.header_text_size <= 0 || math.is_nan(result.header_text_size) || math.is_inf(result.header_text_size) {
+		result.header_text_size = DEFAULT_OPTIONS.header_text_size
+	}
+	if result.cell_text_size <= 0 || math.is_nan(result.cell_text_size) || math.is_inf(result.cell_text_size) {
+		result.cell_text_size = DEFAULT_OPTIONS.cell_text_size
+	}
 	return result
 }
 
