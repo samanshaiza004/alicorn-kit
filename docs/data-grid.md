@@ -169,6 +169,12 @@ used until the `.Data_Grid` pattern addition lands.
   pixel comparison is claimed by the reference authoring result.
 - Non-spanned only; columns cap at 64. Virtual rows publish cells only when
   realized.
+- Every logical row still gets a virtual `Table_Row` semantic description so
+  assistive technology can navigate rows outside the viewport. The component
+  therefore walks all rows when it is described, and Alicorn retains row-level
+  semantic entities for the logical dataset. Visual work is viewport-bounded;
+  total semantic work and storage are not. The current 200-row checks do not
+  establish CPU or memory behavior for much larger datasets.
 - Sorting and filtering are application callbacks over the projection.
 
 ## Compatibility

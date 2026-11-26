@@ -113,6 +113,15 @@ The attempt counts measure correction passes needed to satisfy the current
 checks; they are not a before/after success-rate comparison. This experiment
 also has no equivalent-work CPU, memory, or settled-idle baseline.
 
+The Data Grid's visual virtualization does not bound all work by the viewport.
+For assistive-technology navigation, `data_grid()` publishes a virtual
+`Table_Row` semantic item for every offscreen logical row; Alicorn retains those
+row-level semantic entities while realizing cells only for visible rows. This
+means the semantic pass and its working set grow with dataset size. It is an
+intentional accessibility tradeoff in the current API, not a measured
+performance failure. Benchmark 200, 10,000, and 100,000 rows for description
+time and semantic memory before making large-dataset scalability claims.
+
 Native screenshot comparison, physical fractional-DPI rendering, and platform
 accessibility review remain outstanding. A native Command Palette launch was
 attempted but SDL had no display in the runner. Do not treat the SVG targets or

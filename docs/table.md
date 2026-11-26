@@ -147,6 +147,11 @@ drive assertions cover the contract.
 - Wrapped flexible columns are measured against `Options.measure_width`; a very
   different final width can make the authored intrinsic height conservative.
 - Non-spanned only. Virtualized rows do not publish their cells until realized.
+- A virtualized table still publishes one virtual `Table_Row` semantic item for
+  each offscreen logical row. This preserves assistive-technology access, but
+  row-semantic traversal and retained row-semantic storage grow with the full
+  dataset rather than the visible range. Large-dataset CPU and memory costs
+  have not been benchmarked.
 - Sorting and filtering remain application callbacks over the caller's
   projection.
 

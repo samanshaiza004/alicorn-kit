@@ -14,6 +14,7 @@ rows. The vector reference is not a desktop capture.
 | 1×, 1.25×, 1.5×, 2× DPI | The full-reference checks pass at all four scales for each viewport (12 size/scale combinations). These are logical presentation checks, not native display DPI captures. |
 | Visual match to SVG target | Unverified: this environment did not provide a native display capture for side-by-side pixel review. |
 | Existing behavior and accessibility | Data Grid package tests pass: stable row/column identities, table semantics, disabled-row navigation, selected/current publication, sorting proposals, keyboard activation, 200-row virtualization, Page Down reveal, and header identity across scrollbar transitions. The example keeps sorting, filtering, and accepted selection application-owned. |
+| Large-dataset total work | Visual cells are viewport/overscan bounded, but `data_grid()` publishes one virtual `Table_Row` semantic item per offscreen row. This makes semantic traversal and retained row-semantic storage scale with all logical rows. CPU and memory were not measured beyond the 200-row fixture. |
 
 ## Attempt log
 
