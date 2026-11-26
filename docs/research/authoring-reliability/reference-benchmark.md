@@ -133,9 +133,9 @@ before/after result.
 
 | Reference | Attempts | `alicorn:runtime` in example | Logical resize checks | DPI and native visual result | Report |
 | --- | ---: | --- | --- | --- | --- |
-| Command Palette | 4 | Yes, for its custom modal shell; stock `build` does not require it | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI 1×, 1.25×, 1.5×, 2× passed; native pixels unverified | [Result](results/command-palette.md) |
-| Dialog | 7 | No | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI 1×, 1.25×, 1.5×, 2× passed; native pixels unverified | [Result](results/dialog.md) |
-| Data Grid | 11 | No | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI scales 1×, 1.25×, 1.5×, 2×; native pixels unverified | [Result](results/data-grid.md) |
+| Command Palette | 4 | Yes, for its custom modal shell; stock `build` does not require it | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI 1×, 1.25×, 1.5×, 2× passed; native scene reviewed, pixel/DPI match unverified | [Result](results/command-palette.md) |
+| Dialog | 7 | No | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI 1×, 1.25×, 1.5×, 2× passed; qualitative native review passed, pixel/DPI match unverified | [Result](results/dialog.md) |
+| Data Grid | 11 | No | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI scales 1×, 1.25×, 1.5×, 2×; native scene reviewed, pixel/DPI match unverified | [Result](results/data-grid.md) |
 
 The iteration counts are not a speed ranking. They count implementation/verification
 passes needed to satisfy each component's different contracts. All three examples
@@ -176,15 +176,16 @@ process-memory measurements, not native renderer or screen-reader results.
 See the [Data Grid result](results/data-grid.md) and its linked raw capture for
 the method, per-launch distributions, and limitations.
 
-Native screenshot comparison, physical fractional-DPI rendering, and platform
+Native pixel comparison, physical fractional-DPI rendering, and platform
 accessibility review remain outstanding. Current Palette and Data Grid builds
-were inspected through live macOS captures on the 2560 × 1440 Retina display;
-the Palette query and three filtered results were visible, and the Data Grid
-showed its selected cell and 200-row dataset. Those captures were not archived
-as repository images. The pre-fix Dialog capture exposed a host-clear-color
-leak, now covered by a root-to-viewport regression; the CUA session expired
-before a post-fix capture. Do not treat the SVG targets or headless
-retained-output checks as visual-match evidence.
+were inspected through live macOS captures at a 2560 × 1440 capture resolution;
+the physical display scale factor was not recorded. The Palette query and three
+filtered results were visible, and the Data Grid showed its selected cell and
+200-row dataset. The post-fix Dialog build was also reviewed live: its root
+background filled the window, its Alert Dialog was centered over the backdrop,
+and activating OK dismissed the dialog and restored the page. These captures
+were not archived as repository images. Do not treat the SVG targets or
+headless retained-output checks as pixel-match evidence.
 
 ### Cross-reference observations
 

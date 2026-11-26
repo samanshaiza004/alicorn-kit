@@ -2,8 +2,10 @@
 
 ## Status
 
-Headless layout, visible-text, focus, and behavior checks pass. Native visual
-match and post-fix DPI capture remain **unverified**.
+Headless layout, visible-text, focus, and behavior checks pass. A qualitative
+post-fix native review confirmed the full-window background and centered Alert
+Dialog, and verified dismissal through the visible OK action. SVG pixel matching
+and physical-DPI validation remain **unverified**.
 
 The reference app and Quick Start now paint their root surface with
 `Window_Background`. This prevents the host's default clear color from showing
@@ -21,7 +23,7 @@ reference implementation and its Quick Start.
 | Hardcoded dimensions | Reference width 516 px; max height 500 px; padding 24 px; gaps 12 px; detail row 58 px; actions 112/153 × 40 px; app viewport 1280 × 800 |
 | Layout workarounds | Uses ordinary `ui.button` inside the public Dialog action row to reach the target's 40 px button height; no spacers, overlaps, or positioned layout |
 | Viewport checks | 1280 × 800 initial scene, then 960 × 720 and 760 × 640 TestUI resizes; panel remains in bounds and its full copy stays drawable |
-| TestUI scales 1×, 1.25×, 1.5×, 2× | Passed for panel/action containment, action alignment, Cancel focus, and visible description. Native pixels and physical-DPI output remain unverified. |
+| TestUI scales 1×, 1.25×, 1.5×, 2× | Passed for panel/action containment, action alignment, Cancel focus, and visible description. One native output was reviewed; SVG pixel match and physical-DPI output remain unverified. |
 | Settled idle | At each TestUI scale, after a 2 s settling advance, 32 × 16 ms probes produced zero descriptions, reconcile/measure/layout/paint/shaping/semantic work, GPU submits, invalidation, or frame demand. Headless scheduler check only. |
 | Visual match to vector reference | Logical containment/alignment and text checks pass; pixel match unverified |
 | Behavior and accessibility | Dialog suite 7/7 passed, including four-scale reference output, Cancel-first focus, Return safety, modal focus behavior, dismissal, restoration, and nested/Alert contracts |
@@ -78,25 +80,29 @@ documentation.
   `The video driver did not add any displays`.
 - A live macOS capture of the pre-fix reference was inspected and showed the
   host clear color around its 24 px root. The screenshot was not archived in
-  the repository. The post-fix executable builds, but the CUA session expired
-  before its native output could be recaptured.
+  the repository.
 - The current Dialog suite passes **7/7**, including the four-scale reference
   layout, root-to-viewport bounds, focus, and visible-description check.
 - The updated SDL_GPU reference binary builds successfully with
   `-minimum-os-version:27.0`; linking reports the existing duplicate `-lobjc`
-  warning and that the installed SDL3 dylib targets macOS 27.2. The native
-  display-control session expired before a post-fix screenshot could be
-  reviewed.
-- No desktop screenshots were added to documentation. Native visual
-  verification after the fix remains outstanding.
+  warning and that the installed SDL3 dylib targets macOS 27.2. A live
+  post-fix macOS review showed the application background filling the window
+  and the Alert Dialog centered over its backdrop. The accessibility tree
+  exposed the dialog, title, description, and OK action; activating OK closed
+  the modal and restored the page with its acknowledgement text.
+- This was a qualitative native review at one captured output size. It does
+  not establish SVG pixel equivalence, the display's physical scaling factor,
+  fractional-DPI rendering, or platform screen-reader announcements. No
+  desktop screenshots were added to documentation.
 
 ## Evidence boundary
 
 The headless assertions establish retained bounds, button alignment, dialog
 focus, safe Return behavior, and that the expected body text has shaped glyphs
-with visible paint. They do not prove actual pixels, screen-reader announcements,
-GPU clipping, font fallback, or fractional-DPI appearance. Those require the
-native capture at each target scale.
+with visible paint. The live native review additionally establishes that the
+post-fix scene and Alert Dialog were visibly presented and dismissible in that
+run. Neither check proves SVG pixel equivalence, screen-reader announcements,
+GPU clipping at every scale, font fallback, or fractional-DPI appearance.
 
 The full-descendant text assertion depends on Alicorn's TestUI descendant-text
 helper. At this run, the Alicorn checkout used by the tests and AliKit's lock
