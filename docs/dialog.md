@@ -160,7 +160,13 @@ a color alpha, not an animated scrim.
 - the authoring reference's wrapping, panel/action containment, shared action
   baseline, visible copy, Cancel-first focus, safe Return behavior, and
   containment after resize from 1280 × 800 through 960 × 720 to 760 × 640;
+- the reference panel, action alignment, initial focus, and visible description
+  at TestUI presentation scales 1×, 1.25×, 1.5×, and 2×;
 - nested dialogs: topmost Escape only, parent survival, child focus restoration.
+
+The Dialog suite passes 7/7 tests, including the reference scene's four TestUI
+presentation scales. These are headless scale checks, not physical-DPI
+captures.
 
 ## Limits
 

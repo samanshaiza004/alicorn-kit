@@ -125,6 +125,16 @@ defines. This retest establishes headless suite status only; it does not rerun
 the native example build matrix, external-consumer build, website build, or
 native pixel/DPI captures.
 
+### Current component-suite retest (2026-11-26)
+
+After the reference-window background corrections, the same 19 test targets
+were rerun at seed `1729`: **119/119 tests passed**. The Command Palette and
+Dialog now each include a 1×, 1.25×, 1.5×, and 2× TestUI presentation-scale
+matrix; the full run includes those checks, the Data Grid scrollbar-transition
+identity regression, the Data Grid full-reference layout check, and all Dialog
+interaction tests. It remains headless evidence; native pixel/DPI capture and
+OS-level accessibility checks are still unverified.
+
 ## Limits and known constraints
 
 Headless tests establish layout bounds, shaped text/resources where tested,

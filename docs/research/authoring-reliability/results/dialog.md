@@ -20,9 +20,9 @@ around the dark dialog and making the surrounding application text low-contrast.
 | Hardcoded dimensions | Reference width 516 px; max height 500 px; padding 24 px; gaps 12 px; detail row 58 px; actions 112/153 × 40 px; app viewport 1280 × 800 |
 | Layout workarounds | Uses ordinary `ui.button` inside the public Dialog action row to reach the target's 40 px button height; no spacers, overlaps, or positioned layout |
 | Viewport checks | 1280 × 800 initial scene, then 960 × 720 and 760 × 640 TestUI resizes; panel remains in bounds and its full copy stays drawable |
-| DPI: 1×, 1.25×, 1.5×, 2× | Unverified; native host has no display |
+| TestUI scales 1×, 1.25×, 1.5×, 2× | Passed for panel/action containment, action alignment, Cancel focus, and visible description. Native pixels and physical-DPI output remain unverified. |
 | Visual match to vector reference | Logical containment/alignment and text checks pass; pixel match unverified |
-| Behavior and accessibility | Dialog suite 6/6 passed, including Cancel-first focus, Return safety, modal focus behavior, dismissal, restoration, and nested/Alert contracts |
+| Behavior and accessibility | Dialog suite 7/7 passed, including four-scale reference output, Cancel-first focus, Return safety, modal focus behavior, dismissal, restoration, and nested/Alert contracts |
 
 ## Attempt log
 
@@ -60,6 +60,8 @@ resolve a failed acceptance check or change geometry.
   `/private/tmp/alikit-dialog-reference-rootfix`; its `--smoke` run still exits
   with `SDL_Init failed: The video driver did not add any displays`. No native
   pixels or DPI captures were produced.
+- The current Dialog suite passes **7/7**, including the four-scale reference
+  layout, focus, and visible-description check.
 - No desktop screenshots were added to documentation.
 
 ## Evidence boundary

@@ -151,6 +151,84 @@ reference_test_overlays :: proc(app: ^Reference_Test_App, ctx: ^ui.UI) {
 	alicorn.modal_overlay_end(ctx)
 }
 
+@(private)
+reference_palette_scale_case :: proc(t: ^testing.T, scale: f32) -> bool {
+	app := Reference_Test_App{items=REFERENCE_TEST_ITEMS}
+	if !init(&app.state) {
+		testing.expectf(t, false, "palette state should initialize at scale %.2f", scale)
+		return false
+	}
+	defer destroy(&app.state)
+	handle, status := testui.open(&app, reference_test_render,
+		width=1280, height=800, scale=scale, render_overlays=reference_test_overlays)
+	if !testing.expectf(t, status == .Ok, "palette should open at scale %.2f: %v %s",
+		scale, status, testui.last_turn_diagnostic(&handle)) {
+		if handle.runtime != nil { testui.close(&handle) }
+		return false
+	}
+	defer testui.close(&handle)
+
+	opener := testui.find(&handle, testui.Query{
+		role=.Button, name="Open command palette", match_role=true, match_name=true,
+	})
+	defer testui.destroy_find_result(&opener)
+	if !testing.expect(t, opener.match == .Unique && testui.click(&handle, &opener.element) == .Ok,
+		"the palette should open through its application trigger") { return false }
+	_ = testui.describe_once(&handle)
+
+	panel := testui.find(&handle, testui.Query{
+		role=.Dialog, name="Quick actions", match_role=true, match_name=true,
+	})
+	defer testui.destroy_find_result(&panel)
+	if !testing.expectf(t, panel.match == .Unique &&
+		reference_panel_matches(&panel.element, 1280, 800),
+		"the centered modal geometry should remain stable at scale %.2f", scale) { return false }
+	panel_fits := testui.expect_no_overflow(&handle, &panel.element)
+	if !testing.expect(t, panel_fits.ok, testui.layout_check_diagnostic(panel_fits)) { return false }
+
+	if !testing.expect(t, testui.step(&handle,
+		testui.Input{kind=.Text_Commit, text="export"}) == .Ok,
+		"the query should accept input at each presentation scale") { return false }
+	testui.destroy_find_result(&panel)
+	panel = testui.find(&handle, testui.Query{
+		role=.Dialog, name="Quick actions", match_role=true, match_name=true,
+	})
+	query := testui.find(&handle, testui.Query{
+		role=.Text_Field, name="Search actions", match_role=true, match_name=true,
+	})
+	defer testui.destroy_find_result(&query)
+	query_visible := testui.expect_visible_text(&handle, &query.element, "export")
+	query_inside := testui.expect_inside(&handle, &query.element, &panel.element)
+	if !testing.expectf(t, query.match == .Unique && query_visible.ok && query_inside.ok,
+		"query text should remain visible inside the modal at scale %.2f: %s %s",
+		scale, testui.visible_text_diagnostic(query_visible),
+		testui.layout_check_diagnostic(query_inside)) { return false }
+
+	list := testui.find(&handle, testui.Query{
+		role=.List_Box, name="Action results", match_role=true, match_name=true,
+	})
+	defer testui.destroy_find_result(&list)
+	row := testui.find(&handle, testui.Query{
+		role=.List_Box_Option, name="Export workspace", match_role=true, match_name=true,
+	})
+	defer testui.destroy_find_result(&row)
+	row_inside := testui.expect_inside(&handle, &row.element, &list.element)
+	row_visible := testui.expect_visible_text(&handle, &row.element, "Export workspace")
+	if !testing.expectf(t, list.match == .Unique && row.match == .Unique &&
+		row_inside.ok && row_visible.ok,
+		"the first result should remain visible and contained at scale %.2f: %s %s",
+		scale, testui.layout_check_diagnostic(row_inside),
+		testui.visible_text_diagnostic(row_visible)) { return false }
+	return true
+}
+
+@(test)
+test_reference_palette_geometry_and_text_survive_fractional_scales :: proc(t: ^testing.T) {
+	for scale in ([4]f32{1, 1.25, 1.5, 2}) {
+		if !reference_palette_scale_case(t, scale) { return }
+	}
+}
+
 @(test)
 test_reference_palette_keeps_query_rows_and_focus_correct_across_resize :: proc(t: ^testing.T) {
 	app := Reference_Test_App{items=REFERENCE_TEST_ITEMS}

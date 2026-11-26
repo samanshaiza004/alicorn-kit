@@ -142,8 +142,8 @@ reference_overlay :: proc(app: ^Reference_App, ctx: ^ui.UI) {
 }
 
 @(private)
-reference_open :: proc(app: ^Reference_App, t: ^testing.T) -> (testui.Test_Handle(Reference_App), bool) {
-	handle, status := testui.open(app, reference_render, width=1280, height=800,
+reference_open :: proc(app: ^Reference_App, t: ^testing.T, scale: f32 = 1) -> (testui.Test_Handle(Reference_App), bool) {
+	handle, status := testui.open(app, reference_render, width=1280, height=800, scale=scale,
 		render_overlays=reference_overlay)
 	if !testing.expectf(t, status == .Ok, "the reference fixture should open: %v %s",
 		status, testui.last_turn_diagnostic(&handle)) {
@@ -253,6 +253,59 @@ test_dialog_reference_geometry_focus_and_resizing :: proc(t: ^testing.T) {
 	visible_after_resize := testui.expect_visible_text(&handle, &panel.element,
 		REFERENCE_DELETE_DESCRIPTION)
 	testing.expect(t, visible_after_resize.ok, testui.visible_text_diagnostic(visible_after_resize))
+}
+
+@(private)
+dialog_reference_scale_case :: proc(t: ^testing.T, scale: f32) -> bool {
+	app := Reference_App{}
+	handle, ok := reference_open(&app, t, scale)
+	if !ok { return false }
+	defer testui.close(&handle)
+
+	opener := find_button(&handle, "Delete project")
+	defer testui.destroy_find_result(&opener)
+	if !testing.expect(t, opener.match == .Unique && testui.click(&handle, &opener.element) == .Ok,
+		"the reference trigger should open the Dialog at every scale") { return false }
+	_ = testui.describe_once(&handle)
+	_ = testui.describe_once(&handle)
+
+	panel := testui.find(&handle, testui.Query{
+		role=.Dialog, name="Delete project?", match_role=true, match_name=true,
+	})
+	defer testui.destroy_find_result(&panel)
+	cancel := find_button(&handle, "Cancel")
+	defer testui.destroy_find_result(&cancel)
+	delete_action := testui.find(&handle, testui.Query{
+		role=.Button, key=ui.key_string("reference-delete"),
+		match_role=true, match_key=true,
+	})
+	defer testui.destroy_find_result(&delete_action)
+	if !testing.expectf(t, panel.match == .Unique && cancel.match == .Unique &&
+		delete_action.match == .Unique,
+		"the dialog actions should remain available at scale %.2f", scale) { return false }
+	if !testing.expect(t, alicorn.focused_node(handle.runtime) == cancel.element.visual_node,
+		"Cancel should retain initial focus at every scale") { return false }
+
+	inside_cancel := testui.expect_inside(&handle, &cancel.element, &panel.element)
+	inside_delete := testui.expect_inside(&handle, &delete_action.element, &panel.element)
+	aligned := testui.expect_aligned(&handle, &cancel.element, &delete_action.element, .Center_Y)
+	visible_copy := testui.expect_visible_text(&handle, &panel.element, REFERENCE_DELETE_DESCRIPTION)
+	no_overflow := testui.expect_no_overflow(&handle, &panel.element)
+	if !testing.expectf(t, inside_cancel.ok && inside_delete.ok && aligned.ok &&
+		visible_copy.ok && no_overflow.ok,
+		"dialog content should stay visible, aligned, and contained at scale %.2f: %s %s %s %s",
+		scale, testui.layout_check_diagnostic(inside_cancel),
+		testui.layout_check_diagnostic(inside_delete),
+		testui.layout_check_diagnostic(aligned),
+		testui.visible_text_diagnostic(visible_copy)) { return false }
+	return true
+}
+
+@(test)
+test_dialog_reference_geometry_and_text_survive_fractional_scales :: proc(t: ^testing.T) {
+	for scale in ([4]f32{1, 1.25, 1.5, 2}) {
+		if !dialog_reference_scale_case(t, scale) { return }
+	}
 }
 
 @(test)

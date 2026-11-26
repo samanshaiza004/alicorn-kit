@@ -54,6 +54,40 @@ description or input. Geometry checks use logical pixels. Native screenshots rem
 score visual match, GPU text and icon visibility, fractional-DPI edges, and clipping. If a native
 capture cannot be made, report visual match as **unverified**, not as a pass.
 
+## Controlled authoring comparison
+
+The reference attempt counts below are correction-pass counts for the current
+work. They do not show whether the cookbook reduces first-pass failures. To
+measure that, run the same target independently under these conditions:
+
+| Condition | Available materials |
+| --- | --- |
+| A | Comparable historical AliKit API and its component guide, from `fded57a` |
+| B | Current API and the same component guide, without the layout cookbook |
+| C | Current API, component guide, and layout cookbook |
+| D | Current API, component guide, cookbook, and TestUI layout assertions |
+
+The earlier `40692e3` snapshot predates the Data Grid and Dialog packages, so
+it cannot serve as the common historical baseline for all three tasks. Use
+`fded57a`, which contains all three packages, and record its exact dependency
+pins.
+
+Each trial starts from a fresh isolated directory and receives only its
+condition's materials plus the target SVG and shared task contract. Keep the
+model/version, prompt, decoding settings, time/token budget, dependency pins,
+compiler, and validation order fixed. Do not expose existing examples,
+benchmark results, or other trial outputs. Run at least three independent
+trials per condition before making a comparative claim.
+
+Record separate counts for compile/API errors, geometry/layout errors,
+interaction/accessibility errors, test-authoring or harness errors, and visual
+review failures. Count a new implementation attempt only when a code change
+follows a failed check in one of those categories; report harness/test mistakes
+separately from interface defects. Also record first-build time, runtime
+imports, fixed dimensions/workarounds, resize and scale results, visual score,
+and unresolved limitations. The current condition-C runs are a pilot, not a
+before/after result.
+
 ## Per-reference acceptance criteria
 
 ### Command Palette
@@ -99,8 +133,8 @@ capture cannot be made, report visual match as **unverified**, not as a pass.
 
 | Reference | Attempts | `alicorn:runtime` in example | Logical resize checks | DPI and native visual result | Report |
 | --- | ---: | --- | --- | --- | --- |
-| Command Palette | 4 | Yes, for its custom modal shell; stock `build` does not require it | 1280 × 800, 960 × 720, 760 × 640 passed | Native pixels and DPI unverified | [Result](results/command-palette.md) |
-| Dialog | 7 | No | 1280 × 800, 960 × 720, 760 × 640 passed | Native pixels and DPI unverified | [Result](results/dialog.md) |
+| Command Palette | 4 | Yes, for its custom modal shell; stock `build` does not require it | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI 1×, 1.25×, 1.5×, 2× passed; native pixels unverified | [Result](results/command-palette.md) |
+| Dialog | 7 | No | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI 1×, 1.25×, 1.5×, 2× passed; native pixels unverified | [Result](results/dialog.md) |
 | Data Grid | 11 | No | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI scales 1×, 1.25×, 1.5×, 2×; native pixels unverified | [Result](results/data-grid.md) |
 
 The iteration counts are not a speed ranking. They count implementation/verification

@@ -338,10 +338,11 @@ semantic `Group`, custom row activation, selected state, and visible default
 row text.
 
 `command_palette/visual_output_test.odin` exercises the reference shell at
-1280 × 800, 960 × 720, and 760 × 640. It checks modal bounds, query and row
-containment, shaped query/title/description/shortcut text, filtering, selected
-semantics, activation, and focus restoration. This verifies retained geometry
-and drawable text products, not GPU pixels or fractional-DPI rendering.
+1280 × 800, 960 × 720, and 760 × 640, and checks its retained geometry and
+visible query/result text at TestUI scales 1×, 1.25×, 1.5×, and 2×. It also
+checks query and row containment, filtering, selected semantics, activation,
+and focus restoration. The Command Palette suite passes 10/10 tests. These
+checks do not verify GPU pixels or physical-DPI rendering.
 
 `command_palette/pilot_test.odin` runs the same scripted path through the stock
 modal and `palette_parts.results` and asserts the same activated stable ID.

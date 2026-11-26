@@ -15,7 +15,7 @@ desktop application screenshot.
 | Hardcoded dimensions | Reference window 1280 × 800; top bar 54; sidebar 232; project cards 94 high; modal 660 × 576; modal outer inset 32; panel gap 12; query row 52; uniform result rows 72; leading icon tile 38; shortcut tile 72 × 26. Text sizes are 22/13 for the modal heading/subtitle and 13/11 for row title/description. |
 | Layout workarounds | The item model has no icon or shortcut properties and `build` has no custom-row callback, so the app maps stable item IDs to visual icons/shortcut labels and composes the public input/list/item parts. `alicorn:ui` does not re-export `modal_overlay_begin/end` or `semantic_describe_as`, so the custom shell imports runtime. The current icon enum has no plus mark; the workspace logo uses a text `+`. The target has nonuniform row heights; the example keeps a uniform 72px virtual-list track. |
 | 1280 × 800, 960 × 720, 760 × 640 | TestUI asserts a centered 660 × 576 modal at each viewport and checks query/result containment. All three passed. |
-| 1×, 1.25×, 1.5×, 2× DPI | Unverified; native display capture was not run. |
+| TestUI scales 1×, 1.25×, 1.5×, 2× | Passed for centered modal geometry and visible query/result text. Native pixels and physical-DPI output remain unverified. |
 | Visual match to SVG target | Unverified. The modal bounds and retained visible text are checked headlessly; no native pixel comparison was captured. |
 | Existing behavior and accessibility | Passed in the reference test: query focus and visible typed text, three matching results, selected/current semantics, title/description/shortcut drawable text, one-result filtering, Return activation, close, and focus restoration. The existing component suite covers keyboard navigation, disabled items, Escape, IME composition, modal containment, semantic activation, and idle return. |
 
@@ -52,7 +52,8 @@ odin test command_palette \
   -collection:accesskit=/private/tmp/acetate-alicorn-master-3d49b8b/.deps/odin-accesskit \
   -collection:accesskit_c=/private/tmp/alicorn-textfield-render/.deps/accesskit/accesskit-c-0.23.1/lib/macos/arm64/static \
   -define:ODIN_TEST_THREADS=1
-# Passed: 9/9 tests.
+# Initial reference run passed 9/9 tests; current suite passes 10/10 after
+# adding the four-scale retained-output check.
 
 odin test palette_parts \
   -collection:alicorn=/private/tmp/alicorn-textfield-render \
@@ -71,5 +72,6 @@ odin build examples/command_palette \
 # Passed; linker reported a duplicate -lobjc warning.
 ```
 
-No native screenshot, pixel comparison, or DPI capture was produced. Those
+The four TestUI scale cases do not render to a native GPU surface. No native
+screenshot, pixel comparison, or physical-DPI capture was produced; those
 checks remain necessary before claiming a visual match.
