@@ -145,6 +145,15 @@ The PowerShell validation wrapper was unavailable on this macOS host, so the
 evidence; it does not replace native pixel comparison, physical-DPI testing, or
 OS-level accessibility checks.
 
+### Catalog site build probe (2026-11-26)
+
+`npm run build` ran the `prebuild` synchronization successfully and copied
+`components.json` plus all 14 authored reference SVGs into the generated site
+assets. The Astro build then stopped with `astro: command not found`; this
+checkout has no `website/node_modules`, and I did not install dependencies. The
+catalog output is therefore synchronized, but the website build remains
+unverified.
+
 The remaining 11 catalog components now also have TestUI presentation-scale
 matrices at 1×, 1.25×, 1.5×, and 2×, with assertions for visible text and
 component/viewport containment. Those 11 package suites pass **85/85 tests** at
