@@ -110,21 +110,25 @@ These results do not establish that authors or AI agents make fewer initial
 mistakes than they did with earlier Alicorn/AliKit APIs. We did not run the same
 tasks against an earlier revision with matched instructions and task budgets.
 The attempt counts measure correction passes needed to satisfy the current
-checks; they are not a before/after success-rate comparison. This experiment
-does not have a matched before/after CPU or memory comparison, a cross-framework
-workload, or a settled-idle baseline. The separate Data Grid scaling probe
-below measures one current implementation at three dataset sizes; it is not a
-before/after or cross-framework performance result.
+checks; they are not a before/after success-rate comparison. A matched CPU and
+process-memory comparison now exists for the Data Grid's relevant AliKit source
+changes; it does not cover the Command Palette or Dialog and is not a
+cross-framework workload. There is still no settled-idle baseline for the three
+reference applications. See the [Data Grid matched comparison](results/data-grid.md#matched-beforeafter-comparison)
+for its controlled dependency choice, results, and limits.
 
 The Data Grid's visual virtualization does not bound all work by the viewport.
 For assistive-technology navigation, `data_grid()` publishes a virtual
 `Table_Row` semantic item for every offscreen logical row; Alicorn retains those
 row-level semantic entities while realizing cells only for visible rows. The
-new 200/10,000/100,000-row probe measured description p50 at 0.137/1.705/32.653
-ms and whole-process peak RSS at 13.7/28.9/260.8 MB, respectively. These are
-single-machine TestUI CPU and process-memory measurements, not native renderer
-or screen-reader results. See the [Data Grid result](results/data-grid.md) for
-the full method, p95/p99 values, and limits of the measurement.
+current three-launch probe measured Description p50 at 0.118/1.259/30.277 ms
+and whole-process peak RSS at 13.9/28.9/273.0 MB for 200/10,000/100,000 rows.
+The matched comparison shows effectively flat full-turn p50 across the
+baseline and candidate, with Semantic_Sync p50 about 5–7% higher for the
+candidate at 10,000 and 100,000 rows. These are single-machine TestUI CPU and
+process-memory measurements, not native renderer or screen-reader results.
+See the [Data Grid result](results/data-grid.md) and its linked raw capture for
+the method, per-launch distributions, and limitations.
 
 Native screenshot comparison, physical fractional-DPI rendering, and platform
 accessibility review remain outstanding. A native Command Palette launch was

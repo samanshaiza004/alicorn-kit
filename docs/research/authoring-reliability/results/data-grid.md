@@ -97,72 +97,134 @@ tree.
 
 ## Follow-up: retained-description scaling
 
-The earlier 200-row reference did not test the performance and working-set
-cost of publishing virtual row semantics for large datasets. The new
-[`benchmarks/data_grid/main.odin`](../../../../benchmarks/data_grid/main.odin) probe
-isolates repeated root descriptions at a fixed 1280 × 800 viewport with 12
-visible rows. It warms the retained tree three times, takes 101 samples, and
-measures the full TestUI turn plus Alicorn's `Semantic_Sync` stage. It also
-checks the public semantic-node lookup API to confirm that every logical row
-was published and that offscreen rows were marked virtual. The lookup is done
-outside the timed samples.
+The 200-row reference did not test the performance and working-set cost of
+publishing virtual row semantics for large datasets. The
+[`benchmarks/data_grid/main.odin`](../../../../benchmarks/data_grid/main.odin)
+probe describes a fixed 1280 × 800 viewport with 12 visible rows, performs
+three warmup descriptions, and measures 101 repeated descriptions per process.
+It validates every logical row through the public semantic lookup API before
+timing. Each result below is the median of three fresh process launches; the
+p95/p99 values are the median of the three per-process percentiles.
 
 | Logical rows | Virtual row semantics | Description p50 / p95 / p99 | Reconcile p50 | Semantic sync p50 | Peak process RSS |
 | ---: | ---: | ---: | ---: | ---: | ---: |
-| 200 | 187 | 0.137 / 0.220 / 0.229 ms | 0.073 ms | 0.023 ms | 13.7 MB |
-| 10,000 | 9,987 | 1.705 / 2.854 / 3.602 ms | 0.282 ms | 0.219 ms | 28.9 MB |
-| 100,000 | 99,987 | 32.653 / 38.583 / 40.490 ms | 5.000 ms | 4.920 ms | 260.8 MB |
+| 200 | 187 | 0.118 / 0.128 / 0.148 ms | 0.063 ms | 0.019 ms | 13.9 MB |
+| 10,000 | 9,987 | 1.259 / 1.696 / 2.395 ms | 0.202 ms | 0.154 ms | 28.9 MB |
+| 100,000 | 99,987 | 30.277 / 32.955 / 35.714 ms | 4.371 ms | 4.304 ms | 273.0 MB |
 
-All three cases emitted 44 non-row semantic descriptions in addition to the
-row descriptions. At 100,000 rows, the runtime's Reconcile stage took 5.000 ms
-p50, of which Semantic_Sync took 4.920 ms. The 32.653 ms Description stage
-also includes the application callback and other turn work; this probe does
+Every launch emitted 44 non-row semantic descriptions in addition to the row
+descriptions. At 100,000 rows, the final timed turn examined zero measure and
+layout nodes and reported zero semantic structure changes. Reconcile p50 was
+4.371 ms, of which Semantic_Sync was 4.304 ms. The 30.277 ms Description
+stage includes the application callback and other turn work; this probe does
 not isolate callback time. The component's all-rows loop is the unbounded path
-visible in source. Warm samples examined zero layout nodes, zero measure
-nodes, shaped no text, and made zero semantic structure changes, so layout and
-shaping do not explain the growth. A tenfold row increase from 10,000 to
-100,000 increased description p50 about 19.2-fold and peak process RSS about
-9.0-fold in this run.
+visible in source.
 
 Peak RSS is the whole child process, including the application-owned row and
 cell arrays, the runtime's retained semantic entities, and TestUI. It is not a
 runtime-only memory measurement. Timings are CPU-only retained-pipeline
 measurements: they exclude native renderer preparation, GPU submission,
-presentation, and physical accessibility clients. The p95/p99 figures come
-from 101 samples on one machine and are useful as a local scaling probe, not a
-cross-machine performance claim.
+presentation, and physical accessibility clients. The
+[raw comparison capture](data-grid-performance-comparison-raw.json) contains
+all 18 process summaries and the sorted 101-sample Description and Semantic
+Sync distributions for each launch.
+
+## Matched before/after comparison
+
+This comparison checks whether the Data Grid layout corrections changed the
+warm repeated-description cost. The baseline is AliKit `fded57a94e6a`, before
+the authoring-quality reference work; the candidate source state is
+`ec080d423e88`. The relevant implementation delta is the identity-transparent
+scrollbar-gutter header slot and explicit semantic owner height in `data_grid`
+and `table_core`. The exact same current benchmark source was copied into the
+historical checkout and built against both revisions.
+
+To isolate AliKit's contribution, both snapshots used the same current
+Alicorn `4e0862f368cb` and AccessKit binding `e290e5f55da9`, Odin
+`dev-2026-11:9a6991685`, and release optimization. This intentionally overrides
+the historical snapshot's dependency lock; it does not compare each revision
+with its original dependency stack. Three fresh processes were run per source
+revision and row count, alternating order. Each process used the same 1280 ×
+800 viewport, 12 visible rows, data, three warmups, and 101 timed descriptions.
+The raw per-launch data is linked above.
+
+| Logical rows | Baseline Description p50 / p95 / p99 | Candidate Description p50 / p95 / p99 | Reconcile p50, baseline / candidate | Semantic sync p50, baseline / candidate | Peak process RSS, baseline / candidate |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 200 | 0.111 / 0.115 / 0.122 ms | 0.118 / 0.128 / 0.148 ms | 0.064 / 0.063 ms | 0.020 / 0.019 ms | 13.8 / 13.9 MB |
+| 10,000 | 1.250 / 1.591 / 2.124 ms | 1.259 / 1.696 / 2.395 ms | 0.191 / 0.202 ms | 0.146 / 0.154 ms | 28.8 / 28.9 MB |
+| 100,000 | 30.352 / 33.885 / 38.704 ms | 30.277 / 32.955 / 35.714 ms | 4.108 / 4.371 ms | 4.038 / 4.304 ms | 270.4 / 273.0 MB |
+
+The total Description p50 is effectively flat at 10,000 and 100,000 rows;
+the 200-row difference is 7 μs. At 10,000 and 100,000 rows, candidate
+Semantic_Sync p50 is about 5–7% higher (roughly 8 μs and 266 μs), while the
+whole-turn p50 changes by about 9 μs and -75 μs, respectively. Peak process
+RSS differs by about 0.1–2.6 MB across these conditions. These results do not
+show a material full-turn regression, but they also do not demonstrate a
+performance improvement. Three launches per condition on one machine limit
+confidence in tail differences; treat this as a local non-regression check,
+not a general performance claim.
+
+All conditions published the same logical and virtual row counts and emitted
+the same number of semantic descriptions. This is a repeated full-root
+description workload, not an isolated style change, input-latency test, idle
+measurement, native renderer/GPU benchmark, or comparison of all three
+reference applications. The raw artifact records individual process
+percentiles and distributions.
 
 ### Reproduction
 
-Environment: macOS 27.2.1 arm64; Odin `dev-2026-11:9a6991685`; AliKit
-`d705cd6217517360a22750d82a89adec9c7feca2` (benchmark working tree); Alicorn
-`4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`; release (`-o:speed`) build.
+Environment: macOS 27.2.1 arm64; Odin `dev-2026-11:9a6991685`; baseline AliKit
+`fded57a94e6a2c5bf44d8b980befe5a260ff5ed5`; candidate AliKit
+`ec080d423e885aee569da12305e40eefb70a631a`; Alicorn
+`4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`; AccessKit binding
+`e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b`; release (`-o:speed`) builds.
+The current benchmark source was copied into the baseline snapshot before
+building it. Both builds used the same `-collection:alicorn`,
+`-collection:accesskit`, and `-collection:accesskit_c` paths; only
+`-collection:alikit` differed.
 
 ```sh
+mkdir -p /private/tmp/alikit-fded57a
+git archive fded57a94e6a2c5bf44d8b980befe5a260ff5ed5 | tar -x -C /private/tmp/alikit-fded57a
+mkdir -p /private/tmp/alikit-fded57a/benchmarks/data_grid
+cp benchmarks/data_grid/main.odin /private/tmp/alikit-fded57a/benchmarks/data_grid/main.odin
+
+cd /private/tmp/alikit-fded57a
+odin build benchmarks/data_grid -o:speed \
+  -collection:alicorn=/private/tmp/alicorn-textfield-render \
+  -collection:alikit=/private/tmp/alikit-fded57a \
+  -collection:accesskit=/private/tmp/acetate-alicorn-master-3d49b8b/.deps/odin-accesskit \
+  -collection:accesskit_c=/private/tmp/alicorn-textfield-render/.deps/accesskit/accesskit-c-0.23.1/lib/macos/arm64/static \
+  -out:/private/tmp/alikit-data-grid-scaling-fded57a
+
+cd /private/tmp/alicorn-kit-authoring-quality
 odin build benchmarks/data_grid -o:speed \
   -collection:alicorn=/private/tmp/alicorn-textfield-render \
   -collection:alikit=. \
   -collection:accesskit=/private/tmp/acetate-alicorn-master-3d49b8b/.deps/odin-accesskit \
   -collection:accesskit_c=/private/tmp/alicorn-textfield-render/.deps/accesskit/accesskit-c-0.23.1/lib/macos/arm64/static \
-  -out:/private/tmp/alikit-data-grid-scaling-speed
+  -out:/private/tmp/alikit-data-grid-scaling-current
 
 python3 -c '
 import resource, subprocess, sys
-p = subprocess.run(["/private/tmp/alikit-data-grid-scaling-speed", "100000"], text=True, capture_output=True)
+p = subprocess.run([sys.argv[1], sys.argv[2]], text=True, capture_output=True)
 sys.stdout.write(p.stdout)
 sys.stderr.write(p.stderr)
 print("child_maxrss_bytes", resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
 sys.exit(p.returncode)
-'
+' /private/tmp/alikit-data-grid-scaling-current 100000
 ```
 
-Run the second command with `200` and `10000` as separate invocations to
-measure each child process independently. On macOS, `ru_maxrss` is reported in
-bytes; the table rounds it to decimal MB. The benchmark itself accepts any
-row count at least as large as the visible-row count, or runs the three
-reference sizes when invoked without an argument. Each invocation prints the
-raw Description and Semantic_Sync samples and p50/p95/p99 for all runtime
-stages.
+Run each binary three times for `200`, `10000`, and `100000` rows, alternating
+baseline/candidate order as in the raw capture. Repeat the final command with
+the baseline binary and each row count. Capture each binary invocation in its
+own Python process when collecting RSS so `RUSAGE_CHILDREN.ru_maxrss`
+measures only that benchmark process; macOS reports the value in bytes. The
+benchmark accepts any row count at least as large as the visible-row count, or
+runs the three reference sizes when invoked without an argument. Each
+invocation prints sorted Description and Semantic_Sync sample distributions
+plus p50/p95/p99 for runtime stages. The JSON capture retains these sorted
+arrays and the per-process RSS values; sample order is not retained.
 
 This establishes a real scalability limit in the current semantic publication
 contract. Do not remove the offscreen row semantics as an AliKit-only fix:
