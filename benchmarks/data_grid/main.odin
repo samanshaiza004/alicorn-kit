@@ -19,10 +19,11 @@ P99_INDEX :: (SAMPLE_COUNT*99+99)/100-1
 INSTANCE_ID :: u64(4242)
 
 Bench_App :: struct {
-	state:   grid.State,
-	columns: [3]grid.Column,
-	rows:    []grid.Row,
-	cells:   []grid.Cell,
+	state:       grid.State,
+	columns:     [3]grid.Column,
+	rows:        []grid.Row,
+	cells:       []grid.Cell,
+	callback_ns: u64,
 }
 
 build_data :: proc(app: ^Bench_App, row_count: int) {
@@ -47,6 +48,7 @@ build_data :: proc(app: ^Bench_App, row_count: int) {
 }
 
 render :: proc(app: ^Bench_App, ctx: ^ui.UI) {
+	started := time.now()
 	_ = grid.data_grid(
 		ctx,
 		&app.state,
@@ -62,6 +64,7 @@ render :: proc(app: ^Bench_App, ctx: ^ui.UI) {
 		key=ui.key_string("data-grid-scaling-benchmark"),
 		instance_id=INSTANCE_ID,
 	)
+	app.callback_ns = u64(time.duration_nanoseconds(time.since(started)))
 }
 
 sort_samples :: proc(values: []u64) {
@@ -159,6 +162,7 @@ run_case :: proc(row_count: int) -> bool {
 	fmt.println("settled_idle_probes", SAMPLE_COUNT, "retained_work", 0, "frame_demand", false)
 
 	description_samples: [SAMPLE_COUNT]u64
+	callback_samples: [SAMPLE_COUNT]u64
 	stage_samples: [alicorn.RUNTIME_TIMING_STAGE_COUNT][SAMPLE_COUNT]u64
 	semantic_description_samples: [SAMPLE_COUNT]u64
 	for index in 0..<SAMPLE_COUNT {
@@ -171,6 +175,7 @@ run_case :: proc(row_count: int) -> bool {
 			fmt.eprintln("sample failed", row_count, index, status, testui.last_turn_diagnostic(&handle))
 			return false
 		}
+		callback_samples[index] = app.callback_ns
 		stats_after := alicorn.frame_stats_snapshot(handle.runtime)
 		work := handle.last_turn.work
 		for stage_index in 0..<alicorn.RUNTIME_TIMING_STAGE_COUNT {
@@ -180,6 +185,7 @@ run_case :: proc(row_count: int) -> bool {
 			stats_before.semantic_descriptions_emitted
 	}
 	sort_samples(description_samples[:])
+	sort_samples(callback_samples[:])
 	for stage_index in 0..<alicorn.RUNTIME_TIMING_STAGE_COUNT {
 		sort_samples(stage_samples[stage_index][:])
 	}
@@ -191,6 +197,9 @@ run_case :: proc(row_count: int) -> bool {
 	fmt.println("description_median_ns", description_samples[SAMPLE_COUNT/2])
 	fmt.println("description_p95_ns", description_samples[P95_INDEX])
 	fmt.println("description_p99_ns", description_samples[P99_INDEX])
+	fmt.println("data_grid_callback_p50_ns", callback_samples[SAMPLE_COUNT/2])
+	fmt.println("data_grid_callback_p95_ns", callback_samples[P95_INDEX])
+	fmt.println("data_grid_callback_p99_ns", callback_samples[P99_INDEX])
 	fmt.println("stage_timings_ns p50 p95 p99")
 	for stage_index in 0..<alicorn.RUNTIME_TIMING_STAGE_COUNT {
 		stage := alicorn.Runtime_Timing_Stage(stage_index)
@@ -203,6 +212,9 @@ run_case :: proc(row_count: int) -> bool {
 	fmt.println("semantic_structure_changes", handle.last_turn.work.semantic_structure_changes)
 	fmt.print("description_samples_ns")
 	for sample in description_samples { fmt.print(" ", sample) }
+	fmt.println()
+	fmt.print("data_grid_callback_samples_ns")
+	for sample in callback_samples { fmt.print(" ", sample) }
 	fmt.println()
 	fmt.print("semantic_sync_samples_ns")
 	for sample in stage_samples[int(alicorn.Runtime_Timing_Stage.Semantic_Sync)] { fmt.print(" ", sample) }

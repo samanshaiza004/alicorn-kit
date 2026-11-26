@@ -262,6 +262,93 @@ needs a runtime-level way to retain or page collection semantics without
 re-describing and retaining one row entity per logical item. Native screen
 reader behavior and GPU presentation remain separate validation work.
 
+### Current-head component-call comparison
+
+The earlier matched comparison did not isolate the public `data_grid()` call,
+and used only three fresh processes per revision. This follow-up adds a timer
+around that call and runs five fresh processes per revision and row count. The
+same instrumented benchmark source is compiled against baseline AliKit
+`fded57a94e6a` and current component source at `2c12de142113`. Both use the
+same pinned Alicorn, AccessKit binding, Odin compiler, release mode, viewport,
+dataset, and alternating launch order. See the
+[raw 30-process capture](data-grid-performance-follow-up-raw.json) and the
+[paired runner](../../../../benchmarks/data_grid/run_paired.py).
+
+Each value below is the median of the five process-level percentiles. The
+component-call boundary includes the `data_grid()` API and timer overhead; the
+full-turn Description boundary additionally includes TestUI and runtime work.
+Reconcile and Semantic_Sync are Alicorn stage timings. Peak RSS is the whole
+process, including the benchmark's application-owned row/cell arrays and
+TestUI; it is not retained-runtime memory.
+
+| Rows | `data_grid()` p50, baseline → current | Description p50 | Reconcile p50 | Semantic_Sync p50 | Peak RSS, baseline → current |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 200 | 0.082 → 0.090 ms (+9.8%) | 0.188 → 0.202 ms | 0.103 → 0.111 ms | 0.031 → 0.034 ms | 13.76 → 13.91 MB (+1.1%) |
+| 10,000 | 2.257 → 2.092 ms (-7.3%) | 2.673 → 2.499 ms | 0.415 → 0.396 ms | 0.323 → 0.302 ms | 28.77 → 28.90 MB (+0.5%) |
+| 100,000 | 37.082 → 37.157 ms (+0.2%) | 43.003 → 43.742 ms | 6.055 → 6.195 ms | 5.946 → 6.068 ms | 261.03 → 260.41 MB (-0.2%) |
+
+At 100,000 rows, the direct component-call median is effectively flat. At
+10,000 rows, it is lower in this capture. The 200-row p50 rises by 8 μs and
+its p99 is noisy (0.152 → 0.214 ms); the 10,000- and 100,000-row component
+p99 values move down (3.473 → 3.088 ms and 77.026 → 70.252 ms). With five
+launches on one machine, these tail differences are not strong evidence of a
+performance change. The results do not show a material large-grid CPU or RSS
+regression, but they also do not establish a general performance improvement.
+All 30 processes passed the 101-probe settled-idle gate and published every
+logical row semantic entity.
+
+This comparison also clarifies the scrollbar-transition review concern. The
+existing regression changes one retained grid from nine rows to eight and
+back, then checks retained header, track, cell and label IDs, focus, hover and
+sorting behavior. That is the more direct identity check; the scaling probe
+does not replace it. Neither check validates native screen-reader behavior,
+GPU presentation, or physical DPI.
+
+### Instrumented comparison reproduction
+
+Copy the same benchmark source into the historical checkout, build both
+executables against the exact shared dependencies above, and run the paired
+capture:
+
+```sh
+mkdir -p /private/tmp/alikit-fded57a-benchmark
+git archive fded57a94e6a2c5bf44d8b980befe5a260ff5ed5 \
+  | tar -x -C /private/tmp/alikit-fded57a-benchmark
+mkdir -p /private/tmp/alikit-fded57a-benchmark/benchmarks/data_grid
+cp benchmarks/data_grid/main.odin \
+  /private/tmp/alikit-fded57a-benchmark/benchmarks/data_grid/main.odin
+
+cd /private/tmp/alikit-fded57a-benchmark
+odin build benchmarks/data_grid -o:speed \
+  -collection:alicorn=/private/tmp/alicorn-textfield-render \
+  -collection:alikit=/private/tmp/alikit-fded57a-benchmark \
+  -collection:accesskit=/path/to/odin-accesskit \
+  -collection:accesskit_c=/private/tmp/alicorn-textfield-render/.deps/accesskit/accesskit-c-0.23.1/lib/macos/arm64/static \
+  -out:/private/tmp/alikit-data-grid-baseline
+
+cd /private/tmp/alicorn-kit-authoring-quality
+odin build benchmarks/data_grid -o:speed \
+  -collection:alicorn=/private/tmp/alicorn-textfield-render \
+  -collection:alikit=. \
+  -collection:accesskit=/path/to/odin-accesskit \
+  -collection:accesskit_c=/private/tmp/alicorn-textfield-render/.deps/accesskit/accesskit-c-0.23.1/lib/macos/arm64/static \
+  -out:/private/tmp/alikit-data-grid-current
+
+python3 benchmarks/data_grid/run_paired.py \
+  --baseline /private/tmp/alikit-data-grid-baseline \
+  --candidate /private/tmp/alikit-data-grid-current \
+  --baseline-revision fded57a94e6a2c5bf44d8b980befe5a260ff5ed5 \
+  --candidate-revision 2c12de1421133dd22a8d1ea59d6ebcb31e9b4c25 \
+  --runs 5 \
+  --output docs/research/authoring-reliability/results/data-grid-performance-follow-up-raw.json
+```
+
+The runner records the benchmark source SHA-256, launch order, dependencies,
+process resource use, the sorted 101-sample component-call and full-turn
+distributions, runtime stage percentiles, and settled-idle assertions. Replace
+the AccessKit collection path with the checkout at the recorded binding
+revision.
+
 ## Commands
 
 All commands ran from the AliKit repository root, using the local Alicorn
