@@ -164,6 +164,22 @@ intended content, and the corresponding scale checks pass. These are logical
 layout checks under TestUI; they do not establish physical DPI behavior or
 native pixel fidelity.
 
+### Current Windows CI matrix (2026-11-26)
+
+At AliKit main `1ecd945640c3389829215992c1cd70a0fa98962f`, the full
+[`tools/test.ps1`](../../tools/test.ps1) workflow passed on Windows. Its 21
+test targets completed **138/138 tests**: 14 catalog packages (115 tests),
+four supporting packages (19 tests), and three application-level targets
+(four tests across Table, Data Grid, and Selection Styles references). This
+includes the current Command Palette 12/12, Icon Picker 16/16, Data Grid 8/8,
+shared Table 6/6, and Data Grid reference 2/2 results. The workflow's native
+example builds also completed successfully. See [GitHub Actions run
+45883971377](https://github.com/samanshaiza004/alicorn-kit/actions/runs/45883971377).
+
+This verifies the current pinned Windows compile/test matrix. It does not
+replace macOS native pixel captures, physical-DPI comparisons, a screen-reader
+session, or the controlled historical AI-authoring comparison described below.
+
 ### Catalog reference previews (2026-11-26)
 
 The catalog now has one authored SVG target on each of its 14 component pages.

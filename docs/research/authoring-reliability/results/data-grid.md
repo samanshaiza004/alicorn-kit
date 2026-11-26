@@ -86,10 +86,11 @@ parent change. It also verifies that the grid's stable root remains the
 keyboard focus owner as the scrollbar disappears and returns. The regression
 also hovers the sortable Name header before the transition, checks that its
 hover state remains on the same owner, and clicks it after the gutter disappears
-and returns; both clicks still propose the stable Name column key. It passes
-with the Data Grid suite at 7/7; the shared Table suite passes at 3/3. The
-original six recreation passes remain unchanged; this is a post-benchmark
-correctness follow-up.
+and returns; both clicks still propose the stable Name column key. The first
+follow-up run passed the Data Grid suite at 7/7 and shared Table suite at 3/3;
+current main passes the expanded suites at 8/8 and 6/6. The original six
+recreation passes remain unchanged; this is a post-benchmark correctness
+follow-up.
 
 ## Scrollbar negative control
 
@@ -296,9 +297,12 @@ odin build examples/data_grid \
   -out:/private/tmp/alikit-data-grid-reference
 ```
 
-The Data Grid suite finished with 7/7 tests passing; the shared Table suite
-finished with 3/3 passing; the full-reference layout suite finished with 1/1
-passing. The example build exited successfully. Odin emitted unrelated
+At the initial local capture, the Data Grid suite finished with 7/7 tests
+passing; the shared Table suite finished with 3/3; and the full-reference
+layout suite finished with 1/1. At current main `1ecd945`, the Windows CI run
+passes Data Grid 8/8, Table 6/6, and full-reference layout 2/2 as part of
+138/138 tests across 21 test targets. The same workflow's native example build
+matrix completed successfully. Odin emitted unrelated
 large-stack test warnings from Alicorn and the macOS linker warned about
 duplicate `-lobjc` libraries. SDL cannot initialize a display in this shell
 session, so native pixels and physical DPI remain unverified.
