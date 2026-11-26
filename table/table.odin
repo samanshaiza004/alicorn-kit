@@ -358,7 +358,10 @@ emit_cell :: proc(
 		))
 	text_style := alicorn.Text_Style{overflow=.Ellipsis}
 	text_width := f32(-1)
-	if column.width > 0 { text_width = max(column.width-2*options.cell_padding, 1) }
+	resolved_column_width := column_measure_width(column, -1)
+	if resolved_column_width > 0 {
+		text_width = max(resolved_column_width-2*options.cell_padding, 1)
+	}
 	if !options.no_wrap { text_style.overflow = .Wrap }
 	if id, has_icon := cell.icon.?; has_icon {
 		if ui.row(ctx, key=ui.key_pair(CELL_KEY+6, mix(row.key, column.key)), width=-1, gap=6, align=.Center) {

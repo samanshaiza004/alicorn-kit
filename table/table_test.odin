@@ -26,8 +26,14 @@ fixture_render :: proc(app: ^Test_App, ctx: ^ui.UI) {
 		instance_id=9201)
 }
 
-fixture_open :: proc(app: ^Test_App, t: ^testing.T, scale: f32 = 1) -> (testui.Test_Handle(Test_App), bool) {
+fixture_open :: proc(
+	app: ^Test_App,
+	t: ^testing.T,
+	scale: f32 = 1,
+	first_column_width: f32 = 200,
+) -> (testui.Test_Handle(Test_App), bool) {
 	app.columns = fixture_columns()
+	app.columns[0].width = first_column_width
 	app.cells = [4][3]Cell{
 		{{text="short", detail="one line"}, {text="12 KB"}, {text="file"}},
 		{{text="a deliberately long cell value that must wrap across several visual lines", detail="and a detail line"}, {text="3 MB"}, {text="file"}},
@@ -66,6 +72,30 @@ test_static_table_options_reject_non_finite_text_sizes :: proc(t: ^testing.T) {
 	testing.expect_value(t, resolved.header_text_size, DEFAULT_OPTIONS.header_text_size)
 	testing.expect_value(t, resolved.cell_text_size, DEFAULT_OPTIONS.cell_text_size)
 	testing.expect_value(t, resolved.detail_text_size, DEFAULT_OPTIONS.detail_text_size)
+}
+
+@(test)
+test_static_table_infinite_column_width_keeps_text_flexible :: proc(t: ^testing.T) {
+	app := Test_App{}
+	handle, ok := fixture_open(&app, t, first_column_width=math.inf_f32(1))
+	if !ok { return }
+	defer testui.close(&handle)
+
+	table_node := find_table(&handle)
+	cell := find_role(&handle, .Table_Row_Header, "short")
+	if testing.expect(t, table_node.match == .Unique && cell.match == .Unique,
+		"the infinite-width column should still realize its first cell") {
+		visible := testui.expect_visible_text(&handle, &cell.element, "short")
+		inside := testui.expect_inside(&handle, &cell.element, &table_node.element)
+		no_overflow := testui.expect_no_overflow(&handle, &cell.element)
+		testing.expectf(t, visible.ok && inside.ok && no_overflow.ok,
+			"flexible column text should remain visible and contained: %s %s %s",
+			testui.visible_text_diagnostic(visible),
+			testui.layout_check_diagnostic(inside),
+			testui.layout_check_diagnostic(no_overflow))
+	}
+	testui.destroy_find_result(&table_node)
+	testui.destroy_find_result(&cell)
 }
 
 @(test)
