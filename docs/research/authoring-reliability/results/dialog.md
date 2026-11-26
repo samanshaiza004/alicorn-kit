@@ -3,12 +3,13 @@
 ## Status
 
 Headless layout, visible-text, focus, and behavior checks pass. Native visual
-match and DPI capture remain **unverified** because SDL could not initialize a
-display in this environment.
+match and post-fix DPI capture remain **unverified**.
 
 The reference app and Quick Start now paint their root surface with
 `Window_Background`. This prevents the host's default clear color from showing
 around the dark dialog and making the surrounding application text low-contrast.
+Both roots also grow to fill the host viewport; this was missing from the first
+reference implementation and its Quick Start.
 
 ## Measures
 
@@ -54,6 +55,18 @@ performance comparison.
 The standalone quote-mark polish was excluded from the count because it did not
 resolve a failed acceptance check or change geometry.
 
+## Follow-up: root fills the host viewport
+
+A native Mac screenshot of the Dialog reference showed the host clear color
+through most of the window. The root panel had a logical height of 24 px in a
+1280 × 800 viewport because it used fit-content sizing without `grow=1`. The
+same omission was present in the Quick Start. Both roots now grow, and the
+TestUI reference fixture uses the same panel and asserts exact root/viewport
+bounds at 1280 × 800, 960 × 720, and 760 × 640, plus 1×, 1.25×, 1.5×, and 2×
+scales. The regression failed before the fix with `root=Rect{x=0, y=0,
+w=1280, h=24}` and passes after it. No desktop screenshot was added to the
+documentation.
+
 ## Validation
 
 - `/opt/homebrew/bin/odin test dialog -collection:alicorn=/private/tmp/alicorn-textfield-render -collection:alikit=. -collection:accesskit=/private/tmp/acetate-alicorn-master-3d49b8b/.deps/odin-accesskit -collection:accesskit_c=/private/tmp/alicorn-textfield-render/.deps/accesskit/accesskit-c-0.23.1/lib/macos/arm64/static -define:ODIN_TEST_THREADS=1`:
@@ -61,14 +74,21 @@ resolve a failed acceptance check or change geometry.
 - `/opt/homebrew/bin/odin build examples/dialog -collection:alicorn=/private/tmp/alicorn-textfield-render -collection:alikit=. -collection:accesskit=/private/tmp/acetate-alicorn-master-3d49b8b/.deps/odin-accesskit -collection:accesskit_c=/private/tmp/alicorn-textfield-render/.deps/accesskit/accesskit-c-0.23.1/lib/macos/arm64/static -out:/private/tmp/alikit-dialog-reference`:
   **passed**. The linker reports a duplicate `-lobjc` warning.
 - `/private/tmp/alikit-dialog-reference --smoke`:
-  **could not run**. SDL reported `The video driver did not add any displays`.
-- The updated reference also builds successfully to
-  `/private/tmp/alikit-dialog-reference-rootfix`; its `--smoke` run still exits
-  with `SDL_Init failed: The video driver did not add any displays`. No native
-  pixels or DPI captures were produced.
+  **could not run from the shell runner**. SDL reported
+  `The video driver did not add any displays`.
+- A live macOS capture of the pre-fix reference was inspected and showed the
+  host clear color around its 24 px root. The screenshot was not archived in
+  the repository. The post-fix executable builds, but the CUA session expired
+  before its native output could be recaptured.
 - The current Dialog suite passes **7/7**, including the four-scale reference
-  layout, focus, and visible-description check.
-- No desktop screenshots were added to documentation.
+  layout, root-to-viewport bounds, focus, and visible-description check.
+- The updated SDL_GPU reference binary builds successfully with
+  `-minimum-os-version:27.0`; linking reports the existing duplicate `-lobjc`
+  warning and that the installed SDL3 dylib targets macOS 27.2. The native
+  display-control session expired before a post-fix screenshot could be
+  reviewed.
+- No desktop screenshots were added to documentation. Native visual
+  verification after the fix remains outstanding.
 
 ## Evidence boundary
 

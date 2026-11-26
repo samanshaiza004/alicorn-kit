@@ -13,7 +13,7 @@ App :: struct {
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
 	if ui.panel(ctx, key=ui.key_string("quick-start-root"), width=-1,
-		height=-1, padding=24, gap=12,
+		height=-1, grow=1, padding=24, gap=12,
 		fill=ui.style_color(ctx, .Window_Background), label="quick-start-root") {
 		_ = ui.text(ctx, "Dialog", size=24)
 		if ui.button(ctx, "Show message", key=ui.key_string("quick-start-open")) {

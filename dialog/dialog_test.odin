@@ -90,7 +90,9 @@ Reference_App :: struct {
 }
 
 reference_render :: proc(app: ^Reference_App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=ui.key_string("reference-root"), width=-1, height=-1, padding=24, gap=12) {
+	if ui.panel(ctx, key=ui.key_string("reference-root"), width=-1, height=-1,
+		grow=1, padding=24, gap=12, fill=ui.style_color(ctx, .Window_Background),
+		label="reference-root") {
 		if ui.button(ctx, "Delete project", key=ui.key_string("reference-open"), width=144, height=36) {
 			_ = open(&app.state, ctx.runtime)
 		}
@@ -154,6 +156,22 @@ reference_open :: proc(app: ^Reference_App, t: ^testing.T, scale: f32 = 1) -> (t
 }
 
 @(private)
+dialog_reference_root_fills_viewport :: proc(
+	t: ^testing.T,
+	handle: ^testui.Test_Handle(Reference_App),
+	width, height: int,
+	scale: f32,
+) -> bool {
+	root_id, root_found := alicorn.node_by_key(handle.runtime,
+		ui.key_string("reference-root"), .Container)
+	root, root_ok := alicorn.node_info(handle.runtime, root_id)
+	viewport := alicorn.viewport_bounds(handle.runtime)
+	return testing.expectf(t, root_found && root_ok && root.bounds == viewport,
+		"the reference root should fill the %d×%d viewport at %.2fx: viewport=%v root=%v",
+		width, height, scale, viewport, root.bounds)
+}
+
+@(private)
 dialog_reference_idle_work_is_zero :: proc(work: testui.Turn_Work) -> bool {
 	if work.descriptions_emitted != 0 || work.descriptions_reused != 0 ||
 	   work.reconcile_nodes_visited != 0 || work.measure_nodes_examined != 0 ||
@@ -194,6 +212,8 @@ test_dialog_reference_geometry_focus_and_resizing :: proc(t: ^testing.T) {
 	handle, ok := reference_open(&app, t)
 	if !ok { return }
 	defer testui.close(&handle)
+
+	dialog_reference_root_fills_viewport(t, &handle, 1280, 800, 1)
 
 	opener := find_button(&handle, "Delete project")
 	if !testing.expect(t, opener.match == .Unique, "the reference trigger should be realized") {
@@ -251,6 +271,7 @@ test_dialog_reference_geometry_focus_and_resizing :: proc(t: ^testing.T) {
 	_ = testui.describe_once(&handle)
 	if !testing.expect(t, testui.resize(&handle, 960, 720) == .Ok,
 		"the reference scene should accept a medium viewport") { return }
+	dialog_reference_root_fills_viewport(t, &handle, 960, 720, 1)
 
 	testui.destroy_find_result(&panel)
 	panel = testui.find(&handle, testui.Query{
@@ -272,6 +293,7 @@ test_dialog_reference_geometry_focus_and_resizing :: proc(t: ^testing.T) {
 	testui.destroy_find_result(&panel)
 	if !testing.expect(t, testui.resize(&handle, 760, 640) == .Ok,
 		"the reference scene should accept a smaller viewport") { return }
+	dialog_reference_root_fills_viewport(t, &handle, 760, 640, 1)
 	panel = testui.find(&handle, testui.Query{
 		role=.Dialog, name="Delete project?", match_role=true, match_name=true,
 	})
@@ -296,6 +318,7 @@ dialog_reference_scale_case :: proc(t: ^testing.T, scale: f32) -> bool {
 	handle, ok := reference_open(&app, t, scale)
 	if !ok { return false }
 	defer testui.close(&handle)
+	if !dialog_reference_root_fills_viewport(t, &handle, 1280, 800, scale) { return false }
 
 	opener := find_button(&handle, "Delete project")
 	defer testui.destroy_find_result(&opener)

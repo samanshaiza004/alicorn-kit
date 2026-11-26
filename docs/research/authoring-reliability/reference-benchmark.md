@@ -177,9 +177,14 @@ See the [Data Grid result](results/data-grid.md) and its linked raw capture for
 the method, per-launch distributions, and limitations.
 
 Native screenshot comparison, physical fractional-DPI rendering, and platform
-accessibility review remain outstanding. A native Command Palette launch was
-attempted but SDL had no display in the runner. Do not treat the SVG targets or
-headless retained-output checks as visual-match evidence.
+accessibility review remain outstanding. Current Palette and Data Grid builds
+were inspected through live macOS captures on the 2560 × 1440 Retina display;
+the Palette query and three filtered results were visible, and the Data Grid
+showed its selected cell and 200-row dataset. Those captures were not archived
+as repository images. The pre-fix Dialog capture exposed a host-clear-color
+leak, now covered by a root-to-viewport regression; the CUA session expired
+before a post-fix capture. Do not treat the SVG targets or headless
+retained-output checks as visual-match evidence.
 
 ### Cross-reference observations
 
