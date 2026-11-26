@@ -98,6 +98,24 @@ representative text is shaped and visible within its retained element bounds.
 This verifies headless text output and layout bounds; it does not replace native
 pixel captures or DPI validation.
 
+### External-consumer compile check on macOS (2026-11-25)
+
+The PowerShell external-consumer harness could not run on this host because
+`pwsh` is unavailable. I reproduced its two build paths manually against the
+same pinned dependencies: the collection-import fixture built with the
+`alicorn` and `alikit` collections, and the copied Radio Group fixture built
+from the `components.json` copy recipe with no `alikit` collection. Both builds
+passed on macOS arm64 with Odin `dev-2026-11:9a6991685`, Alicorn
+`4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`, and AccessKit binding
+`e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b`.
+
+A read-only manifest audit checked all 19 component/supporting-package entries:
+declared sources, tests, examples, copy sources, package directories, package
+imports, and copy rewrites. It found zero errors and zero warnings. These are
+compile and registry-contract results only. SDL native smoke runs and pixel
+captures were not performed because the shell has no usable display; the
+PowerShell orchestration and website build remain unverified on this host.
+
 The run used Odin `dev-2026-11:9a6991685`, Alicorn
 `4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`, AccessKit binding
 `e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b`, one test thread, and seed `1729`.
