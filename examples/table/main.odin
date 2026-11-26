@@ -92,6 +92,24 @@ contains_fold :: proc(haystack, needle: string) -> bool {
 	return strings.contains(lower, needle_lower)
 }
 
+adopt_accessibility_requests :: proc(app: ^App, rt: ^alicorn.Runtime) {
+	if app == nil || rt == nil { return }
+	filter_node, filter_found := alicorn.node_by_key(rt,
+		ui.key_string("table-example-filter"), .Text_Field)
+	filter_id: alicorn.Semantic_ID
+	if filter_found { filter_id = alicorn.semantic_visual_id(filter_node) }
+	for {
+		request, found := alicorn.semantic_request_pop(rt)
+		if !found { break }
+		if request.kind == .Perform && request.id == filter_id && request.action == .Set_Value {
+			if ui.text_buffer_set(&app.query, request.text_value) {
+				rebuild_projection(app)
+			}
+		}
+		alicorn.semantic_request_event_destroy(rt, &request)
+	}
+}
+
 rebuild_projection :: proc(app: ^App) {
 	query := app.query.text
 	count := 0
@@ -115,6 +133,7 @@ rebuild_projection :: proc(app: ^App) {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
+	adopt_accessibility_requests(app, ctx.runtime)
 	if app.theme_error {
 		_ = ui.text(ctx, "Table theme contract is not satisfied.", size=15,
 			color=ui.style_color(ctx, .Danger))

@@ -24,6 +24,7 @@ TABLE_NAMESPACE :: u64(0x5441424C45303101) // "TABLE01"
 MAX_INSTANCE_ID :: u64(0x3FFFFFFFFFFFFFFF)
 MAX_COLUMNS :: core.MAX_COLUMNS
 CELL_KEY :: u64(0xA11C_6A01)
+TABLE_LIST_KEY :: u64(0xA11C_7AB1)
 
 Alignment :: core.Alignment
 Column :: core.Column
@@ -163,6 +164,31 @@ header_cell_semantic_id :: proc(instance_id, column_key: u64) -> alicorn.Semanti
 row_semantic_id :: proc(instance_id, row_key: u64) -> alicorn.Semantic_ID {
 	if instance_id == 0 || instance_id > MAX_INSTANCE_ID || row_key == 0 { return {} }
 	return alicorn.Semantic_ID{namespace=TABLE_NAMESPACE, value=mix(instance_id, row_key)}
+}
+
+// handle_semantic_reveal_request reveals a virtual row requested by
+// assistive technology. The application owns Alicorn's shared semantic
+// request queue and must dispatch each .Reveal event to the table instance
+// that published its semantic ID.
+handle_semantic_reveal_request :: proc(
+	rt: ^alicorn.Runtime,
+	rows: []Row,
+	instance_id: u64,
+	request: alicorn.Semantic_Request_Event,
+) -> bool {
+	if rt == nil || instance_id == 0 || instance_id > MAX_INSTANCE_ID ||
+	   request.kind != .Reveal || request.id.namespace != TABLE_NAMESPACE || request.id.value == 0 {
+		return false
+	}
+	list_node, found := alicorn.node_by_key(rt, ui.key_pair(TABLE_LIST_KEY, instance_id), .Scroll_Region)
+	if !found { return false }
+	for row, index in rows {
+		if row.key == 0 || row_semantic_id(instance_id, row.key) != request.id { continue }
+		_ = alicorn.virtual_list_ensure_visible(rt, list_node, index,
+			"assistive technology revealed a static table row")
+		return true
+	}
+	return false
 }
 
 cell_semantic_id :: proc(instance_id, row_key, column_key: u64) -> alicorn.Semantic_ID {
@@ -533,7 +559,7 @@ table :: proc(
 			ctx,
 			row_count,
 			resolved.virtual_row_height,
-			key=alicorn.key_string("alikit-table-list"),
+			key=ui.key_pair(TABLE_LIST_KEY, instance_id),
 			style=ui.layout_style(.Column, width=-1, height=list_height, clip=true),
 			label=resolved.accessible_label,
 			focusable=false,

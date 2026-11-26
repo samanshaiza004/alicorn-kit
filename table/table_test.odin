@@ -252,6 +252,27 @@ test_static_table_optional_virtualization :: proc(t: ^testing.T) {
 	if testing.expect(t, last.match == .Unique, "the last logical row should have a virtual semantic item") {
 		testing.expect(t, last.element.is_virtual_item,
 			"the last row should start outside the realized window")
+		if alicorn.semantic_reveal_request(handle.runtime, last.element.semantic_id) {
+			request, found := alicorn.semantic_request_pop(handle.runtime)
+			if testing.expect(t, found && request.kind == .Reveal,
+				"Alicorn should deliver a Reveal request for the virtual row") {
+				handled := handle_semantic_reveal_request(handle.runtime, fixture.rows[:], 9202, request)
+				testing.expect(t, handled, "the static table should resolve the requested stable row key")
+			}
+			if found { alicorn.semantic_request_event_destroy(handle.runtime, &request) }
+			_ = testui.describe_once(&handle)
+			revealed := testui.find(&handle, testui.Query{
+				role=.Table_Row, name="Row 200", match_role=true, match_name=true,
+			})
+			if testing.expect(t, revealed.match == .Unique,
+				"the requested logical row should remain published") {
+				testing.expect(t, !revealed.element.is_virtual_item,
+					"an assistive-technology Reveal request should realize the requested row")
+			}
+			testui.destroy_find_result(&revealed)
+		} else {
+			testing.expect(t, false, "the virtual row should accept an assistive-technology Reveal request")
+		}
 	}
 	testui.destroy_find_result(&last)
 

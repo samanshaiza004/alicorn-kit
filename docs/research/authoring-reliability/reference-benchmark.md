@@ -218,6 +218,13 @@ headless retained-output checks as pixel-match evidence.
   semantic row makes it a realized row. This follow-up adds a new contract after
   the original attempt-count exercise, so the reported 11 passes remain scoped to
   that earlier task definition.
+- The same request-queue audit found that the static Table also published
+  offscreen virtual rows without a public reveal resolver, and its reference
+  filter did not adopt semantic `.Set_Value` requests. The Table now resolves
+  `.Reveal` by its stable row key and instance identity, and its example routes
+  filter updates into application-owned state. Package and reference-app tests
+  cover both behaviors. The Table reference remains a nonvirtualized intrinsic
+  row-height example, so its app-level reveal path is not exercised there.
 - Dialog's public action helper fixes its button height at 32 px; reaching the
   target's 40 px uses ordinary `ui.button` controls inside the public action row.
 - The custom Command Palette shell needs runtime exports for modal overlay and

@@ -139,6 +139,16 @@ try {
     & $OdinPath @TableTestArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit table tests failed.' }
 
+    $TableReferenceTestArgs = @(
+        'test', 'examples/table',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'table_reference_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @TableReferenceTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit table reference accessibility tests failed.' }
+
     $DataGridTestArgs = @(
         'test', 'data_grid',
         '-define:ODIN_TEST_THREADS=1',

@@ -104,7 +104,31 @@ width is close to `measure_width`; set it to the intended container width.
 Virtualization is opt-in (`Options.virtualize` with `max_visible_rows` and
 `virtual_row_height`) because intrinsic measurement requires all rows to be
 described. Virtualized rows use Alicorn's fixed-row virtual list and publish
-unrealized rows as virtual `Table_Row` semantic items.
+unrealized rows as virtual `Table_Row` semantic items. When the host asks to
+reveal one of those rows, the application drains its shared semantic-request
+queue and dispatches the event to the table instance:
+
+```odin
+import alicorn "alicorn:runtime"
+import table "alikit:table"
+
+for {
+	request, found := alicorn.semantic_request_pop(rt)
+	if !found { break }
+	if request.kind == .Reveal {
+		_ = table.handle_semantic_reveal_request(
+			rt, app.visible_rows, app.table_instance_id, request,
+		)
+	}
+	alicorn.semantic_request_event_destroy(rt, &request)
+}
+```
+
+The helper resolves the row by its stable key and scrolls the matching virtual
+list. It returns false when the event does not belong to that table or the row
+is no longer in the current projection. Applications with multiple virtual
+tables should offer each reveal event to their table instances until one
+accepts it. Nonvirtualized tables need no reveal routing.
 
 ## Keyboard and accessibility contract
 
