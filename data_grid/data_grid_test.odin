@@ -243,6 +243,9 @@ check_large_grid_geometry :: proc(
 		row_bounds.y+row_bounds.h <= viewport.y+viewport.h+0.5
 	testing.expect(t, row_visible,
 		"the realized row should remain inside the clipped virtual-list viewport")
+	table_contains_row := testui.expect_inside(handle, &first_row.element, &grid_node.element)
+	testing.expect(t, table_contains_row.ok,
+		"the semantic Table bounds should contain its visible virtualized rows")
 
 	name_header := find_role(handle, .Table_Column_Header, "Name")
 	defer testui.destroy_find_result(&name_header)

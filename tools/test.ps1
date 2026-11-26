@@ -149,6 +149,16 @@ try {
     & $OdinPath @DataGridTestArgs
     if ($LASTEXITCODE -ne 0) { throw 'AliKit data grid tests failed.' }
 
+    $DataGridReferenceTestArgs = @(
+        'test', 'examples/data_grid',
+        '-define:ODIN_TEST_THREADS=1',
+        $AlicornCollection,
+        $AliKitCollection,
+        "-out:$(Join-Path $OutputRoot 'data_grid_reference_tests.exe')"
+    ) + $CompilerArguments
+    & $OdinPath @DataGridReferenceTestArgs
+    if ($LASTEXITCODE -ne 0) { throw 'AliKit data grid reference layout tests failed.' }
+
     $ScrollAreaTestArgs = @(
         'test', 'scroll_area',
         '-define:ODIN_TEST_THREADS=1',

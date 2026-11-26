@@ -21,6 +21,7 @@ SAMPLE_NAME_COUNT :: 8
 
 App :: struct {
 	view:            data_grid.State,
+	row_count_node:  ui.Node_ID,
 	columns:         [4]data_grid.Column,
 	query:           ui.Text_Buffer,
 	initialized:     bool,
@@ -166,38 +167,38 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 	status := fmt.tprintf("%d projects in this workspace", app.visible_count)
 	if app.status != "" { status = app.status }
 
-	if ui.column(ctx, key=ui.key_string("grid-example-window"), width=-1, height=-1) {
+	if ui.column(ctx, key=ui.key_string("grid-example-window"), width=-1, height=-1, grow=1) {
 		if ui.panel(ctx, key=ui.key_string("grid-example-titlebar"), width=-1, height=54,
 			fill=ui.style_color(ctx, .Subtle_Surface)) {
 			if ui.row(ctx, key=ui.key_string("grid-example-brand"), width=-1,
 				height=-1, align=.Center) {
-				_ = ui.column(ctx, key=ui.key_string("grid-example-brand-inset"), width=96, height=1)
+				if ui.column(ctx, key=ui.key_string("grid-example-brand-inset"), width=96, height=1) {}
 				_ = ui.text(ctx, "Northstar", size=15)
 			}
 		}
 		if ui.row(ctx, key=ui.key_string("grid-example-main"), width=-1, height=-1, grow=1) {
 			if ui.panel(ctx, key=ui.key_string("grid-example-rail"), width=72, height=-1,
 				fill=ui.style_color(ctx, .Subtle_Surface), align=.Center) {
-				_ = ui.column(ctx, key=ui.key_string("grid-example-rail-top-space"), width=1, height=34)
+				if ui.column(ctx, key=ui.key_string("grid-example-rail-top-space"), width=1, height=34) {}
 				if ui.icon_button(ctx, "Northstar", .Info,
 					key=ui.key_string("grid-example-brand-mark"),
 					style=ui.layout_style(width=34, height=34), variant=.Primary) {
 					app.status = "Northstar workspace."
 				}
-				_ = ui.column(ctx, key=ui.key_string("grid-example-rail-brand-gap"), width=1, height=26)
+				if ui.column(ctx, key=ui.key_string("grid-example-rail-brand-gap"), width=1, height=26) {}
 				if ui.icon_button(ctx, "Projects", .File,
 					key=ui.key_string("grid-example-projects"),
 					style=ui.layout_style(width=36, height=36), selected=true) {
 					app.status = "Projects is the current view."
 				}
-				_ = ui.column(ctx, key=ui.key_string("grid-example-rail-projects-gap"), width=1, height=15)
+				if ui.column(ctx, key=ui.key_string("grid-example-rail-projects-gap"), width=1, height=15) {}
 				if ui.icon_button(ctx, "Search", .Search,
 					key=ui.key_string("grid-example-search"),
 					style=ui.layout_style(width=36, height=36)) {
 					app.status = "Use the project filter to search this dataset."
 				}
 			}
-			_ = ui.column(ctx, key=ui.key_string("grid-example-content-inset"), width=38, height=-1)
+			if ui.column(ctx, key=ui.key_string("grid-example-content-inset"), width=38, height=-1) {}
 			if ui.column(ctx, key=ui.key_string("grid-example-content"), width=panel_width,
 				height=-1, gap=19) {
 				_ = ui.column(ctx, key=ui.key_string("grid-example-content-top-space"),
@@ -217,7 +218,7 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 						app.status = "Project creation is an application-owned action."
 					}
 				}
-				if ui.panel(ctx, key=ui.key_string("grid-example-panel"), width=-1,
+				if ui.panel(ctx, key=ui.key_string("grid-example-panel"), width=panel_width,
 					height=panel_height, padding=16, gap=12,
 					fill=ui.style_color(ctx, .Surface), radius=10,
 					stroke=ui.border(1, ui.style_color(ctx, .Border), .Inside)) {
@@ -229,7 +230,8 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 							_ = ui.text_field(ctx, "Filter projects", &app.query,
 								key=ui.key_string("grid-example-filter"), width=320, height=36)
 						}
-						_ = ui.text(ctx, fmt.tprintf("%d rows", app.visible_count), size=12,
+						app.row_count_node = ui.text(ctx, fmt.tprintf("%d rows", app.visible_count),
+							key=ui.key_string("grid-example-row-count"), size=12,
 							color=ui.style_color(ctx, .Muted_Text))
 					}
 					if event := data_grid.data_grid(

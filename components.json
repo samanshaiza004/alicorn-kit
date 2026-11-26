@@ -1128,7 +1128,8 @@
         "data_grid/data_grid.odin"
       ],
       "tests": [
-        "data_grid/data_grid_test.odin"
+        "data_grid/data_grid_test.odin",
+        "examples/data_grid/main_test.odin"
       ],
       "example": "examples/data_grid/main.odin",
       "dependencies": [

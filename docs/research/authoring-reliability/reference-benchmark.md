@@ -97,7 +97,7 @@ capture cannot be made, report visual match as **unverified**, not as a pass.
 | --- | ---: | --- | --- | --- | --- |
 | Command Palette | 4 | Yes, for its custom modal shell; stock `build` does not require it | 1280 × 800, 960 × 720, 760 × 640 passed | Native pixels and DPI unverified | [Result](results/command-palette.md) |
 | Dialog | 7 | No | 1280 × 800, 960 × 720, 760 × 640 passed | Native pixels and DPI unverified | [Result](results/dialog.md) |
-| Data Grid | 6 | No | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI scales 1×, 1.25×, 1.5×, 2×; native pixels unverified | [Result](results/data-grid.md) |
+| Data Grid | 11 | No | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI scales 1×, 1.25×, 1.5×, 2×; native pixels unverified | [Result](results/data-grid.md) |
 
 The iteration counts are not a speed ranking. They count implementation/verification
 passes needed to satisfy each component's different contracts. All three examples
@@ -105,6 +105,13 @@ passed their reported headless behavior and geometry checks. Every implementatio
 recorded specific fixed dimensions or public-API constraints; none used hidden
 runtime workarounds for layout. The reports preserve those details rather than
 claiming that the cookbook removed all authoring friction.
+
+These results do not establish that authors or AI agents make fewer initial
+mistakes than they did with earlier Alicorn/AliKit APIs. We did not run the same
+tasks against an earlier revision with matched instructions and task budgets.
+The attempt counts measure correction passes needed to satisfy the current
+checks; they are not a before/after success-rate comparison. This experiment
+also has no equivalent-work CPU, memory, or settled-idle baseline.
 
 Native screenshot comparison, physical fractional-DPI rendering, and platform
 accessibility review remain outstanding. A native Command Palette launch was
@@ -120,7 +127,10 @@ headless retained-output checks as visual-match evidence.
   thickness inside its full-width background only when rows can scroll. A later
   transition test found that this conditional wrapper recreated the keyed header
   grid and sortable cells when the scrollbar appeared or disappeared; using
-  Alicorn's identity-transparent container preserves those node IDs.
+  Alicorn's identity-transparent container preserves those node IDs. The full
+  reference-app check later caught unclosed empty layout scopes, a collapsed
+  panel width, and a semantic Table owner that did not cover its virtualized
+  rows; all three now have permanent regression assertions.
 - Dialog's public action helper fixes its button height at 32 px; reaching the
   target's 40 px uses ordinary `ui.button` controls inside the public action row.
 - The custom Command Palette shell needs runtime exports for modal overlay and

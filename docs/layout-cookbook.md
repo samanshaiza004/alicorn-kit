@@ -47,6 +47,21 @@ if ui.row(ctx, width=-1, height=-1, gap=12) {
 }
 ```
 
+## Keep empty layout scopes scoped
+
+`ui.row`, `ui.column`, and `ui.panel` open containers. Even an empty spacer must use the scoped
+`if` form so the container closes before the next sibling. Do not ignore the result of a direct
+scope call as if it were a leaf spacer; later controls can become children of that container and
+inherit its narrow bounds.
+
+```odin
+import ui "alicorn:ui"
+if ui.row(ctx, width=-1, height=36, align=.Center) {
+	if ui.column(ctx, width=16, height=1) {}
+	_ = ui.text(ctx, "The next sibling follows the spacer")
+}
+```
+
 ## Align icon-and-label rows
 
 Give the row an explicit height, center its children on the cross axis, and keep the icon and label

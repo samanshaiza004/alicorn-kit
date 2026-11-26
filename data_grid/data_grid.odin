@@ -627,6 +627,11 @@ data_grid :: proc(
 	header_count := 0
 	if !resolved.hide_header { header_count = 1 }
 	row_count := len(rows)
+	list_height := resolved.row_height
+	if row_count > 0 {
+		list_height = f32(min(resolved.max_visible_rows, row_count))*resolved.row_height
+	}
+	root_height := list_height+f32(header_count)*resolved.header_height
 	scrollbar_gutter := f32(0)
 	if row_count > resolved.max_visible_rows { scrollbar_gutter = alicorn.SCROLLBAR_THICKNESS }
 	logical_count := row_count+header_count
@@ -637,7 +642,10 @@ data_grid :: proc(
 		.Container,
 		label=resolved.accessible_label,
 		key=alicorn.key_string("alikit-data-grid-root"),
-		style=ui.layout_style(.Column, width=-1, height=-1, gap=0),
+		// Keep the semantic focus owner aligned with its header and virtual
+		// viewport. The virtual list is a layout boundary and cannot supply this
+		// fit-content height to its parent.
+		style=ui.layout_style(.Column, width=-1, height=root_height, gap=0),
 		focusable=true,
 	)
 	if state.root_node == 0 { return }
@@ -672,7 +680,6 @@ data_grid :: proc(
 		_ = ui.text(ctx, resolved.empty_label, key=alicorn.key_string("alikit-data-grid-empty"),
 			size=resolved.cell_text_size, color=alicorn.style_color(ctx, .Muted_Text))
 	} else {
-		list_height := f32(min(resolved.max_visible_rows, row_count))*resolved.row_height
 		list := alicorn.virtual_list_begin(
 			ctx,
 			row_count,

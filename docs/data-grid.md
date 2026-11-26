@@ -148,10 +148,14 @@ claimed as a pattern.
 - sortable header semantics, direction description, Press action, and
   `Sort_Proposed`;
 - 200-row virtualization with virtual semantic rows and Page Down reveal;
+- semantic Table bounds covering the header and realized virtual-list rows;
 - shared header/body tracks with and without a scrollbar, first-row clipping,
   visible cell text at 1280, 960, and 760 px widths, and retained header
   identity across scrollbar appearance/disappearance;
 - fractional TestUI presentation scales at 1×, 1.25×, 1.5×, and 2×;
+- the full 200-row reference application's visible first row, table bounds,
+  toolbar separation, and viewport containment at 1280 × 800, 960 × 720, and
+  760 × 640;
 - the runnable example build against the pinned Alicorn and AccessKit collections.
 
 There is no `testui` data-grid pattern at the pinned revision; `.Roving_List`
