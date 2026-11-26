@@ -111,16 +111,20 @@ mistakes than they did with earlier Alicorn/AliKit APIs. We did not run the same
 tasks against an earlier revision with matched instructions and task budgets.
 The attempt counts measure correction passes needed to satisfy the current
 checks; they are not a before/after success-rate comparison. This experiment
-also has no equivalent-work CPU, memory, or settled-idle baseline.
+does not have a matched before/after CPU or memory comparison, a cross-framework
+workload, or a settled-idle baseline. The separate Data Grid scaling probe
+below measures one current implementation at three dataset sizes; it is not a
+before/after or cross-framework performance result.
 
 The Data Grid's visual virtualization does not bound all work by the viewport.
 For assistive-technology navigation, `data_grid()` publishes a virtual
 `Table_Row` semantic item for every offscreen logical row; Alicorn retains those
-row-level semantic entities while realizing cells only for visible rows. This
-means the semantic pass and its working set grow with dataset size. It is an
-intentional accessibility tradeoff in the current API, not a measured
-performance failure. Benchmark 200, 10,000, and 100,000 rows for description
-time and semantic memory before making large-dataset scalability claims.
+row-level semantic entities while realizing cells only for visible rows. The
+new 200/10,000/100,000-row probe measured description p50 at 0.137/1.705/32.653
+ms and whole-process peak RSS at 13.7/28.9/260.8 MB, respectively. These are
+single-machine TestUI CPU and process-memory measurements, not native renderer
+or screen-reader results. See the [Data Grid result](results/data-grid.md) for
+the full method, p95/p99 values, and limits of the measurement.
 
 Native screenshot comparison, physical fractional-DPI rendering, and platform
 accessibility review remain outstanding. A native Command Palette launch was

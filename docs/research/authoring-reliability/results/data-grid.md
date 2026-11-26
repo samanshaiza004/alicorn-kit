@@ -14,7 +14,7 @@ rows. The vector reference is not a desktop capture.
 | 1×, 1.25×, 1.5×, 2× DPI | The full-reference checks pass at all four scales for each viewport (12 size/scale combinations). These are logical presentation checks, not native display DPI captures. |
 | Visual match to SVG target | Unverified: this environment did not provide a native display capture for side-by-side pixel review. |
 | Existing behavior and accessibility | Data Grid package tests pass: stable row/column identities, table semantics, disabled-row navigation, selected/current publication, sorting proposals, keyboard activation, 200-row virtualization, Page Down reveal, and header identity across scrollbar transitions. The example keeps sorting, filtering, and accepted selection application-owned. |
-| Large-dataset total work | Visual cells are viewport/overscan bounded, but `data_grid()` publishes one virtual `Table_Row` semantic item per offscreen row. This makes semantic traversal and retained row-semantic storage scale with all logical rows. CPU and memory were not measured beyond the 200-row fixture. |
+| Large-dataset total work | Visual cells are viewport/overscan bounded, but `data_grid()` publishes one virtual `Table_Row` semantic item per offscreen row. The retained-description scaling probe below measures the resulting CPU and whole-process peak RSS at 200, 10,000, and 100,000 rows. |
 
 ## Attempt log
 
@@ -94,6 +94,82 @@ test failed with the expected `12.00 px` Name-track mismatch at 1280, 960, and
 760 px. The source was restored to use Alicorn's `SCROLLBAR_THICKNESS` constant,
 and the final tests pass. The temporary change is not present in the working
 tree.
+
+## Follow-up: retained-description scaling
+
+The earlier 200-row reference did not test the performance and working-set
+cost of publishing virtual row semantics for large datasets. The new
+[`benchmarks/data_grid/main.odin`](../../../../benchmarks/data_grid/main.odin) probe
+isolates repeated root descriptions at a fixed 1280 × 800 viewport with 12
+visible rows. It warms the retained tree three times, takes 101 samples, and
+measures the full TestUI turn plus Alicorn's `Semantic_Sync` stage. It also
+checks the public semantic-node lookup API to confirm that every logical row
+was published and that offscreen rows were marked virtual. The lookup is done
+outside the timed samples.
+
+| Logical rows | Virtual row semantics | Description p50 / p95 / p99 | Reconcile p50 | Semantic sync p50 | Peak process RSS |
+| ---: | ---: | ---: | ---: | ---: | ---: |
+| 200 | 187 | 0.137 / 0.220 / 0.229 ms | 0.073 ms | 0.023 ms | 13.7 MB |
+| 10,000 | 9,987 | 1.705 / 2.854 / 3.602 ms | 0.282 ms | 0.219 ms | 28.9 MB |
+| 100,000 | 99,987 | 32.653 / 38.583 / 40.490 ms | 5.000 ms | 4.920 ms | 260.8 MB |
+
+All three cases emitted 44 non-row semantic descriptions in addition to the
+row descriptions. At 100,000 rows, the runtime's Reconcile stage took 5.000 ms
+p50, of which Semantic_Sync took 4.920 ms. The 32.653 ms Description stage
+also includes the application callback and other turn work; this probe does
+not isolate callback time. The component's all-rows loop is the unbounded path
+visible in source. Warm samples examined zero layout nodes, zero measure
+nodes, shaped no text, and made zero semantic structure changes, so layout and
+shaping do not explain the growth. A tenfold row increase from 10,000 to
+100,000 increased description p50 about 19.2-fold and peak process RSS about
+9.0-fold in this run.
+
+Peak RSS is the whole child process, including the application-owned row and
+cell arrays, the runtime's retained semantic entities, and TestUI. It is not a
+runtime-only memory measurement. Timings are CPU-only retained-pipeline
+measurements: they exclude native renderer preparation, GPU submission,
+presentation, and physical accessibility clients. The p95/p99 figures come
+from 101 samples on one machine and are useful as a local scaling probe, not a
+cross-machine performance claim.
+
+### Reproduction
+
+Environment: macOS 27.2.1 arm64; Odin `dev-2026-11:9a6991685`; AliKit
+`d705cd6217517360a22750d82a89adec9c7feca2` (benchmark working tree); Alicorn
+`4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`; release (`-o:speed`) build.
+
+```sh
+odin build benchmarks/data_grid -o:speed \
+  -collection:alicorn=/private/tmp/alicorn-textfield-render \
+  -collection:alikit=. \
+  -collection:accesskit=/private/tmp/acetate-alicorn-master-3d49b8b/.deps/odin-accesskit \
+  -collection:accesskit_c=/private/tmp/alicorn-textfield-render/.deps/accesskit/accesskit-c-0.23.1/lib/macos/arm64/static \
+  -out:/private/tmp/alikit-data-grid-scaling-speed
+
+python3 -c '
+import resource, subprocess, sys
+p = subprocess.run(["/private/tmp/alikit-data-grid-scaling-speed", "100000"], text=True, capture_output=True)
+sys.stdout.write(p.stdout)
+sys.stderr.write(p.stderr)
+print("child_maxrss_bytes", resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
+sys.exit(p.returncode)
+'
+```
+
+Run the second command with `200` and `10000` as separate invocations to
+measure each child process independently. On macOS, `ru_maxrss` is reported in
+bytes; the table rounds it to decimal MB. The benchmark itself accepts any
+row count at least as large as the visible-row count, or runs the three
+reference sizes when invoked without an argument. Each invocation prints the
+raw Description and Semantic_Sync samples and p50/p95/p99 for all runtime
+stages.
+
+This establishes a real scalability limit in the current semantic publication
+contract. Do not remove the offscreen row semantics as an AliKit-only fix:
+they let assistive technology address virtualized rows. A future optimization
+needs a runtime-level way to retain or page collection semantics without
+re-describing and retaining one row entity per logical item. Native screen
+reader behavior and GPU presentation remain separate validation work.
 
 ## Commands
 
