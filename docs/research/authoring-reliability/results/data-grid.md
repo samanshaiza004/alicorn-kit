@@ -82,9 +82,11 @@ The conditional header slot now uses Alicorn's identity-transparent container.
 It remains a layout parent for the track grid, while its appearance no longer
 changes descendant identity. The regression checks the header surface, track
 grid, sortable cell, and label IDs in both directions, as well as the slot's
-parent change. It passes with the Data Grid suite at 7/7; the shared Table suite
-passes at 3/3. The original six recreation passes remain unchanged; this is a
-post-benchmark correctness follow-up.
+parent change. It also verifies that the grid's stable root remains the
+keyboard focus owner as the scrollbar disappears and returns. It passes with
+the Data Grid suite at 7/7; the shared Table suite passes at 3/3. The original
+six recreation passes remain unchanged; this is a post-benchmark correctness
+follow-up.
 
 ## Scrollbar negative control
 

@@ -327,6 +327,7 @@ test_short_dataset_does_not_reserve_scrollbar_gutter :: proc(t: ^testing.T) {
 }
 
 Header_Identity_Probe :: struct {
+	focus_owner: alicorn.Node_ID,
 	surface:    alicorn.Node_ID,
 	grid:       alicorn.Node_ID,
 	name_cell:  alicorn.Node_ID,
@@ -348,6 +349,8 @@ probe_header_identity :: proc(
 	probe.surface = header_row.element.visual_node
 	probe.header_semantic = header_row.element.semantic_id
 	testui.destroy_find_result(&header_row)
+	probe.focus_owner, _ = alicorn.node_by_key(handle.runtime,
+		ui.key_string("alikit-data-grid-root"), .Container)
 
 	name_header := find_role(handle, .Table_Column_Header, "Name")
 	if !testing.expect(t, name_header.match == .Unique, "the Name header should stay published") {
@@ -361,8 +364,9 @@ probe_header_identity :: proc(
 	probe.grid, _ = alicorn.node_by_key(handle.runtime, ui.key_u64(0xA11C_6A11), .Grid)
 	probe.name_text, _ = alicorn.node_by_key(handle.runtime,
 		ui.key_pair(0xA11C_6A04, 10), .Text)
-	ok = probe.surface != 0 && probe.grid != 0 && probe.name_cell != 0 && probe.name_text != 0
-	testing.expect(t, ok, "the header surface, grid, cell, and label should have retained nodes")
+	ok = probe.focus_owner != 0 && probe.surface != 0 && probe.grid != 0 &&
+		probe.name_cell != 0 && probe.name_text != 0
+	testing.expect(t, ok, "the grid focus owner and header parts should have retained nodes")
 	return
 }
 
@@ -387,6 +391,8 @@ test_header_identity_survives_scrollbar_gutter_transitions :: proc(t: ^testing.T
 
 	before, before_ok := probe_header_identity(t, &handle)
 	if !before_ok { return }
+	if !testing.expect(t, alicorn.focused_node(handle.runtime) == before.focus_owner,
+		"the Data Grid should begin with focus on its stable root owner") { return }
 	before_grid_info, before_grid_found := alicorn.node_info(handle.runtime, before.grid)
 	_, gutter_present := alicorn.node_by_key(handle.runtime,
 		ui.key_string("alikit-table-header-scrollbar-gutter"), .Container)
@@ -416,6 +422,9 @@ test_header_identity_survives_scrollbar_gutter_transitions :: proc(t: ^testing.T
 		"the sortable header cell should keep its identity across the parent change")
 	testing.expect(t, before.name_text == after.name_text,
 		"the header label should keep its identity across the parent change")
+	testing.expect(t, before.focus_owner == after.focus_owner &&
+		alicorn.focused_node(handle.runtime) == before.focus_owner,
+		"removing the scrollbar gutter should preserve keyboard focus on the grid")
 
 	fixture.rows = rows[:9]
 	alicorn.invalidate_root(handle.runtime, "data-grid scrollbar restored beyond viewport capacity")
@@ -433,6 +442,9 @@ test_header_identity_survives_scrollbar_gutter_transitions :: proc(t: ^testing.T
 		"the sortable header should keep its identity when scrolling returns")
 	testing.expect(t, before.name_text == restored.name_text,
 		"the header label should keep its identity when scrolling returns")
+	testing.expect(t, before.focus_owner == restored.focus_owner &&
+		alicorn.focused_node(handle.runtime) == before.focus_owner,
+		"restoring the scrollbar gutter should preserve keyboard focus on the grid")
 }
 
 @(test)
