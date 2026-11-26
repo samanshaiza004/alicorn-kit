@@ -1,0 +1,24 @@
+interface Props {
+  title: string;
+  target: string;
+  alt: string;
+  description: string;
+  href: string;
+}
+
+const { title, target, alt, description, href } = Astro.props;
+const base = import.meta.env.BASE_URL.replace(/\/?$/, '/');
+const image = `${base}reference-previews/${target}.svg`;
+---
+<figure class="reference-preview">
+  <a class="reference-preview__image-link" href={href} aria-label={`Open ${title} documentation`}>
+    <img src={image} alt={alt} loading="lazy" decoding="async" />
+  </a>
+  <figcaption>
+    <div class="reference-preview__copy">
+      <a class="reference-preview__title" href={href}>{title}</a>
+      <p>{description}</p>
+    </div>
+    <span class="reference-preview__label">Authored design target · not a desktop capture</span>
+  </figcaption>
+</figure>

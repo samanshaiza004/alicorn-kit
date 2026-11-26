@@ -3,6 +3,8 @@ title: Data Grid
 description: An interactive dataset grid with one Tab stop, roving cell focus, selection publication, and sort proposals.
 ---
 
+import ReferencePreview from '../../../components/ReferencePreview.astro';
+
 <div class="lede">
 <code>alikit:data_grid</code> is an interactive, virtualized, <strong>non-spanned</strong> grid over
 Alicorn's compound table roles. The application owns columns, rows, comparators, filters, and the
@@ -18,6 +20,14 @@ Start with the [minimal Quick Start](https://github.com/samanshaiza004/alicorn-k
 The [reference application](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/data_grid/main.odin) is a larger runnable consumer with filtering, sorting, responsive columns, and 200 rows.
 
 The authoring-reliability target is an [authored Data Grid SVG](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/references/data-grid.svg), not a desktop capture. The example and its result log are linked from the [reference benchmark](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/reference-benchmark.md).
+
+<ReferencePreview
+  title="Data Grid reference target"
+  target="data-grid"
+  alt="Project data grid with aligned columns, a selected cell, filter controls, and status information."
+  description="Authored layout target for the runnable reference app; it is not a screenshot of Alicorn output."
+  href="https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/data_grid/main.odin"
+/>
 
 ## Responsibility split
 

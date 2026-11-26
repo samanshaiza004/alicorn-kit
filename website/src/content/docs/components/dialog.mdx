@@ -3,6 +3,8 @@ title: Dialog
 description: Composable modal dialogs with focus placement, dismissal policy, and focus restoration.
 ---
 
+import ReferencePreview from '../../../components/ReferencePreview.astro';
+
 <div class="lede">
 <code>alikit:dialog</code> provides Dialog and Alert Dialog behavior over Alicorn's modal overlay.
 The application owns when to open, the dialog copy and content, action meaning, and dispatch. The
@@ -46,6 +48,14 @@ for the application state change. This remains within the public UI and Dialog A
 
 The authoring target is an [authored SVG layout](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/references/dialog.svg),
 not a screenshot of a running desktop app.
+
+<ReferencePreview
+  title="Dialog reference target"
+  target="dialog"
+  alt="Destructive confirmation dialog over a project settings workspace, with wrapped copy and aligned actions."
+  description="Authored layout target for the runnable reference app; it is not a screenshot of Alicorn output."
+  href="https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/dialog/main.odin"
+/>
 
 ## Source and limits
 

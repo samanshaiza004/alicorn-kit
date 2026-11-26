@@ -14,6 +14,7 @@ hero:
 ---
 
 import CatalogCard from '../../components/CatalogCard.astro';
+import ReferencePreview from '../../components/ReferencePreview.astro';
 
 <div class="lede">
 AliKit is an optional companion library for <a href="https://github.com/Carnival-Science/Alicorn">Alicorn</a>,
@@ -25,6 +26,34 @@ component lifecycle.
 ## Runnable examples
 
 Each catalog page documents a source-level Odin component and links to a complete native application example. The catalog pages do not include screenshots of the desktop applications.
+
+## Reference layouts
+
+These three authored vector targets show the layout and content used by the reference examples. They are design illustrations, not captures of Alicorn output or pixel-match claims.
+
+<div class="reference-gallery">
+  <ReferencePreview
+    title="Command Palette"
+    target="command-palette"
+    alt="Command palette over a dark workspace, with a query field, three action rows, and keyboard hints."
+    description="Nested modal layout, expanding query, result rows, and shortcut alignment."
+    href="components/command-palette/"
+  />
+  <ReferencePreview
+    title="Dialog"
+    target="dialog"
+    alt="Destructive confirmation dialog over a project settings workspace, with wrapped copy and aligned actions."
+    description="Intrinsic height, wrapped text, safe initial focus, and trailing actions."
+    href="components/dialog/"
+  />
+  <ReferencePreview
+    title="Data Grid"
+    target="data-grid"
+    alt="Project data grid with aligned columns, a selected cell, filter controls, and status information."
+    description="Shared column tracks, clipping, selection, and a virtualized dataset."
+    href="components/data-grid/"
+  />
+</div>
 
 ## The catalog
 

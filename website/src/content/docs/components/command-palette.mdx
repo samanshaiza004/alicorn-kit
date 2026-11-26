@@ -3,6 +3,8 @@ title: Command Palette
 description: A native modal command palette with caller-owned items, stable IDs, virtualized results, and focus restoration.
 ---
 
+import ReferencePreview from '../../../components/ReferencePreview.astro';
+
 <div class="lede">
 <code>alikit:command_palette</code> provides a themed modal palette for searching and activating a
 caller-owned action list. The application owns command discovery, stable IDs, ranking policy, and
@@ -18,6 +20,14 @@ Start with the [minimal Quick Start](https://github.com/samanshaiza004/alicorn-k
 The separate [reference application](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette/main.odin) runs with `--reference` to show the full Northstar workspace scene and prefill its query with `export`. Its visual target is the authored [Command Palette SVG](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/references/command-palette.svg); this page does not embed desktop application screenshots.
 
 The reference test checks the modal's 660 × 576 logical bounds at 1280 × 800, 960 × 720, and 760 × 640, plus query/result visibility, containment, filtering, selection semantics, activation, and focus restoration. TestUI observes retained text and geometry, not GPU pixels. Native pixel matching and DPI captures remain unverified.
+
+<ReferencePreview
+  title="Command Palette reference target"
+  target="command-palette"
+  alt="Command palette over a dark workspace, with a query field, three action rows, and keyboard hints."
+  description="Authored layout target for the runnable reference app; it is not a screenshot of Alicorn output."
+  href="https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/command_palette/main.odin"
+/>
 
 ## Responsibility split
 

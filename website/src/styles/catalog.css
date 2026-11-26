@@ -96,3 +96,90 @@ table.api-table td:first-child {
   color: var(--sl-color-gray-2);
   max-width: 52rem;
 }
+
+/* Authored reference targets. These are illustrations, not runtime captures. */
+.reference-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+  align-items: start;
+  gap: 1rem;
+  margin: 1.25rem 0 2.25rem;
+}
+
+.reference-preview {
+  min-width: 0;
+  margin: 1.25rem 0 2rem;
+  overflow: hidden;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.75rem;
+  background: var(--sl-color-black);
+}
+
+.reference-gallery .reference-preview {
+  margin: 0;
+}
+
+.reference-preview__image-link {
+  display: block;
+  overflow: hidden;
+  background: #101318;
+}
+
+.reference-preview img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  object-position: center;
+}
+
+.reference-preview figcaption {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem 0.9rem;
+}
+
+.reference-preview__copy {
+  min-width: 0;
+}
+
+.reference-preview__title {
+  color: var(--sl-color-white);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.reference-preview__title:hover {
+  color: var(--sl-color-accent-high);
+}
+
+.reference-preview__copy p {
+  margin: 0.3rem 0 0;
+  color: var(--sl-color-gray-2);
+  font-size: var(--sl-text-sm);
+  line-height: 1.45;
+}
+
+.reference-preview__label {
+  flex: 0 0 auto;
+  max-width: 10rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 999px;
+  padding: 0.15rem 0.45rem;
+  color: var(--sl-color-gray-2);
+  font-size: var(--sl-text-xs);
+  line-height: 1.35;
+  text-align: center;
+}
+
+@media (max-width: 40rem) {
+  .reference-preview figcaption {
+    flex-direction: column;
+  }
+
+  .reference-preview__label {
+    max-width: 100%;
+  }
+}

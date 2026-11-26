@@ -46,14 +46,22 @@ npm run build    # static output in dist/
 npm run preview
 ```
 
-`npm run build` first copies the repository-root `components.json` into `public/components.json`
-so the registry download and the catalog cannot drift.
+The `predev`, `prestart`, and `prebuild` hooks copy the repository-root `components.json` into
+`public/components.json` and stage the authored SVG design targets in
+`public/reference-previews/`. The target SVGs stay canonical under
+`docs/research/authoring-reliability/references/`; they are labeled as illustrations and are not
+captures of desktop-app output.
 
 ## GitHub Pages
 
 The standalone catalog site is **retired**. The catalog is published in the Alicorn documentation
 site at <https://carnival-science.github.io/Alicorn/components/>, which syncs these pages and
 `components.json` at a pinned revision.
+
+When syncing pages that include `ReferencePreview`, also copy
+`website/public/reference-previews/*.svg` to the documentation site's
+`reference-previews/` path. These generated assets come from the canonical SVGs under
+`docs/research/authoring-reliability/references/`.
 
 `.github/workflows/pages.yml` now deploys only `website/redirect/`: an index page and a 404 page
 that forward the old URL — including per-component paths, `manifest/`, and `compatibility/` — to

@@ -5,6 +5,8 @@
   "type": "module",
   "description": "AliKit component catalog — native Alicorn components for Odin.",
   "scripts": {
+    "predev": "node scripts/sync-manifest.mjs",
+    "prestart": "node scripts/sync-manifest.mjs",
     "dev": "astro dev",
     "start": "astro dev",
     "prebuild": "node scripts/sync-manifest.mjs",

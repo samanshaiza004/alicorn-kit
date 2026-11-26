@@ -25,7 +25,8 @@ It starts with three components that exercise different layout contracts:
 | Data Grid | Shared tracks, clipping, scrolling, selected cell, large virtual dataset | [Data Grid SVG](references/data-grid.svg) |
 
 These are authored vector targets, not screenshots of the AliKit desktop app.
-They are not documentation previews of running Alicorn output. The reference viewport is
+The catalog displays them as design-reference illustrations, not previews of running Alicorn
+output. The reference viewport is
 1280 × 800 logical pixels; each implementation must also be exercised at 960 × 720 and
 760 × 640. Check native presentation at 1×, 1.25×, 1.5×, and 2× display scale where a native
 capture environment is available.

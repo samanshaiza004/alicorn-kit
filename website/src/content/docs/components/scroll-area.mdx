@@ -3,6 +3,8 @@ title: Scroll Area
 description: Bounded or intrinsic retained scrolling with keyboard navigation, Scroll View semantics, and scrollbar part geometry.
 ---
 
+import ReferencePreview from '../../../components/ReferencePreview.astro';
+
 <div class="lede">
 <code>alikit:scroll_area</code> wraps Alicorn's retained scroll region with a caller-owned state,
 content-derived sizing, a single keyboard focus stop, and a public scrollbar geometry snapshot.
@@ -17,6 +19,14 @@ shows a 40-line build log. Its [authored SVG target](https://github.com/samansha
 is a layout reference, not a desktop screenshot. The example uses the public runtime package only
 for optional extension-role theme registration; the basic `begin`/`end` pattern needs the UI and
 Scroll Area packages.
+
+<ReferencePreview
+  title="Scroll Area reference target"
+  target="scroll-area"
+  alt="Scrollable build log with line numbers, a visible scrollbar, and an action to jump to the latest line."
+  description="Authored layout target for the runnable example; it is not a screenshot of Alicorn output."
+  href="https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/scroll_area/main.odin"
+/>
 
 ## Sizing and ownership
 

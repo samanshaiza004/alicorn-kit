@@ -3,6 +3,8 @@ title: Icon Picker
 description: A complete copyable icon chooser with search, two appearances, roving focus, and one activation event.
 ---
 
+import ReferencePreview from '../../../components/ReferencePreview.astro';
+
 <div class="lede">
 <code>alikit:icon_picker</code> is a complete composite built from public parts: search, a virtualized grid or list
 of icon choices, roving keyboard focus, semantic selection, one activation event, and two
@@ -19,6 +21,14 @@ Start with the [minimal Quick Start](https://github.com/samanshaiza004/alicorn-k
 The [reference application](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker/main.odin) demonstrates the complete copyable composite inside a modal, including Grid/List switching and focus restoration. The [parts](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker_parts/main.odin) and [composition](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker_composition/main.odin) examples show custom rendering and dialog composition.
 
 The [authored List appearance target](https://github.com/samanshaiza004/alicorn-kit/blob/main/docs/research/authoring-reliability/references/icon-picker.svg) is a visual reference, not a desktop capture. The default example switches between Grid and List with Ctrl+2; retained-output tests verify the query and list text remain drawable after filtering and resizing.
+
+<ReferencePreview
+  title="Icon Picker reference target"
+  target="icon-picker"
+  alt="Icon chooser modal with a search field, icon grid, selected item, and list-appearance sample."
+  description="Authored Grid and List target; it is not a screenshot of Alicorn output."
+  href="https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/icon_picker/main.odin"
+/>
 
 ## Responsibility split
 
