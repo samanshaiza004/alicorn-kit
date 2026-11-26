@@ -268,7 +268,7 @@ The earlier matched comparison did not isolate the public `data_grid()` call,
 and used only three fresh processes per revision. This follow-up adds a timer
 around that call and runs five fresh processes per revision and row count. The
 same instrumented benchmark source is compiled against baseline AliKit
-`fded57a94e6a` and current component source at `2c12de142113`. Both use the
+`fded57a94e6a` and current component source at `47223c7013ee`. Both use the
 same pinned Alicorn, AccessKit binding, Odin compiler, release mode, viewport,
 dataset, and alternating launch order. See the
 [raw 30-process capture](data-grid-performance-follow-up-raw.json) and the
@@ -338,7 +338,7 @@ python3 benchmarks/data_grid/run_paired.py \
   --baseline /private/tmp/alikit-data-grid-baseline \
   --candidate /private/tmp/alikit-data-grid-current \
   --baseline-revision fded57a94e6a2c5bf44d8b980befe5a260ff5ed5 \
-  --candidate-revision 2c12de1421133dd22a8d1ea59d6ebcb31e9b4c25 \
+  --candidate-revision 47223c7013ee8f92a3593b6ac99702ef505f2b6e \
   --runs 5 \
   --output docs/research/authoring-reliability/results/data-grid-performance-follow-up-raw.json
 ```

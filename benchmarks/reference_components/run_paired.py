@@ -2,11 +2,13 @@
 """Run matched headless Command Palette and Dialog probes on macOS."""
 
 import argparse
+import hashlib
 import json
 import platform
 import subprocess
 import sys
 from datetime import date
+from pathlib import Path
 
 
 SAMPLE_RUNNER = r"""
@@ -127,6 +129,7 @@ def main():
         "machine": f"{platform.platform()} ({platform.machine()})",
         "benchmark": {
             "kind": "TestUI component-pipeline probe; not a native renderer or full reference-app benchmark",
+            "source_sha256": hashlib.sha256(Path("benchmarks/reference_components/main.odin").read_bytes()).hexdigest(),
             "viewport": [1280, 800],
             "warmups": 3,
             "settling_advance_ns": 2_000_000_000,

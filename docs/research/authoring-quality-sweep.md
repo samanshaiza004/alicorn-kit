@@ -179,6 +179,9 @@ example builds also completed successfully. See [GitHub Actions run
 This verifies the current pinned Windows compile/test matrix. It does not
 replace macOS native pixel captures, physical-DPI comparisons, a screen-reader
 session, or the controlled historical AI-authoring comparison described below.
+The follow-up benchmark commit `47223c7013ee` also passed this workflow with
+the same 21 targets and native example build matrix; see [run
+45889679227](https://github.com/samanshaiza004/alicorn-kit/actions/runs/45889679227).
 
 ### Catalog reference previews (2026-11-26)
 

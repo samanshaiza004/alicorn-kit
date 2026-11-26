@@ -6,7 +6,7 @@
     "description": "Before the authoring-quality reference work"
   },
   "candidate": {
-    "alikit_revision": "2c12de1421133dd22a8d1ea59d6ebcb31e9b4c25",
+    "alikit_revision": "47223c7013ee8f92a3593b6ac99702ef505f2b6e",
     "description": "Current AliKit source state"
   },
   "controlled_dependencies": {

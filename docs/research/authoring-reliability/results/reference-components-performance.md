@@ -8,7 +8,7 @@ order constant.
 
 | Item | Baseline | Candidate |
 | --- | --- | --- |
-| AliKit | `fded57a94e6a2c5bf44d8b980befe5a260ff5ed5` | `95fc8af9ac0296be195d72828fba8a3a9a53ff7e` |
+| AliKit | `fded57a94e6a2c5bf44d8b980befe5a260ff5ed5` | `47223c7013ee8f92a3593b6ac99702ef505f2b6e` |
 | Alicorn | `4e0862f368cb638b7aece0bad9dd82cae0c3d8c4` | Same |
 | AccessKit binding | `e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b` | Same |
 | Odin | `dev-2026-11:9a6991685` | Same |
@@ -21,8 +21,11 @@ viewport, three warmups, a 2 s virtual settling advance, 101 idle probes, and
 1,001 forced descriptions. Five fresh processes per revision and component
 run in alternating revision order. The [paired runner](../../../../benchmarks/reference_components/run_paired.py)
 records each process's TestUI turn timings, Alicorn stage timings, process CPU
-time, and peak RSS. The full samples are in the
-[raw capture](reference-components-performance-comparison-raw.json).
+time, and peak RSS. This current-main capture uses five launches per revision
+and component. The full samples are in the
+[current raw capture](reference-components-performance-current-raw.json). The
+earlier five-launch capture against intermediate candidate `95fc8af` remains
+available in [its original raw file](reference-components-performance-comparison-raw.json).
 
 The table reports the median of five process-level percentiles. Description
 percentiles are from the 1,001 timed TestUI turns within each process. RSS is
@@ -30,14 +33,14 @@ the median process peak, not retained heap size or long-session memory.
 
 | Component | Description p50 (µs), baseline → candidate | p95 (µs) | p99 (µs) | Process CPU (ms) | Peak RSS (MB) |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| Command Palette | 42 → 45 | 100 → 106 | 152 → 188 | 77.88 → 84.40 | 12.337 → 12.337 |
-| Dialog | 13 → 13 | 19 → 18 | 54 → 60 | 40.81 → 40.50 | 11.960 → 11.960 |
+| Command Palette | 27 → 27 | 29 → 28 | 37 → 40 | 42.14 → 41.66 | 12.288 → 12.304 |
+| Dialog | 10 → 10 | 11 → 10 | 11 → 11 | 24.18 → 24.39 | 11.928 → 11.944 |
 
 These measurements do not establish a material performance or memory
-regression. Palette p50 differs by 3 µs in this minimal scene; its per-process
-p50 ranges overlap (31–54 µs baseline, 31–50 µs candidate), as do the broad
-p95/p99 ranges. Dialog p50 and p95 are effectively unchanged. The five-launch
-CPU and RSS medians are small and inconsistent across the two components.
+regression. Command Palette p50 is 27 µs in both revisions; its per-process
+ranges overlap for p50 (27–27 µs baseline, 26–30 µs candidate) and p95/p99.
+Dialog p50 is 10 µs in both revisions, and its p95/p99 ranges overlap. The
+five-launch CPU and RSS medians differ by at most about 1% for each component.
 The 101 idle probes passed in every process with zero retained work, runtime
 invalidation, or frame demand.
 
@@ -50,9 +53,12 @@ growth, energy, or physical DPI. Treat it as a local non-regression check, not
 a broad performance claim.
 
 The implementation delta is narrow: `command_palette` adds a public `Match`
-alias, and the shared palette result surface now grows to fill its row; the
-Dialog implementation file is unchanged between these revisions. This probe
-includes the palette row-width correction but does not isolate its cost.
+alias and semantic query-value adoption; the dialog implementation is
+unchanged between these revisions. The stock palette workload does not send a
+semantic query-value request, so the comparison measures its ordinary retained
+description path rather than the new handler specifically. This probe includes
+the palette row-width correction and does not isolate the cost of any one
+change.
 
 ## Reproduction
 
@@ -87,9 +93,9 @@ odin build benchmarks/reference_components -o:speed \
 python3 benchmarks/reference_components/run_paired.py \
   --baseline /private/tmp/alikit_reference_components_baseline \
   --candidate /private/tmp/alikit_reference_components_candidate \
-  --candidate-revision 95fc8af9ac0296be195d72828fba8a3a9a53ff7e \
+  --candidate-revision 47223c7013ee8f92a3593b6ac99702ef505f2b6e \
   --runs 5 \
-  --output docs/research/authoring-reliability/results/reference-components-performance-comparison-raw.json
+  --output docs/research/authoring-reliability/results/reference-components-performance-current-raw.json
 ```
 
 `run_paired.py` uses Python's per-child `resource` accounting for process CPU

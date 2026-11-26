@@ -100,8 +100,17 @@ review failures. Count a new implementation attempt only when a code change
 follows a failed check in one of those categories; report harness/test mistakes
 separately from interface defects. Also record first-build time, runtime
 imports, fixed dimensions/workarounds, resize and scale results, visual score,
-and unresolved limitations. The current condition-C runs are a pilot, not a
-before/after result.
+and unresolved limitations.
+
+Condition A and C each have one pilot implementation per reference. They are
+not a controlled comparison: the A trials received shared host and text-field
+API context after work had started, and the C pilot did not complete the same
+live validation protocol. All three A examples compiled against the pinned
+historical packages, but SDL reported that no video display was available, so
+none could be checked for live geometry, interaction, resize, DPI, or
+accessibility output. Keep these pilots out of any condition-level success-rate
+claim. Run the full independently repeated protocol above before comparing
+conditions.
 
 ## Per-reference acceptance criteria
 
@@ -164,30 +173,33 @@ mistakes than they did with earlier Alicorn/AliKit APIs. We did not run the same
 tasks against an earlier revision with matched instructions and task budgets.
 The attempt counts measure correction passes needed to satisfy the current
 checks; they are not a before/after success-rate comparison. Matched headless
-component-pipeline CPU and process peak-RSS probes now cover the Command Palette
-and Dialog, and a separate matched description/RSS comparison covers the Data
-Grid. These are local same-runtime comparisons, not native rendering,
-long-session memory, or cross-framework workloads. Settled-idle gates now cover the three reference
-scenes: Command Palette and Dialog run 32 virtual 16 ms probes after a 2 s
+component-pipeline CPU and process peak-RSS probes cover all three references
+at current main: Command Palette and Dialog at 47223c7, and Data Grid at
+47223c7 with a direct timer around `data_grid()`. In this capture, Palette
+description p50 was 27 µs in both revisions, Dialog was 10 µs in both, and the
+Data Grid call was 0.082/2.257/37.082 ms at baseline versus
+0.090/2.092/37.157 ms for 200/10,000/100,000 rows. These are local same-runtime
+comparisons, not native rendering, long-session memory, or cross-framework
+workloads. Settled-idle gates now cover the three reference scenes: Command
+Palette and Dialog run 32 virtual 16 ms probes after a 2 s
 settling advance at each TestUI scale; Data Grid runs 101 probes at each row
 count. All assert zero retained work, invalidation, and frame demand. These are
 headless work-demand checks, not native wakeup, GPU/presentation, energy, or
 idle CPU-timing measurements. Persistent-heap measurements and a matched
 before/after authoring comparison remain outstanding. See the [Command Palette
 and Dialog probe](results/reference-components-performance.md) and the [Data
-Grid matched comparison](results/data-grid.md#matched-beforeafter-comparison)
+Grid current-head comparison](results/data-grid.md#current-head-component-call-comparison)
 for their dependency controls, results, and limits.
 
 The Data Grid's visual virtualization does not bound all work by the viewport.
 For assistive-technology navigation, `data_grid()` publishes a virtual
 `Table_Row` semantic item for every offscreen logical row; Alicorn retains those
 row-level semantic entities while realizing cells only for visible rows. The
-current three-launch probe measured Description p50 at 0.118/1.259/30.277 ms
-and whole-process peak RSS at 13.9/28.9/273.0 MB for 200/10,000/100,000 rows.
-The matched comparison shows effectively flat full-turn p50 across the
-baseline and candidate, with Semantic_Sync p50 about 5–7% higher for the
-candidate at 10,000 and 100,000 rows. These are single-machine TestUI CPU and
-process-memory measurements, not native renderer or screen-reader results.
+current five-launch probe measured direct `data_grid()` call p50 at
+0.090/2.092/37.157 ms and whole-process peak RSS at 13.91/28.90/260.41 MB for
+200/10,000/100,000 rows. The matched baseline values were 0.082/2.257/37.082 ms
+and 13.76/28.77/261.03 MB. These are single-machine TestUI CPU and process-
+memory measurements, not native renderer or screen-reader results.
 See the [Data Grid result](results/data-grid.md) and its linked raw capture for
 the method, per-launch distributions, and limitations.
 
