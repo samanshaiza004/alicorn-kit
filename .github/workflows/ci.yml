@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: Carnival-Science/Alicorn
-          ref: 47c9d4a7cd1f637876190fec899daeeac00a30ae
+          ref: 4e0862f368cb638b7aece0bad9dd82cae0c3d8c4
           path: alicorn
 
       - name: Check out pinned AccessKit binding
