@@ -131,6 +131,28 @@ presentation, and physical accessibility clients. The
 all 18 process summaries and the sorted 101-sample Description and Semantic
 Sync distributions for each launch.
 
+### Settled-idle follow-up
+
+The release runner now probes settled idle before its repeated-description
+samples. For each data size it advances TestUI 101 times by 16 ms and requires
+zero emitted or reused descriptions, retained stage work, GPU submissions,
+runtime invalidation, and scheduled frame demand. All three cases passed. The
+same single release run measured the following full-description distribution;
+these are one-process results and should not be compared directly with the
+three-launch medians above.
+
+| Logical rows | Description p50 / p95 / p99 |
+| ---: | ---: |
+| 200 | 0.194 / 0.207 / 0.234 ms |
+| 10,000 | 2.641 / 3.212 / 3.400 ms |
+| 100,000 | 38.390 / 46.319 / 65.344 ms |
+
+The raw 101-sample Description and Semantic Sync distributions, runtime stage
+percentiles, and idle assertions are in the [single-run capture](data-grid-idle-probe-raw.json).
+The idle probe establishes zero retained work and frame demand under TestUI; it
+does not measure native host wakeups, GPU or display submissions, energy, or
+idle wall-clock CPU cost.
+
 ## Matched before/after comparison
 
 This comparison checks whether the Data Grid layout corrections changed the
@@ -168,10 +190,11 @@ not a general performance claim.
 
 All conditions published the same logical and virtual row counts and emitted
 the same number of semantic descriptions. This is a repeated full-root
-description workload, not an isolated style change, input-latency test, idle
-measurement, native renderer/GPU benchmark, or comparison of all three
-reference applications. The raw artifact records individual process
-percentiles and distributions.
+description workload, not an isolated style change, input-latency test, native
+renderer/GPU benchmark, or comparison of all three reference applications.
+The separate settled-idle probe above is a work-demand gate, not an idle CPU
+timing comparison. The raw artifact records individual process percentiles and
+distributions.
 
 ### Reproduction
 

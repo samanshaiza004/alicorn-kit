@@ -41,6 +41,41 @@ reference_absf :: proc(value: f32) -> f32 {
 }
 
 @(private)
+reference_idle_work_is_zero :: proc(work: testui.Turn_Work) -> bool {
+	if work.descriptions_emitted != 0 || work.descriptions_reused != 0 ||
+	   work.reconcile_nodes_visited != 0 || work.measure_nodes_examined != 0 ||
+	   work.measure_nodes_executed != 0 || work.layout_nodes_visited != 0 ||
+	   work.paint_nodes_visited != 0 || work.composition_nodes_visited != 0 ||
+	   work.text_shape_requests != 0 || work.semantic_entities_resolved != 0 ||
+	   work.semantic_structure_changes != 0 || work.semantic_property_changes != 0 ||
+	   work.semantic_projection_nodes_added != 0 || work.semantic_projection_nodes_updated != 0 ||
+	   work.semantic_projection_nodes_removed != 0 || work.gpu_submits != 0 {
+		return false
+	}
+	for stage_index in 0..<alicorn.RUNTIME_TIMING_STAGE_COUNT {
+		if work.stage_timings_ns[alicorn.Runtime_Timing_Stage(stage_index)] != 0 { return false }
+	}
+	return true
+}
+
+@(private)
+reference_palette_settled_idle :: proc(t: ^testing.T, handle: ^testui.Test_Handle(Reference_Test_App), scale: f32) -> bool {
+	// Allow transient pointer/focus transitions to finish before probing idle.
+	if !testing.expect(t, testui.advance_time(handle, 2_000_000_000) == .Ok,
+		"the reference palette should settle before its idle probe") { return false }
+	for sample in 0..<32 {
+		if !testing.expectf(t, testui.advance_time(handle, 16_000_000) == .Ok,
+			"idle probe %d should advance at scale %.2f", sample, scale) { return false }
+		work := handle.last_turn.work
+		if !testing.expectf(t, reference_idle_work_is_zero(work) &&
+			!handle.runtime.invalidated && !alicorn.presentation_needs_frame(handle.runtime),
+			"settled palette should have no retained work or frame demand at scale %.2f, probe %d",
+			scale, sample) { return false }
+	}
+	return true
+}
+
+@(private)
 reference_test_render :: proc(app: ^Reference_Test_App, ctx: ^ui.UI) {
 	if ui.column(ctx, key=ui.key_string("palette-reference-test-root"),
 		width=-1, height=-1, padding=16) {
@@ -219,6 +254,7 @@ reference_palette_scale_case :: proc(t: ^testing.T, scale: f32) -> bool {
 		"the first result should remain visible and contained at scale %.2f: %s %s",
 		scale, testui.layout_check_diagnostic(row_inside),
 		testui.visible_text_diagnostic(row_visible)) { return false }
+	if !reference_palette_settled_idle(t, &handle, scale) { return false }
 	return true
 }
 

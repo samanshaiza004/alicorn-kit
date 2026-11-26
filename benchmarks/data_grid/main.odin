@@ -76,6 +76,23 @@ sort_samples :: proc(values: []u64) {
 	}
 }
 
+work_is_zero :: proc(work: testui.Turn_Work) -> bool {
+	if work.descriptions_emitted != 0 || work.descriptions_reused != 0 ||
+	   work.reconcile_nodes_visited != 0 || work.measure_nodes_examined != 0 ||
+	   work.measure_nodes_executed != 0 || work.layout_nodes_visited != 0 ||
+	   work.paint_nodes_visited != 0 || work.composition_nodes_visited != 0 ||
+	   work.text_shape_requests != 0 || work.semantic_entities_resolved != 0 ||
+	   work.semantic_structure_changes != 0 || work.semantic_property_changes != 0 ||
+	   work.semantic_projection_nodes_added != 0 || work.semantic_projection_nodes_updated != 0 ||
+	   work.semantic_projection_nodes_removed != 0 || work.gpu_submits != 0 {
+		return false
+	}
+	for stage_index in 0..<alicorn.RUNTIME_TIMING_STAGE_COUNT {
+		if work.stage_timings_ns[alicorn.Runtime_Timing_Stage(stage_index)] != 0 { return false }
+	}
+	return true
+}
+
 run_case :: proc(row_count: int) -> bool {
 	app := Bench_App{}
 	build_data(&app, row_count)
@@ -124,6 +141,23 @@ run_case :: proc(row_count: int) -> bool {
 		return false
 	}
 
+	fmt.println("case", row_count, "viewport", VIEWPORT_WIDTH, VIEWPORT_HEIGHT)
+	// A presentation may become idle after settling; scheduled time advances
+	// must not create recurring descriptions, retained work, or frame demand.
+	for sample in 0..<SAMPLE_COUNT {
+		if testui.advance_time(&handle, 16_000_000) != .Ok {
+			fmt.eprintln("idle probe failed", row_count, sample, testui.last_turn_diagnostic(&handle))
+			return false
+		}
+		if !work_is_zero(handle.last_turn.work) || handle.runtime.invalidated ||
+		   alicorn.presentation_needs_frame(handle.runtime) {
+			fmt.eprintln("settled grid did recurring work", row_count, sample,
+				handle.last_turn.work, "invalidated", handle.runtime.invalidated)
+			return false
+		}
+	}
+	fmt.println("settled_idle_probes", SAMPLE_COUNT, "retained_work", 0, "frame_demand", false)
+
 	description_samples: [SAMPLE_COUNT]u64
 	stage_samples: [alicorn.RUNTIME_TIMING_STAGE_COUNT][SAMPLE_COUNT]u64
 	semantic_description_samples: [SAMPLE_COUNT]u64
@@ -151,7 +185,6 @@ run_case :: proc(row_count: int) -> bool {
 	}
 	sort_samples(semantic_description_samples[:])
 
-	fmt.println("case", row_count, "viewport", VIEWPORT_WIDTH, VIEWPORT_HEIGHT)
 	fmt.println("logical_row_semantic_entities", logical_row_entities)
 	fmt.println("offscreen_row_semantic_entities", virtual_row_entities)
 	fmt.println("offscreen_row_label_bytes", virtual_row_label_bytes)

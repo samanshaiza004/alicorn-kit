@@ -21,6 +21,7 @@ around the dark dialog and making the surrounding application text low-contrast.
 | Layout workarounds | Uses ordinary `ui.button` inside the public Dialog action row to reach the target's 40 px button height; no spacers, overlaps, or positioned layout |
 | Viewport checks | 1280 × 800 initial scene, then 960 × 720 and 760 × 640 TestUI resizes; panel remains in bounds and its full copy stays drawable |
 | TestUI scales 1×, 1.25×, 1.5×, 2× | Passed for panel/action containment, action alignment, Cancel focus, and visible description. Native pixels and physical-DPI output remain unverified. |
+| Settled idle | At each TestUI scale, after a 2 s settling advance, 32 × 16 ms probes produced zero descriptions, reconcile/measure/layout/paint/shaping/semantic work, GPU submits, invalidation, or frame demand. Headless scheduler check only. |
 | Visual match to vector reference | Logical containment/alignment and text checks pass; pixel match unverified |
 | Behavior and accessibility | Dialog suite 7/7 passed, including four-scale reference output, Cancel-first focus, Return safety, modal focus behavior, dismissal, restoration, and nested/Alert contracts |
 

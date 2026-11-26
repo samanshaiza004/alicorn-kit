@@ -153,6 +153,41 @@ reference_open :: proc(app: ^Reference_App, t: ^testing.T, scale: f32 = 1) -> (t
 	return handle, true
 }
 
+@(private)
+dialog_reference_idle_work_is_zero :: proc(work: testui.Turn_Work) -> bool {
+	if work.descriptions_emitted != 0 || work.descriptions_reused != 0 ||
+	   work.reconcile_nodes_visited != 0 || work.measure_nodes_examined != 0 ||
+	   work.measure_nodes_executed != 0 || work.layout_nodes_visited != 0 ||
+	   work.paint_nodes_visited != 0 || work.composition_nodes_visited != 0 ||
+	   work.text_shape_requests != 0 || work.semantic_entities_resolved != 0 ||
+	   work.semantic_structure_changes != 0 || work.semantic_property_changes != 0 ||
+	   work.semantic_projection_nodes_added != 0 || work.semantic_projection_nodes_updated != 0 ||
+	   work.semantic_projection_nodes_removed != 0 || work.gpu_submits != 0 {
+		return false
+	}
+	for stage_index in 0..<alicorn.RUNTIME_TIMING_STAGE_COUNT {
+		if work.stage_timings_ns[alicorn.Runtime_Timing_Stage(stage_index)] != 0 { return false }
+	}
+	return true
+}
+
+@(private)
+dialog_reference_settled_idle :: proc(t: ^testing.T, handle: ^testui.Test_Handle(Reference_App), scale: f32) -> bool {
+	// Let transient focus/pointer transitions complete before checking for idle.
+	if !testing.expect(t, testui.advance_time(handle, 2_000_000_000) == .Ok,
+		"the reference dialog should settle before its idle probe") { return false }
+	for sample in 0..<32 {
+		if !testing.expectf(t, testui.advance_time(handle, 16_000_000) == .Ok,
+			"idle probe %d should advance at scale %.2f", sample, scale) { return false }
+		work := handle.last_turn.work
+		if !testing.expectf(t, dialog_reference_idle_work_is_zero(work) &&
+			!handle.runtime.invalidated && !alicorn.presentation_needs_frame(handle.runtime),
+			"settled dialog should have no retained work or frame demand at scale %.2f, probe %d",
+			scale, sample) { return false }
+	}
+	return true
+}
+
 @(test)
 test_dialog_reference_geometry_focus_and_resizing :: proc(t: ^testing.T) {
 	app := Reference_App{}
@@ -298,6 +333,7 @@ dialog_reference_scale_case :: proc(t: ^testing.T, scale: f32) -> bool {
 		testui.layout_check_diagnostic(inside_delete),
 		testui.layout_check_diagnostic(aligned),
 		testui.visible_text_diagnostic(visible_copy)) { return false }
+	if !dialog_reference_settled_idle(t, &handle, scale) { return false }
 	return true
 }
 

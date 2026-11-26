@@ -151,8 +151,14 @@ The attempt counts measure correction passes needed to satisfy the current
 checks; they are not a before/after success-rate comparison. A matched CPU and
 process-memory comparison now exists for the Data Grid's relevant AliKit source
 changes; it does not cover the Command Palette or Dialog and is not a
-cross-framework workload. There is still no settled-idle baseline for the three
-reference applications. See the [Data Grid matched comparison](results/data-grid.md#matched-beforeafter-comparison)
+cross-framework workload. Settled-idle gates now cover the three reference
+scenes: Command Palette and Dialog run 32 virtual 16 ms probes after a 2 s
+settling advance at each TestUI scale; Data Grid runs 101 probes at each row
+count. All assert zero retained work, invalidation, and frame demand. These are
+headless work-demand checks, not native wakeup, GPU/presentation, energy, or
+idle CPU-timing measurements. Command Palette and Dialog CPU and persistent-
+memory comparisons and a matched before/after authoring comparison remain
+outstanding. See the [Data Grid matched comparison](results/data-grid.md#matched-beforeafter-comparison)
 for its controlled dependency choice, results, and limits.
 
 The Data Grid's visual virtualization does not bound all work by the viewport.
