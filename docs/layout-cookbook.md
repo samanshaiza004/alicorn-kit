@@ -17,7 +17,9 @@ Use these values deliberately:
 `ui.row` and `ui.column` stretch across their parent's width and measure their height from their
 children by default. `grow` only distributes remaining space when the parent has a definite size.
 Choose a fixed or fill height for a full-window root; keep the default fit-content height for
-cards and compact groups.
+cards and compact groups. For a root panel that paints the window background, set both fill axes
+and `grow=1`. A fit-content root can leave most of the host viewport showing its clear color even
+when its children are laid out correctly.
 
 ```odin
 import ui "alicorn:ui"
@@ -28,6 +30,20 @@ if ui.column(ctx, width=-1, height=-1, padding=16, gap=12) {
 	}
 }
 ```
+
+For a window root with a painted background, make the root panel claim the host viewport instead
+of measuring only its children:
+
+```odin
+import ui "alicorn:ui"
+if ui.panel(ctx, width=-1, height=-1, grow=1, padding=24, gap=12,
+	fill=ui.style_color(ctx, .Window_Background)) {
+	_ = ui.text(ctx, "Workspace", size=24)
+}
+```
+
+The Dialog reference and Quick Start use this pattern. Their root-to-viewport bounds are checked at
+multiple window sizes and TestUI presentation scales.
 
 ## Let `grow` own the remainder
 
