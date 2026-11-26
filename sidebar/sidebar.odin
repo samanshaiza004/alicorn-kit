@@ -503,7 +503,7 @@ rail_begin :: proc(
 		.Container,
 		label=resolved.accessible_label,
 		key=alicorn.key_string("alikit-sidebar-rail"),
-		style=ui.layout_style(.Column, width=-1, height=-1, padding=resolved.padding,
+		style=ui.layout_style(.Column, width=-1, height=-1, grow=1, padding=resolved.padding,
 			gap=resolved.item_gap, align=.Stretch),
 		focusable=true,
 	)

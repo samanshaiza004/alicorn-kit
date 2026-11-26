@@ -97,7 +97,7 @@ test_on_key :: proc(state: rawptr, rt: ^alicorn.Runtime, key: alicorn.Applicatio
 	return handled
 }
 
-test_open :: proc(app: ^Test_App, t: ^testing.T) -> (testui.Test_Handle(Test_App), bool) {
+test_open :: proc(app: ^Test_App, t: ^testing.T, scale: f32 = 1) -> (testui.Test_Handle(Test_App), bool) {
 	buffer, ok := ui.text_buffer("")
 	if !ok { return {}, false }
 	app.query = buffer
@@ -105,6 +105,7 @@ test_open :: proc(app: ^Test_App, t: ^testing.T) -> (testui.Test_Handle(Test_App
 		app,
 		width=520,
 		height=420,
+		scale=scale,
 		initialize=test_initialize,
 		build_application=test_build,
 		on_key=test_on_key,
@@ -125,6 +126,30 @@ test_close :: proc(app: ^Test_App, handle: ^testui.Test_Handle(Test_App)) {
 
 find_option :: proc(handle: ^testui.Test_Handle(Test_App), name: string) -> testui.Find_Result {
 	return testui.find(handle, testui.Query{role=.List_Box_Option, name=name, match_role=true, match_name=true})
+}
+
+@(test)
+test_palette_parts_visible_option_is_contained_at_fractional_scales :: proc(t: ^testing.T) {
+	scales := [4]f32{1, 1.25, 1.5, 2}
+	for scale in scales {
+		app := Test_App{}
+		handle, ok := test_open(&app, t, scale)
+		if !ok { continue }
+
+		list := testui.find(&handle, testui.Query{role=.List_Box, name="Test results", match_role=true, match_name=true})
+		alpha := find_option(&handle, "Alpha")
+		if testing.expectf(t, list.match == .Unique && alpha.match == .Unique,
+			"the palette list and first option should be realized at %.2f", scale) {
+			visible := testui.expect_visible_text(&handle, &alpha.element, "Alpha")
+			inside := testui.expect_inside(&handle, &alpha.element, &list.element)
+			testing.expectf(t, visible.ok && inside.ok,
+				"the option should remain visible and inside its list at %.2f: %s %s",
+				scale, testui.visible_text_diagnostic(visible), testui.layout_check_diagnostic(inside))
+		}
+		testui.destroy_find_result(&list)
+		testui.destroy_find_result(&alpha)
+		test_close(&app, &handle)
+	}
 }
 
 @(test)

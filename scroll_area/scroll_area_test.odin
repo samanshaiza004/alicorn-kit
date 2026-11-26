@@ -1,6 +1,7 @@
 package scroll_area
 
 import "core:testing"
+import "core:math"
 import alicorn "alicorn:runtime"
 import testui "alicorn:testui"
 import ui "alicorn:ui"
@@ -37,9 +38,9 @@ fixture_render :: proc(app: ^Test_App, ctx: ^ui.UI) {
 	}
 }
 
-fixture_open :: proc(app: ^Test_App, t: ^testing.T) -> (testui.Test_Handle(Test_App), bool) {
+fixture_open :: proc(app: ^Test_App, t: ^testing.T, scale: f32 = 1) -> (testui.Test_Handle(Test_App), bool) {
 	app.options = fixture_options()
-	handle, status := testui.open(app, fixture_render, width=520, height=420)
+	handle, status := testui.open(app, fixture_render, width=520, height=420, scale=scale)
 	if !testing.expectf(t, status == .Ok, "the scroll area fixture should open: %v %s",
 		status, testui.last_turn_diagnostic(&handle)) {
 		if handle.runtime != nil { testui.close(&handle) }
@@ -51,6 +52,28 @@ fixture_open :: proc(app: ^Test_App, t: ^testing.T) -> (testui.Test_Handle(Test_
 @(private)
 find_area :: proc(handle: ^testui.Test_Handle(Test_App)) -> testui.Find_Result {
 	return testui.find(handle, testui.Query{role=.Scroll_View, name="Log", match_role=true, match_name=true})
+}
+
+@(test)
+test_scroll_area_visible_content_and_viewport_survive_fractional_scales :: proc(t: ^testing.T) {
+	scales := [4]f32{1, 1.25, 1.5, 2}
+	for scale in scales {
+		app := Test_App{}
+		handle, ok := fixture_open(&app, t, scale)
+		if !ok { continue }
+
+		area := find_area(&handle)
+		if testing.expectf(t, area.match == .Unique && area.element.has_bounds &&
+			math.abs(area.element.bounds.h-120) <= 0.5,
+			"the bounded scroll viewport should retain its 120 logical-pixel height at %.2f", scale) {
+			visible := testui.expect_visible_text(&handle, &area.element, "Visible top line")
+			testing.expectf(t, visible.ok,
+				"the initial visible line should remain drawable at %.2f: %s",
+				scale, testui.visible_text_diagnostic(visible))
+		}
+		testui.destroy_find_result(&area)
+		testui.close(&handle)
+	}
 }
 
 @(test)

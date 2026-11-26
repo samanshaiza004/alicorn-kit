@@ -117,15 +117,42 @@ card_render :: proc(app: ^Card_App, ctx: ^ui.UI) {
 	}
 }
 
-card_open :: proc(app: ^Card_App, t: ^testing.T) -> (testui.Test_Handle(Card_App), bool) {
+card_open :: proc(app: ^Card_App, t: ^testing.T, scale: f32 = 1) -> (testui.Test_Handle(Card_App), bool) {
 	app.actions = [2]Action{{id=alicorn.Action_ID(11), label="Retry"}, {id=alicorn.Action_ID(12), label="Details"}}
-	handle, status := testui.open(app, card_render, width=520, height=420)
+	handle, status := testui.open(app, card_render, width=520, height=420, scale=scale)
 	if !testing.expectf(t, status == .Ok, "the card fixture should open: %v %s",
 		status, testui.last_turn_diagnostic(&handle)) {
 		if handle.runtime != nil { testui.close(&handle) }
 		return {}, false
 	}
 	return handle, true
+}
+
+@(test)
+test_notice_card_text_and_action_fit_at_fractional_scales :: proc(t: ^testing.T) {
+	scales := [4]f32{1, 1.25, 1.5, 2}
+	for scale in scales {
+		app := Card_App{}
+		handle, ok := card_open(&app, t, scale)
+		if !ok { continue }
+		_ = testui.advance_time(&handle, 500_000_000)
+
+		warning := testui.find(&handle, testui.Query{
+			role=.Status, name="Couldn't refresh folder", match_role=true, match_name=true,
+		})
+		retry := testui.find(&handle, testui.Query{role=.Button, name="Retry", match_role=true, match_name=true})
+		if testing.expectf(t, warning.match == .Unique && retry.match == .Unique,
+			"the notice and its action should be present at %.2f", scale) {
+			visible := testui.expect_visible_text(&handle, &warning.element, "Couldn't refresh folder")
+			inside := testui.expect_inside(&handle, &retry.element, &warning.element)
+			testing.expectf(t, visible.ok && inside.ok,
+				"notice title and action should fit together at %.2f: %s %s",
+				scale, testui.visible_text_diagnostic(visible), testui.layout_check_diagnostic(inside))
+		}
+		testui.destroy_find_result(&warning)
+		testui.destroy_find_result(&retry)
+		testui.close(&handle)
+	}
 }
 
 @(test)

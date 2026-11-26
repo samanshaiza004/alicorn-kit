@@ -25,21 +25,32 @@ tree_view_visible_render :: proc(app: ^Tree_View_Visible_App, ctx: ^ui.UI) {
 }
 
 @(test)
-test_tree_view_realized_row_has_visible_label :: proc(t: ^testing.T) {
-	app := Tree_View_Visible_App{items=tree_view_test_items}
-	handle, status := testui.open(&app, tree_view_visible_render, width=360, height=220)
-	if !testing.expectf(t, status == .Ok, "the visible tree fixture should open: %v %s",
-		status, testui.last_turn_diagnostic(&handle)) {
-		if handle.runtime != nil { testui.close(&handle) }
-		return
-	}
-	defer testui.close(&handle)
+test_tree_view_realized_row_has_visible_label_at_fractional_scales :: proc(t: ^testing.T) {
+	scales := [4]f32{1, 1.25, 1.5, 2}
+	for scale in scales {
+		app := Tree_View_Visible_App{items=tree_view_test_items}
+		handle, status := testui.open(&app, tree_view_visible_render,
+			width=360, height=220, scale=scale)
+		if !testing.expectf(t, status == .Ok, "the visible tree fixture should open at %.2f: %v %s",
+			scale, status, testui.last_turn_diagnostic(&handle)) {
+			if handle.runtime != nil { testui.close(&handle) }
+			continue
+		}
 
-	row := testui.find(&handle, testui.Query{role=.Tree_Item, name="main.odin", match_role=true, match_name=true})
-	defer testui.destroy_find_result(&row)
-	if !testing.expect(t, row.match == .Unique, "the realized child row should publish its label") { return }
-	visible := testui.expect_visible_text(&handle, &row.element, "main.odin")
-	testing.expect(t, visible.ok, testui.visible_text_diagnostic(visible))
+		tree := testui.find(&handle, testui.Query{role=.Tree, name="Project files", match_role=true, match_name=true})
+		row := testui.find(&handle, testui.Query{role=.Tree_Item, name="main.odin", match_role=true, match_name=true})
+		if testing.expectf(t, tree.match == .Unique && row.match == .Unique,
+			"tree and realized child row should publish at %.2f (tree=%v row=%v)", scale, tree.match, row.match) {
+			visible := testui.expect_visible_text(&handle, &row.element, "main.odin")
+			inside := testui.expect_inside(&handle, &row.element, &tree.element)
+			testing.expectf(t, visible.ok && inside.ok,
+				"tree row should remain visible and contained at %.2f: %s %s",
+				scale, testui.visible_text_diagnostic(visible), testui.layout_check_diagnostic(inside))
+		}
+		testui.destroy_find_result(&tree)
+		testui.destroy_find_result(&row)
+		testui.close(&handle)
+	}
 }
 
 @(private)

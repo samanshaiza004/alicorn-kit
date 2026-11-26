@@ -45,11 +45,11 @@ fixture_render :: proc(app: ^Test_App, ctx: ^ui.UI) {
 	}
 }
 
-fixture_open :: proc(app: ^Test_App, t: ^testing.T) -> (testui.Test_Handle(Test_App), bool) {
+fixture_open :: proc(app: ^Test_App, t: ^testing.T, scale: f32 = 1) -> (testui.Test_Handle(Test_App), bool) {
 	app.items = FIXTURE_ITEMS
 	app.selected_key = 1
 	_ = request_focus(&app.rail)
-	handle, status := testui.open(app, fixture_render, width=640, height=420)
+	handle, status := testui.open(app, fixture_render, width=640, height=420, scale=scale)
 	if !testing.expectf(t, status == .Ok, "the sidebar fixture should open: %v %s",
 		status, testui.last_turn_diagnostic(&handle)) {
 		if handle.runtime != nil { testui.close(&handle) }
@@ -66,6 +66,30 @@ find_rail :: proc(handle: ^testui.Test_Handle(Test_App)) -> testui.Find_Result {
 @(private)
 find_item :: proc(handle: ^testui.Test_Handle(Test_App), name: string) -> testui.Find_Result {
 	return testui.find(handle, testui.Query{role=.List_Box_Option, name=name, match_role=true, match_name=true})
+}
+
+@(test)
+test_sidebar_routes_remain_visible_and_contained_at_fractional_scales :: proc(t: ^testing.T) {
+	scales := [4]f32{1, 1.25, 1.5, 2}
+	for scale in scales {
+		app := Test_App{}
+		handle, ok := fixture_open(&app, t, scale)
+		if !ok { continue }
+
+		rail_node := find_rail(&handle)
+		files := find_item(&handle, "Files")
+		if testing.expectf(t, rail_node.match == .Unique && files.match == .Unique,
+			"sidebar and visible route should be available at %.2f", scale) {
+			visible := testui.expect_visible_text(&handle, &files.element, "Files")
+			inside := testui.expect_inside(&handle, &files.element, &rail_node.element)
+			testing.expectf(t, visible.ok && inside.ok,
+				"sidebar route should remain visible and contained at %.2f: %s %s",
+				scale, testui.visible_text_diagnostic(visible), testui.layout_check_diagnostic(inside))
+		}
+		testui.destroy_find_result(&rail_node)
+		testui.destroy_find_result(&files)
+		testui.close(&handle)
+	}
 }
 
 @(test)

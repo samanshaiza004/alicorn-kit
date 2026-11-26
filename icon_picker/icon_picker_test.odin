@@ -287,7 +287,7 @@ on_pointer :: proc(state: rawptr, rt: ^alicorn.Runtime, event: alicorn.Pointer_E
 	}
 }
 
-test_open :: proc(app: ^Test_App, t: ^testing.T, width := 640, height := 520) -> (testui.Test_Handle(Test_App), bool) {
+test_open :: proc(app: ^Test_App, t: ^testing.T, width := 640, height := 520, scale: f32 = 1) -> (testui.Test_Handle(Test_App), bool) {
 	if !init(&app.picker) { return {}, false }
 	app.selected_key = 1
 	app.picker.selected_key = 1
@@ -296,6 +296,7 @@ test_open :: proc(app: ^Test_App, t: ^testing.T, width := 640, height := 520) ->
 		render,
 		width=width,
 		height=height,
+		scale=scale,
 		render_overlays=render_overlays,		on_key=on_key,
 		on_pointer=on_pointer,
 	)
@@ -315,6 +316,47 @@ test_close :: proc(app: ^Test_App, handle: ^testui.Test_Handle(Test_App)) {
 
 find_cell :: proc(handle: ^testui.Test_Handle(Test_App), name: string) -> testui.Find_Result {
 	return testui.find(handle, testui.Query{role=.List_Box_Option, name=name, match_role=true, match_name=true})
+}
+
+@(test)
+test_icon_picker_search_output_and_bounds_at_fractional_scales :: proc(t: ^testing.T) {
+	scales := [4]f32{1, 1.25, 1.5, 2}
+	for scale in scales {
+		app := Test_App{choices=fixture_choices(), appearance=.Grid, inline=true, focus_target=.Search}
+		handle, ok := test_open(&app, t, width=640, height=520, scale=scale)
+		if !ok { continue }
+
+		if !testing.expect(t, testui.step(&handle, testui.Input{kind=.Text_Commit, text="term"}) == .Ok,
+			"search input should be delivered at every presentation scale") {
+			test_close(&app, &handle)
+			continue
+		}
+		search := testui.find(&handle, testui.Query{
+			role=.Text_Field, name="Search icons", match_role=true, match_name=true,
+		})
+		picker := testui.find(&handle, testui.Query{
+			role=.List_Box, name="Icon choices", match_role=true, match_name=true,
+		})
+		if testing.expectf(t, search.match == .Unique && picker.match == .Unique,
+			"search and picker owners should remain available at %.2f", scale) {
+			visible := testui.expect_visible_text(&handle, &search.element, "term")
+			viewport := alicorn.Rect{0, 0, 640, 520}
+			search_inside_viewport := search.element.bounds.x >= viewport.x &&
+				search.element.bounds.y >= viewport.y &&
+				search.element.bounds.x+search.element.bounds.w <= viewport.x+viewport.w &&
+				search.element.bounds.y+search.element.bounds.h <= viewport.y+viewport.h
+			picker_inside_viewport := picker.element.bounds.x >= viewport.x &&
+				picker.element.bounds.y >= viewport.y &&
+				picker.element.bounds.x+picker.element.bounds.w <= viewport.x+viewport.w &&
+				picker.element.bounds.y+picker.element.bounds.h <= viewport.y+viewport.h
+			testing.expectf(t, visible.ok && search_inside_viewport && picker_inside_viewport,
+				"query text and picker should remain visible inside the viewport at %.2f: %s search=%v picker=%v",
+				scale, testui.visible_text_diagnostic(visible), search_inside_viewport, picker_inside_viewport)
+		}
+		testui.destroy_find_result(&search)
+		testui.destroy_find_result(&picker)
+		test_close(&app, &handle)
+	}
 }
 
 open_modal_by_click :: proc(handle: ^testui.Test_Handle(Test_App), t: ^testing.T) -> bool {

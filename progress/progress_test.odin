@@ -20,10 +20,10 @@ fixture_render :: proc(app: ^Test_App, ctx: ^ui.UI) {
 	progress(ctx, &app.state, app.value, 0, 100, options, key=alicorn.key_string("progress-fixture"), instance_id=8101)
 }
 
-fixture_open :: proc(app: ^Test_App, t: ^testing.T, options: Options = {}) -> (testui.Test_Handle(Test_App), bool) {
+fixture_open :: proc(app: ^Test_App, t: ^testing.T, options: Options = {}, scale: f32 = 1) -> (testui.Test_Handle(Test_App), bool) {
 	app.value = 25
 	app.options = options
-	handle, status := testui.open(app, fixture_render, width=420, height=220)
+	handle, status := testui.open(app, fixture_render, width=420, height=220, scale=scale)
 	if !testing.expectf(t, status == .Ok, "the progress fixture should open: %v %s",
 		status, testui.last_turn_diagnostic(&handle)) {
 		if handle.runtime != nil { testui.close(&handle) }
@@ -35,6 +35,30 @@ fixture_open :: proc(app: ^Test_App, t: ^testing.T, options: Options = {}) -> (t
 @(private)
 lookup_progress :: proc(handle: ^testui.Test_Handle(Test_App)) -> (alicorn.Semantic_Node, bool) {
 	return alicorn.semantic_node_lookup(handle.runtime, progress_semantic_id(8101))
+}
+
+@(test)
+test_progress_visible_label_and_value_at_fractional_scales :: proc(t: ^testing.T) {
+	scales := [4]f32{1, 1.25, 1.5, 2}
+	for scale in scales {
+		app := Test_App{}
+		handle, ok := fixture_open(&app, t, scale=scale)
+		if !ok { continue }
+
+		owner := testui.find(&handle, testui.Query{
+			role=.Progress, name="Upload progress", match_role=true, match_name=true,
+		})
+		if testing.expectf(t, owner.match == .Unique,
+			"the progress owner should remain exposed at %.2f", scale) {
+			visible_label := testui.expect_visible_text(&handle, &owner.element, "Upload progress")
+			visible_value := testui.expect_visible_text(&handle, &owner.element, "25%")
+			testing.expectf(t, visible_label.ok && visible_value.ok,
+				"progress label and value should remain drawable at %.2f: %s %s",
+				scale, testui.visible_text_diagnostic(visible_label), testui.visible_text_diagnostic(visible_value))
+		}
+		testui.destroy_find_result(&owner)
+		testui.close(&handle)
+	}
 }
 
 @(test)

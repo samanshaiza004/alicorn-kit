@@ -55,9 +55,10 @@ fixture_overlays :: proc(app: ^Test_App, ctx: ^ui.UI) {
 	popup_end(ctx, &app.state)
 }
 
-fixture_open :: proc(app: ^Test_App, t: ^testing.T, height := 420) -> (testui.Test_Handle(Test_App), bool) {
+fixture_open :: proc(app: ^Test_App, t: ^testing.T, height := 420, scale: f32 = 1) -> (testui.Test_Handle(Test_App), bool) {
 	app.items = fixture_items()
-	handle, status := testui.open(app, fixture_render, width=560, height=height, render_overlays=fixture_overlays)
+	handle, status := testui.open(app, fixture_render, width=560, height=height,
+		scale=scale, render_overlays=fixture_overlays)
 	if !testing.expectf(t, status == .Ok, "the menu fixture should open: %v %s",
 		status, testui.last_turn_diagnostic(&handle)) {
 		if handle.runtime != nil { testui.close(&handle) }
@@ -69,6 +70,36 @@ fixture_open :: proc(app: ^Test_App, t: ^testing.T, height := 420) -> (testui.Te
 @(private)
 find_item :: proc(handle: ^testui.Test_Handle(Test_App), name: string) -> testui.Find_Result {
 	return testui.find(handle, testui.Query{role=.Menu_Item, name=name, match_role=true, match_name=true})
+}
+
+@(test)
+test_menu_popup_item_is_visible_and_contained_at_fractional_scales :: proc(t: ^testing.T) {
+	scales := [4]f32{1, 1.25, 1.5, 2}
+	for scale in scales {
+		app := Test_App{}
+		handle, ok := fixture_open(&app, t, scale=scale)
+		if !ok { continue }
+
+		trigger := testui.find(&handle, testui.Query{role=.Button, name="Actions", match_role=true, match_name=true})
+		if testing.expect(t, trigger.match == .Unique && testui.click(&handle, &trigger.element) == .Ok,
+			"the menu should open through its trigger at every scale") {
+			_ = testui.describe_once(&handle)
+			menu_part := testui.find(&handle, testui.Query{role=.Menu, name="Actions", match_role=true, match_name=true})
+			item_part := find_item(&handle, "Duplicate")
+			if testing.expectf(t, menu_part.match == .Unique && item_part.match == .Unique,
+				"the popup and checked item should be present at %.2f", scale) {
+				visible := testui.expect_visible_text(&handle, &item_part.element, "Duplicate")
+				inside := testui.expect_inside(&handle, &item_part.element, &menu_part.element)
+				testing.expectf(t, visible.ok && inside.ok,
+					"the menu item should remain visible and inside its popup at %.2f: %s %s",
+					scale, testui.visible_text_diagnostic(visible), testui.layout_check_diagnostic(inside))
+			}
+			testui.destroy_find_result(&menu_part)
+			testui.destroy_find_result(&item_part)
+		}
+		testui.destroy_find_result(&trigger)
+		testui.close(&handle)
+	}
 }
 
 @(test)

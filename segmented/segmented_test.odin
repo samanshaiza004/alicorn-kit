@@ -43,12 +43,12 @@ fixture_render :: proc(app: ^Test_App, ctx: ^ui.UI) {
 	}
 }
 
-fixture_open :: proc(app: ^Test_App, t: ^testing.T) -> (testui.Test_Handle(Test_App), bool) {
+fixture_open :: proc(app: ^Test_App, t: ^testing.T, scale: f32 = 1) -> (testui.Test_Handle(Test_App), bool) {
 	app.items = SEGMENT_ITEMS
 	app.selected = 10
 	app.mode = .Follow_Focus
 	_ = request_focus(&app.state)
-	handle, status := testui.open(app, fixture_render, width=520, height=260)
+	handle, status := testui.open(app, fixture_render, width=520, height=260, scale=scale)
 	if !testing.expectf(t, status == .Ok, "the segmented fixture should open: %v %s",
 		status, testui.last_turn_diagnostic(&handle)) {
 		if handle.runtime != nil { testui.close(&handle) }
@@ -69,6 +69,30 @@ find_segment :: proc(handle: ^testui.Test_Handle(Test_App), name: string) -> tes
 	return testui.find(handle, testui.Query{
 		role=.Tab, name=name, match_role=true, match_name=true,
 	})
+}
+
+@(test)
+test_segmented_labels_remain_visible_and_contained_at_fractional_scales :: proc(t: ^testing.T) {
+	scales := [4]f32{1, 1.25, 1.5, 2}
+	for scale in scales {
+		app := Test_App{}
+		handle, ok := fixture_open(&app, t, scale)
+		if !ok { continue }
+
+		control_find := find_control(&handle)
+		overview := find_segment(&handle, "Overview")
+		if testing.expectf(t, control_find.match == .Unique && overview.match == .Unique,
+			"segmented control and selected tab should be available at %.2f", scale) {
+			visible := testui.expect_visible_text(&handle, &overview.element, "Overview")
+			inside := testui.expect_inside(&handle, &overview.element, &control_find.element)
+			testing.expectf(t, visible.ok && inside.ok,
+				"segment label should remain visible and contained at %.2f: %s %s",
+				scale, testui.visible_text_diagnostic(visible), testui.layout_check_diagnostic(inside))
+		}
+		testui.destroy_find_result(&control_find)
+		testui.destroy_find_result(&overview)
+		testui.close(&handle)
+	}
 }
 
 @(test)

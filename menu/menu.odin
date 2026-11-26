@@ -616,7 +616,7 @@ popup_begin :: proc(
 				.Container,
 				label="menu-rows-owner",
 				key=ui.key_pair(instance_id, 0x524F5750),
-				style=ui.layout_style(.Column, width=-1, height=-1),
+				style=ui.layout_style(.Column, width=-1, height=-1, grow=1),
 				focusable=true,
 			)
 			if rows != 0 {

@@ -135,6 +135,16 @@ identity regression, the Data Grid full-reference layout check, and all Dialog
 interaction tests. It remains headless evidence; native pixel/DPI capture and
 OS-level accessibility checks are still unverified.
 
+The remaining 11 catalog components now also have TestUI presentation-scale
+matrices at 1×, 1.25×, 1.5×, and 2×, with assertions for visible text and
+component/viewport containment. Those 11 package suites pass **85/85 tests** at
+the locked Alicorn and AccessKit revisions. The new checks exposed three
+undersized semantic owners: Sidebar's rail collection, the static Table root,
+and Menu's popup row owner. Their layout declarations now fill or measure their
+intended content, and the corresponding scale checks pass. These are logical
+layout checks under TestUI; they do not establish physical DPI behavior or
+native pixel fidelity.
+
 ### Catalog reference previews (2026-11-26)
 
 The catalog now has one authored SVG target on each of its 14 component pages.

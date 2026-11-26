@@ -25,7 +25,7 @@ fixture_render :: proc(app: ^Test_App, ctx: ^ui.UI) {
 		instance_id=9201)
 }
 
-fixture_open :: proc(app: ^Test_App, t: ^testing.T) -> (testui.Test_Handle(Test_App), bool) {
+fixture_open :: proc(app: ^Test_App, t: ^testing.T, scale: f32 = 1) -> (testui.Test_Handle(Test_App), bool) {
 	app.columns = fixture_columns()
 	app.cells = [4][3]Cell{
 		{{text="short", detail="one line"}, {text="12 KB"}, {text="file"}},
@@ -36,7 +36,7 @@ fixture_open :: proc(app: ^Test_App, t: ^testing.T) -> (testui.Test_Handle(Test_
 	for index in 0..<4 {
 		app.rows[index] = Row{key=u64(100+index), cells=app.cells[index][:]}
 	}
-	handle, status := testui.open(app, fixture_render, width=620, height=420)
+	handle, status := testui.open(app, fixture_render, width=620, height=420, scale=scale)
 	if !testing.expectf(t, status == .Ok, "the static table fixture should open: %v %s",
 		status, testui.last_turn_diagnostic(&handle)) {
 		if handle.runtime != nil { testui.close(&handle) }
@@ -53,6 +53,30 @@ find_table :: proc(handle: ^testui.Test_Handle(Test_App)) -> testui.Find_Result 
 @(private)
 find_role :: proc(handle: ^testui.Test_Handle(Test_App), role: alicorn.Semantic_Role, name: string) -> testui.Find_Result {
 	return testui.find(handle, testui.Query{role=role, name=name, match_role=true, match_name=true})
+}
+
+@(test)
+test_static_table_visible_cells_remain_aligned_at_fractional_scales :: proc(t: ^testing.T) {
+	scales := [4]f32{1, 1.25, 1.5, 2}
+	for scale in scales {
+		app := Test_App{}
+		handle, ok := fixture_open(&app, t, scale)
+		if !ok { continue }
+
+		table_node := find_table(&handle)
+		cell := find_role(&handle, .Table_Cell, "12 KB")
+		if testing.expectf(t, table_node.match == .Unique && cell.match == .Unique,
+			"the table and visible body cell should be available at %.2f", scale) {
+			visible := testui.expect_visible_text(&handle, &cell.element, "12 KB")
+			inside := testui.expect_inside(&handle, &cell.element, &table_node.element)
+			testing.expectf(t, visible.ok && inside.ok,
+				"the body cell should remain visible and inside the table at %.2f: %s %s",
+				scale, testui.visible_text_diagnostic(visible), testui.layout_check_diagnostic(inside))
+		}
+		testui.destroy_find_result(&table_node)
+		testui.destroy_find_result(&cell)
+		testui.close(&handle)
+	}
 }
 
 @(test)

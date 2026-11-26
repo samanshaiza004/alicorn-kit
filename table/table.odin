@@ -491,7 +491,7 @@ table :: proc(
 		.Container,
 		label=resolved.accessible_label,
 		key=alicorn.key_string("alikit-table-root"),
-		style=ui.layout_style(.Column, width=-1, height=-1, gap=0),
+		style=ui.layout_style(.Column, width=-1, height=alicorn.LAYOUT_SIZE_FIT_CONTENT, gap=0),
 	)
 	if root == 0 { return }
 	table_id := table_semantic_id(instance_id)
