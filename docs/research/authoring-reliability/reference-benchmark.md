@@ -34,6 +34,15 @@ output. The reference viewport is
 760 × 640. Check native presentation at 1×, 1.25×, 1.5×, and 2× display scale where a native
 capture environment is available.
 
+The 14 source SVGs were rendered and reviewed together on 2026-11-26. Their
+contexts range from project workspaces and inventory to audio production,
+writing, build tooling, and archives. Their visual vocabulary is less varied:
+12 use dark palettes and many use card surfaces; Radio Group and Table use light
+palettes. This suite checks whether each component can reproduce its selected
+layout and behavior. It does not establish creative freedom across unrelated
+design languages, nor justify adding a styling abstraction. A separate study
+would need alternative visual targets with the same behavior contract.
+
 ## Method
 
 Give each implementation agent only its component's vector target, this method,
