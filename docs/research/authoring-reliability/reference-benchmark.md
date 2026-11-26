@@ -155,19 +155,6 @@ uses a centered icon tile and a horizontal text layout. See the separate
 [Icon Picker follow-up](results/icon-picker.md); it is not part of the three
 reference attempt counts.
 
-For each of the three reference implementations, keep one result file under `results/` with this table and its attempt notes:
-
-| Measure | Result |
-| --- | --- |
-| Attempts to pass geometry/behavior checks | Unmeasured |
-| Imports used; runtime import and reason | Unmeasured |
-| Hardcoded dimensions | Unmeasured |
-| Layout workarounds | Unmeasured |
-| 1280 × 800, 960 × 720, 760 × 640 | Unmeasured |
-| 1×, 1.25×, 1.5×, 2× DPI | Unverified until native captures |
-| Visual match to SVG target | Unverified until native captures |
-| Existing behavior and accessibility | Unmeasured |
-
 The experiment is complete only after the three reports include native captures or explicitly list
 the platform work that remains. A passing compiler, semantic value, or TestUI geometry check alone
 does not establish visual equivalence.

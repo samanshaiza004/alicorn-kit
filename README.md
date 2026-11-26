@@ -5,11 +5,15 @@ native GUI runtime for Odin. It uses Alicorn's existing retained runtime,
 controls, semantics, layout, and host input APIs. It does not introduce another
 UI tree, state store, or application lifecycle.
 
-AliKit provides a command palette, a generic Tree View, a copyable icon picker,
-and the v0.3 P0 components: radio group, progress, notices, navigation rail, and
-virtualized table. The application owns domain state, ranking, route selection,
-and dispatch. AliKit owns reusable interaction behavior, semantics, and
-copyable presentation parts.
+AliKit currently provides a Command Palette, Palette Parts, Tree View, Icon
+Picker, Radio Group, Segmented Control, Progress, Notices, Sidebar, static
+Table, interactive Data Grid, Dialog, Menu, and Scroll Area. Supporting
+packages provide reusable selection behavior, palette/tree models, table
+presentation, and theme-contract validation. The
+[component catalog](docs/components.md) is the complete package inventory.
+Applications own domain state, ranking, route selection, and dispatch; AliKit
+owns reusable interaction behavior, semantics, and composable presentation
+parts.
 
 ## Current status
 
@@ -17,7 +21,7 @@ AliKit is an early, source-level companion package pinned to the Alicorn
 revision in `dependencies.lock.json`. The API may evolve with Alicorn; pin both
 projects when consuming it.
 
-The v0.3 P0 sprint adds:
+The v0.3 P0 sprint introduced:
 
 - composable radio parts and a wrapper with `Radio_Group`/`Radio_Button`
   semantics;
@@ -43,6 +47,9 @@ command services.
 
 - [Component catalog](docs/components.md) - current packages and when to use
   them.
+- [Quick Starts and reference apps](docs/components.md#installation-and-copying)
+  - begin with a minimal consumer, then open the larger reference applications
+    for full composition patterns.
 - [Command Palette guide](docs/command-palette.md) - API, ownership, input,
   appearance, and native integration.
 - [Tree View guide](docs/tree-view.md) - stable identities, visible-row
@@ -62,6 +69,13 @@ command services.
   presentation.
 - [Table guide](docs/table.md) - virtualized nested table semantics, navigation,
   and the non-spanned v1 decision.
+- [Data Grid guide](docs/data-grid.md) - interactive virtualized cells, focus,
+  selection, and sort proposals.
+- [Dialog guide](docs/dialog.md) - modal and alert behavior, focus, and actions.
+- [Menu guide](docs/menu.md) - anchored menus, keyboard navigation, and
+  dismissal.
+- [Scroll Area guide](docs/scroll-area.md) - bounded scrolling and scrollbar
+  geometry.
 - [Issue 3 research record](docs/research/issue-003-parts-pilot.md) - inventory,
   measured stock-vs-parts comparison, contract coverage, and GO/NO-GO.
 - [Issue 4 research record](docs/research/issue-004-v03-components.md) - pin
@@ -87,7 +101,12 @@ command services.
 - `segmented/` - single-selection segmented control with a moving indicator.
 - `notices/` - runtime notice helpers and inline card parts.
 - `sidebar/` - navigation rail.
-- `table/` - virtualized table.
+- `table/` - static, non-spanned table with optional fixed-row virtualization.
+- `data_grid/` - interactive, virtualized data grid.
+- `dialog/` - modal Dialog and Alert Dialog parts.
+- `menu/` - anchored dropdown menus.
+- `scroll_area/` - bounded and intrinsic scroll areas.
+- `table_core/` - shared Table and Data Grid presentation.
 - `examples/` - runnable consumers for every component, including the parts-based palette.
 - `tests/` - the external-consumer fixture templates used by `tools/validate_external_consumer.ps1`.
 - `docs/` - component guides and research records.

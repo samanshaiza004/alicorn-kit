@@ -10,9 +10,13 @@ storage.
 
 - Check [the component catalog](docs/components.md) to confirm what exists and
   which layer owns each responsibility.
-- Read the component's API guide and follow the `ui.run` integration in
-  [`examples/command_palette`](examples/command_palette/main.odin). Use the
-  lower-level host callbacks only when the application needs custom dispatch.
+- Read the component's API guide. For the Command Palette, start with the
+  minimal [`command_palette_quick_start`](examples/command_palette_quick_start/main.odin)
+  `ui.run` consumer; use the full
+  [`command_palette` reference app](examples/command_palette/main.odin) for its
+  custom shell and workspace composition. Dialog and Data Grid also have
+  dedicated Quick Starts beside their reference apps. Use lower-level host
+  callbacks only when the application needs custom dispatch.
 - For tree integrations, follow [`docs/tree-view.md`](docs/tree-view.md) and
   [`examples/tree_view`](examples/tree_view/main.odin); keep the visible-row
   projection, expansion/loading policy, and item actions in the application.
