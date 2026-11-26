@@ -196,6 +196,31 @@ request_focus :: proc(state: ^State) -> bool {
 	return true
 }
 
+// handle_semantic_reveal_request scrolls a virtual row into view when the host
+// asks the application to reveal its logical collection item. The application
+// remains responsible for draining Alicorn's shared semantic request queue and
+// dispatching each request to the owning component.
+handle_semantic_reveal_request :: proc(
+	state: ^State,
+	rt: ^alicorn.Runtime,
+	rows: []Row,
+	instance_id: u64,
+	request: alicorn.Semantic_Request_Event,
+) -> bool {
+	if state == nil || rt == nil || state.list_node == 0 || instance_id == 0 ||
+	   request.kind != .Reveal || request.id.namespace == 0 || request.id.value == 0 {
+		return false
+	}
+	for row, index in rows {
+		if row.key == 0 { continue }
+		if row_semantic_id(instance_id, row.key) != request.id { continue }
+		_ = alicorn.virtual_list_ensure_visible(rt, state.list_node, index,
+			"assistive technology revealed a data grid row")
+		return true
+	}
+	return false
+}
+
 @(private)
 options_resolve :: proc(options: Options) -> Options {
 	result := options

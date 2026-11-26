@@ -13,6 +13,7 @@ import "core:mem"
 import "core:os"
 import "core:strings"
 import base_runtime "base:runtime"
+import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import data_grid "../../data_grid"
 
@@ -150,6 +151,7 @@ sort_proposed :: proc(app: ^App, column_key: u64) {
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
+	adopt_accessibility_requests(app, ctx.runtime)
 	rebuild_projection(app)
 	viewport := ctx.runtime.viewport
 	visible_rows := clamp(int((viewport.h-360)/48), 4, 8)
@@ -255,6 +257,25 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 				}
 			}
 		}
+	}
+}
+
+adopt_accessibility_requests :: proc(app: ^App, rt: ^alicorn.Runtime) {
+	if app == nil || rt == nil { return }
+	filter_node, filter_found := alicorn.node_by_key(rt,
+		ui.key_string("grid-example-filter"), .Text_Field)
+	filter_id: alicorn.Semantic_ID
+	if filter_found { filter_id = alicorn.semantic_visual_id(filter_node) }
+	for {
+		request, found := alicorn.semantic_request_pop(rt)
+		if !found { break }
+		if request.kind == .Perform && request.id == filter_id && request.action == .Set_Value {
+			_ = ui.text_buffer_set(&app.query, request.text_value)
+		} else if request.kind == .Reveal {
+			_ = data_grid.handle_semantic_reveal_request(
+				&app.view, rt, app.projection[:app.visible_count], 7101, request)
+		}
+		alicorn.semantic_request_event_destroy(rt, &request)
 	}
 }
 

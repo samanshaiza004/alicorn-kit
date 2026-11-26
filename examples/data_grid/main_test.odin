@@ -132,3 +132,37 @@ test_reference_layout_visible_at_supported_viewports_and_dpi_scales :: proc(t: ^
 		}
 	}
 }
+
+@(test)
+test_reference_adopts_accessibility_filter_value :: proc(t: ^testing.T) {
+	app := App{}
+	handle, status := testui.open(
+		&app,
+		render,
+		width=1280,
+		height=800,
+		initialize=initialize_reference_test,
+	)
+	defer stop(&app)
+	defer if handle.runtime != nil { testui.close(&handle) }
+	if !testing.expectf(t, status == .Ok,
+		"the reference app should open for semantic filter testing: %v %s",
+		status, testui.last_turn_diagnostic(&handle)) {
+		return
+	}
+
+	filter_node, found := alicorn.node_by_key(handle.runtime,
+		ui.key_string("grid-example-filter"), .Text_Field)
+	if !testing.expect(t, found, "the reference filter should have a retained text-field node") {
+		return
+	}
+	filter_id := alicorn.semantic_visual_id(filter_node)
+	queued := alicorn.semantic_action_request(
+		handle.runtime, filter_id, .Set_Value, text_value="Blocked")
+	if !testing.expect(t, queued, "the semantic filter should accept an app-owned Set_Value request") {
+		return
+	}
+	_ = testui.describe_once(&handle)
+	testing.expect_value(t, app.query.text, "Blocked")
+	testing.expect_value(t, app.visible_count, 66)
+}

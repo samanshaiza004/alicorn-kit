@@ -144,7 +144,7 @@ before/after result.
 | --- | ---: | --- | --- | --- | --- |
 | Command Palette | 4 | Yes, for its custom modal shell; stock `build` does not require it | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI 1×, 1.25×, 1.5×, 2× passed; native scene reviewed, pixel/DPI match unverified | [Result](results/command-palette.md) |
 | Dialog | 7 | No | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI 1×, 1.25×, 1.5×, 2× passed; qualitative native review passed, pixel/DPI match unverified | [Result](results/dialog.md) |
-| Data Grid | 11 | No | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI scales 1×, 1.25×, 1.5×, 2×; native scene reviewed, pixel/DPI match unverified | [Result](results/data-grid.md) |
+| Data Grid | 11 | Yes, in the reference app for virtual-row reveal and filter-value requests; Quick Start does not | 1280 × 800, 960 × 720, 760 × 640 passed | TestUI scales 1×, 1.25×, 1.5×, 2×; native scene reviewed, pixel/DPI match unverified | [Result](results/data-grid.md) |
 
 The iteration counts are not a speed ranking. They count implementation/verification
 passes needed to satisfy each component's different contracts. All three examples
@@ -210,6 +210,14 @@ headless retained-output checks as pixel-match evidence.
   caught unclosed empty layout scopes, a collapsed panel width, and a semantic
   Table owner that did not cover its virtualized rows; all three now have
   permanent regression assertions.
+- A post-benchmark accessibility audit found that the Data Grid published virtual
+  `Table_Row` items but its reference app discarded the runtime's app-owned
+  `.Reveal` and filter `.Set_Value` requests. The app now routes reveal requests
+  through the component's stable-row resolver and adopts filter values into its
+  owned text buffer. A TestUI regression verifies that revealing an offscreen
+  semantic row makes it a realized row. This follow-up adds a new contract after
+  the original attempt-count exercise, so the reported 11 passes remain scoped to
+  that earlier task definition.
 - Dialog's public action helper fixes its button height at 32 px; reaching the
   target's 40 px uses ordinary `ui.button` controls inside the public action row.
 - The custom Command Palette shell needs runtime exports for modal overlay and

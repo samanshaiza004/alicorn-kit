@@ -21,10 +21,16 @@ rows and ordinary document navigation.
 The component retains only ephemeral focus/proposal state. It publishes
 `Selected`/`Current` from caller values and never mutates selection.
 
-The runnable reference example imports `alicorn:ui` and `alikit:data_grid`;
-it does not import `alicorn:runtime`. The application owns the 200-row fixture,
-search projection, sorting, and responsive column widths. It reads the current
-viewport through the UI callback context to choose a bounded visible-row count.
+The Quick Start imports `alicorn:ui` and `alikit:data_grid`. The reference
+application additionally imports `alicorn:runtime` to route app-owned
+accessibility requests: a virtual row's `.Reveal` request must be mapped to the
+application's current row projection, and the filter's `.Set_Value` request
+must update its owned text buffer. The component exposes
+`handle_semantic_reveal_request` for the row mapping; the application drains
+the shared semantic request queue so requests for other controls remain under
+application policy. The reference app also owns the 200-row fixture, search
+projection, sorting, and responsive column widths. It reads the viewport
+through the UI callback context to choose a bounded visible-row count.
 
 ## Runnable examples
 
@@ -77,6 +83,37 @@ case .Sort_Proposed:
 ```
 
 Call `data_grid.request_focus(&state)` to focus the single Tab stop.
+
+For virtualized rows, drain Alicorn's semantic request queue from the
+application and dispatch each request to its owner. The reference app also
+adopts `.Set_Value` into its filter buffer:
+
+```odin
+import ui "alicorn:ui"
+import data_grid "alikit:data_grid"
+import alicorn "alicorn:runtime"
+
+filter_node, filter_found := alicorn.node_by_key(
+	ctx.runtime, ui.key_string("grid-example-filter"), .Text_Field)
+filter_id: alicorn.Semantic_ID
+if filter_found { filter_id = alicorn.semantic_visual_id(filter_node) }
+for {
+	request, found := alicorn.semantic_request_pop(ctx.runtime)
+	if !found { break }
+	if request.kind == .Perform && request.id == filter_id && request.action == .Set_Value {
+		_ = ui.text_buffer_set(&app.query, request.text_value)
+	} else if request.kind == .Reveal {
+		_ = data_grid.handle_semantic_reveal_request(
+			&app.view, ctx.runtime,
+			app.projection[:app.visible_count], 1, request)
+	}
+	alicorn.semantic_request_event_destroy(ctx.runtime, &request)
+}
+```
+
+The queue is shared by the whole application. Keep draining until empty and
+dispatch other `.Perform` and `.Reveal` requests to their owning controls
+before destroying each event.
 
 ## Parts and identities
 

@@ -539,9 +539,11 @@ test_table_virtualizes_and_reveals_large_rows :: proc(t: ^testing.T) {
 	testing.expect_value(t, grid_node.element.logical_count, u64(LARGE_ROW_COUNT+1))
 	testui.destroy_find_result(&grid_node)
 	last := testui.find(&handle, testui.Query{role=.Table_Row, name="Row 200", match_role=true, match_name=true})
+	last_semantic_id: alicorn.Semantic_ID
 	if testing.expect(t, last.match == .Unique, "the last logical row should have a virtual semantic item") {
 		testing.expect(t, last.element.is_virtual_item,
 			"the last row should start outside the realized window")
+		last_semantic_id = last.element.semantic_id
 	}
 	testui.destroy_find_result(&last)
 
@@ -555,6 +557,25 @@ test_table_virtualizes_and_reveals_large_rows :: proc(t: ^testing.T) {
 		}
 		check_large_grid_geometry(t, &handle, &fixture)
 	}
+
+	if testing.expect(t, alicorn.semantic_reveal_request(handle.runtime, last_semantic_id),
+		"the virtual row should accept an assistive-technology reveal request") {
+		request, found := alicorn.semantic_request_pop(handle.runtime)
+		if testing.expect(t, found && request.kind == .Reveal && request.id == last_semantic_id,
+			"Alicorn should deliver a distinct Reveal request for the logical row") {
+			handled := handle_semantic_reveal_request(
+				&fixture.state, handle.runtime, fixture.rows, 9102, request)
+			testing.expect(t, handled, "the Data Grid should resolve and scroll to its stable row key")
+		}
+		if found { alicorn.semantic_request_event_destroy(handle.runtime, &request) }
+	}
+	_ = testui.describe_once(&handle)
+	last = testui.find(&handle, testui.Query{role=.Table_Row, name="Row 200", match_role=true, match_name=true})
+	if testing.expect(t, last.match == .Unique, "the revealed row should remain in the semantic table") {
+		testing.expect(t, !last.element.is_virtual_item,
+			"a semantic Reveal request should realize its row in the visible list window")
+	}
+	testui.destroy_find_result(&last)
 
 	for _ in 0..<40 {
 		_ = testui.step(&handle, testui.Input{kind=.Key, key=.Page_Down})
