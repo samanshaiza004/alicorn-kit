@@ -127,13 +127,22 @@ native pixel/DPI captures.
 
 ### Current component-suite retest (2026-11-26)
 
-After the reference-window background corrections, the same 19 test targets
-were rerun at seed `1729`: **119/119 tests passed**. The Command Palette and
-Dialog now each include a 1×, 1.25×, 1.5×, and 2× TestUI presentation-scale
-matrix; the full run includes those checks, the Data Grid scrollbar-transition
-identity regression, the Data Grid full-reference layout check, and all Dialog
-interaction tests. It remains headless evidence; native pixel/DPI capture and
-OS-level accessibility checks are still unverified.
+After the reference-window and Dialog root-sizing corrections, all 20 current
+test targets were rerun at seed `1729`: **130/130 tests passed**. This includes
+14 catalog component packages (109 tests), four supporting packages (19), and
+the Data Grid reference and Selection Styles example suites (one each). The
+matrix used Odin `dev-2026-11:9a6991685`, Alicorn
+`4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`, and AccessKit binding
+`e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b`, with one test thread. It includes
+the Command Palette and Dialog 1×, 1.25×, 1.5×, and 2× TestUI presentation-scale
+matrices, the Data Grid scrollbar-transition identity regression and
+full-reference layout check, and all Dialog interaction tests.
+
+The PowerShell validation wrapper was unavailable on this macOS host, so the
+20 Odin test targets were invoked directly with the same pinned collections,
+`ODIN_TEST_THREADS=1`, and `ODIN_TEST_RANDOM_SEED=1729`. This is headless
+evidence; it does not replace native pixel comparison, physical-DPI testing, or
+OS-level accessibility checks.
 
 The remaining 11 catalog components now also have TestUI presentation-scale
 matrices at 1×, 1.25×, 1.5×, and 2×, with assertions for visible text and
@@ -161,11 +170,13 @@ native output fidelity or physical-DPI rendering.
 ## Limits and known constraints
 
 Headless tests establish layout bounds, shaped text/resources where tested,
-paint commands, semantic state, identity, and interaction behavior. They do
-not establish native pixel equivalence, screen-reader behavior, OS input,
-fractional-DPI rendering, or GPU output. This environment had no usable native
-display for visual captures, so no DPI matrix is claimed. Windows and macOS
-native interaction checks remain outstanding.
+paint commands, semantic state, identity, and interaction behavior. Live
+macOS reviews have also inspected the Command Palette, Data Grid, and corrected
+Dialog reference app; the Dialog alert was opened and dismissed, and its
+accessible title, description, and action were exposed. These are qualitative
+single-environment checks, not archived screenshot comparisons or a physical
+scale matrix. Native pixel equivalence, fractional-DPI rendering, GPU clipping,
+screen-reader behavior, and Windows interaction checks remain outstanding.
 
 The guides retain known constraints rather than hiding them: Palette Parts
 groups require a complete realized result slice; Segmented uses equal-width
