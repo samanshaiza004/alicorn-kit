@@ -221,6 +221,23 @@ set_query :: proc(state: ^State, rt: ^alicorn.Runtime, value: string) -> bool {
 	return true
 }
 
+// handle_semantic_set_value_request adopts an assistive-technology value for
+// the picker-owned search field. The application drains and destroys the
+// runtime's shared request events, then offers .Set_Value requests to this
+// helper.
+handle_semantic_set_value_request :: proc(
+	state: ^State,
+	rt: ^alicorn.Runtime,
+	request: alicorn.Semantic_Request_Event,
+) -> bool {
+	if state == nil || rt == nil || !state.initialized || state.search_node == 0 ||
+	   request.kind != .Perform || request.action != .Set_Value ||
+	   request.id != alicorn.semantic_visual_id(state.search_node) {
+		return false
+	}
+	return set_query(state, rt, request.text_value)
+}
+
 query_text :: proc(state: ^State) -> string {
 	if state == nil || !state.initialized { return "" }
 	return state.query.text

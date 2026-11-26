@@ -20,8 +20,10 @@ The regression checks actual retained text output for the committed search
 query, repeats the assertion after IME commit, resizes the fixture from its
 initial viewport to 420 × 400 logical pixels, and verifies that the search
 field remains contained, follows the narrower width, and continues to show the
-query. It also switches to List appearance and checks visible glyphs for the
-Home row's label and detail.
+query. The semantic `.Set_Value` regression verifies that an assistive query
+value is visible in the search field and updates the sole matching choice. It
+also switches to List appearance and checks visible glyphs for the Home row's
+label and detail.
 
 Before the row correction, the new visibility assertions failed for both
 strings: the Home label reported 4 matching glyphs and 0 visible glyphs; its
@@ -38,7 +40,7 @@ clipped text.
 | `alicorn:runtime` in the runnable example | Yes; the application owns modal overlay, semantic dialog, focus restoration, native key/pointer callbacks, and nested overlay behavior |
 | Hardcoded dimensions | Yes; dialog, row, cell, and search sizing are explicit demo choices; no geometry-key workaround was added |
 | Layout workaround | The default List row now uses ordinary `ui.row`/`ui.panel` composition; no duplicate text node or forced rebuild |
-| Headless behavior/output tests | 14/14 passed against Alicorn `4e0862f` and the pinned AccessKit binding |
+| Headless behavior/output tests | 16/16 passed against Alicorn `4e0862f` and the pinned AccessKit binding; includes semantic search-value adoption |
 | Example build | Passed against the same locked dependencies |
 | Resize | 420 × 400 logical viewport; search remains within bounds and retains visible query text |
 | Native pixels, screen reader, physical DPI | Unverified; this environment has no native display |

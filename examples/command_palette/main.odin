@@ -251,6 +251,16 @@ on_key :: proc(app: ^App, rt: ^ui.Runtime, key: ui.Application_Key) -> bool {
 	return false
 }
 
+on_wake :: proc(app: ^App, ctx: ui.Application_Context) {
+	rt := cast(^alicorn.Runtime)ctx
+	for {
+		request, found := alicorn.semantic_request_pop(rt)
+		if !found { break }
+		_ = palette.handle_semantic_set_value_request(&app.palette_state, rt, request)
+		alicorn.semantic_request_event_destroy(rt, &request)
+	}
+}
+
 initialize :: proc(app: ^App, rt: ^ui.Runtime) {
 	if app.reference_mode {
 		if palette.open_palette(&app.palette_state, rt) {
@@ -279,6 +289,6 @@ main :: proc() {
 	}
 	defer palette.destroy(&app.palette_state)
 	ui.run(&app, render, title="AliKit Command Palette", width=1280, height=800,
-		on_initialize=initialize, on_key=on_key, render_overlays=render_overlays,
+		on_initialize=initialize, on_key=on_key, on_wake=on_wake, render_overlays=render_overlays,
 		on_stop=stop, smoke=smoke)
 }

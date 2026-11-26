@@ -543,6 +543,45 @@ test_icon_picker_appearance_switch_preserves_contract :: proc(t: ^testing.T) {
 }
 
 @(test)
+test_icon_picker_adopts_semantic_search_value :: proc(t: ^testing.T) {
+	app := Test_App{choices=fixture_choices(), appearance=.Grid, inline=true, focus_target=.Search}
+	handle, ok := test_open(&app, t)
+	if !ok { return }
+	defer test_close(&app, &handle)
+
+	search_id := alicorn.semantic_visual_id(app.picker.search_node)
+	if !testing.expect(t, alicorn.semantic_action_request(handle.runtime, search_id, .Set_Value,
+		text_value="Terminal"), "the search field should accept a semantic Set_Value request") {
+		return
+	}
+	request, found := alicorn.semantic_request_pop(handle.runtime)
+	if !testing.expect(t, found && request.kind == .Perform,
+		"Alicorn should queue the requested search value") {
+		if found { alicorn.semantic_request_event_destroy(handle.runtime, &request) }
+		return
+	}
+	handled := handle_semantic_set_value_request(&app.picker, handle.runtime, request)
+	alicorn.semantic_request_event_destroy(handle.runtime, &request)
+	if !testing.expect(t, handled, "the picker should adopt the request for its own search field") {
+		return
+	}
+	_ = testui.describe_once(&handle)
+	testing.expect_value(t, query_text(&app.picker), "Terminal")
+	testing.expect_value(t, app.picker.match_count, 1)
+	search_field := testui.find(&handle, testui.Query{
+		role=.Text_Field, name="Search icons", match_role=true, match_name=true,
+	})
+	visible_query := testui.expect_visible_text(&handle, &search_field.element, "Terminal")
+	testing.expect(t, search_field.match == .Unique && visible_query.ok,
+		"the semantic search value should appear in the rendered search field: %s",
+		testui.visible_text_diagnostic(visible_query))
+	testui.destroy_find_result(&search_field)
+	terminal := find_cell(&handle, "Terminal")
+	defer testui.destroy_find_result(&terminal)
+	testing.expect(t, terminal.match == .Unique, "the requested choice should be the sole match")
+}
+
+@(test)
 test_icon_picker_search_filters_and_ime_yields_navigation :: proc(t: ^testing.T) {
 	app := Test_App{choices=fixture_choices(), appearance=.Grid, inline=true, focus_target=.Search}
 	handle, ok := test_open(&app, t)

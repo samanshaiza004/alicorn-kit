@@ -226,6 +226,16 @@ on_pointer :: proc(app: ^App, rt: ^alicorn.Runtime, event: alicorn.Pointer_Event
 	}
 }
 
+on_wake :: proc(app: ^App, ctx: ui.Application_Context) {
+	rt := cast(^alicorn.Runtime)ctx
+	for {
+		request, found := alicorn.semantic_request_pop(rt)
+		if !found { break }
+		_ = picker.handle_semantic_set_value_request(&app.icon, rt, request)
+		alicorn.semantic_request_event_destroy(rt, &request)
+	}
+}
+
 initialize :: proc(app: ^App, rt: ^alicorn.Runtime) {
 	if !picker.init(&app.icon) {
 		return
@@ -258,6 +268,7 @@ main :: proc() {
 		on_initialize=initialize,
 		on_key=on_key,
 		on_pointer=on_pointer,
+		on_wake=on_wake,
 		on_stop=stop,
 		smoke=smoke,
 	)

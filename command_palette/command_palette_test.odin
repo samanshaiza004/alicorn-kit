@@ -90,6 +90,39 @@ test_keyboard_activation_and_focus_restore_use_retained_runtime :: proc(t: ^test
 }
 
 @(test)
+test_semantic_set_value_updates_palette_query_and_matches :: proc(t: ^testing.T) {
+	rt := alicorn.new_runtime(alicorn.Rect{0, 0, 480, 320})
+	defer alicorn.destroy_runtime(&rt)
+	state: State
+	if !init(&state, context.allocator) {
+		testing.expect(t, false, "palette state should initialize")
+		return
+	}
+	defer destroy(&state)
+	items := palette_test_items
+	_ = open_palette(&state, &rt)
+	_ = palette_test_describe(&rt, &state, items[:])
+	query_id := alicorn.semantic_visual_id(state.query_node)
+	if !testing.expect(t, alicorn.semantic_action_request(&rt, query_id, .Set_Value, text_value="Close"),
+		"the query field should accept a semantic Set_Value request") {
+		return
+	}
+	request, found := alicorn.semantic_request_pop(&rt)
+	if !testing.expect(t, found && request.kind == .Perform,
+		"Alicorn should queue the query value for the application") {
+		if found { alicorn.semantic_request_event_destroy(&rt, &request) }
+		return
+	}
+	handled := handle_semantic_set_value_request(&state, &rt, request)
+	alicorn.semantic_request_event_destroy(&rt, &request)
+	testing.expect(t, handled && query_text(&state) == "Close",
+		"the palette should adopt the semantic query value")
+	_ = palette_test_describe(&rt, &state, items[:])
+	testing.expect(t, state.match_count == 1 && state.selection.id == Item_ID(22),
+		"the next description should filter and select the matching stable action")
+}
+
+@(test)
 test_pointer_activation_restores_focus_after_modal_tree_retires :: proc(t: ^testing.T) {
 	rt := alicorn.new_runtime(alicorn.Rect{0, 0, 480, 320})
 	defer alicorn.destroy_runtime(&rt)

@@ -13,6 +13,30 @@ The application owns commands, stable IDs, ranking policy, dispatch, and the
 open shortcut. AliKit owns the query field, result-list interaction, selection
 by stable ID, modal containment, and focus restoration.
 
+The query buffer belongs to the component. If the native accessibility host
+sends `.Set_Value`, route the shared request queue from `ui.run`'s `on_wake`
+callback:
+
+```odin
+import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
+import palette "alikit:command_palette"
+
+on_wake :: proc(app: ^App, ctx: ui.Application_Context) {
+	rt := cast(^alicorn.Runtime)ctx
+	for {
+		request, found := alicorn.semantic_request_pop(rt)
+		if !found { break }
+		_ = palette.handle_semantic_set_value_request(&app.palette_state, rt, request)
+		alicorn.semantic_request_event_destroy(rt, &request)
+	}
+}
+```
+
+The application owns the shared queue. In a larger app, route each request to
+its owning control before destroying the event. The reference app demonstrates
+this integration; the minimal Quick Start omits the optional host callback.
+
 ## Preview
 
 The default appearance is a centered modal with a title, controlled query, a
@@ -330,7 +354,8 @@ presentation.
 caller-filtered behavior, disabled skipping, selection reconciliation,
 open/close, query reset failures, match-buffer allocation failures, pointer and
 keyboard activation, focus restoration, modal containment, Escape dismissal,
-the `.Modal_Dialog` pattern check, IME composition yield, and idle return.
+the `.Modal_Dialog` pattern check, IME composition yield, semantic query-value
+adoption, and idle return.
 
 `command_palette/command_palette_parts_test.odin` composes `input`, the result
 parts, and `group_begin` directly and verifies the `List_Box` logical count,
@@ -341,7 +366,9 @@ row text.
 1280 × 800, 960 × 720, and 760 × 640, and checks its retained geometry and
 visible query/result text at TestUI scales 1×, 1.25×, 1.5×, and 2×. It also
 checks query and row containment, filtering, selected semantics, activation,
-and focus restoration. The Command Palette suite passes 10/10 tests. These
+and focus restoration. It also routes a semantic `.Set_Value` request through
+the component helper and verifies visible query glyphs and its filtered result.
+The Command Palette suite passes 12/12 tests. These
 checks do not verify GPU pixels or physical-DPI rendering.
 
 `command_palette/pilot_test.odin` runs the same scripted path through the stock

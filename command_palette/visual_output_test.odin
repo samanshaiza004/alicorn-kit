@@ -266,6 +266,69 @@ test_reference_palette_geometry_and_text_survive_fractional_scales :: proc(t: ^t
 }
 
 @(test)
+test_reference_palette_semantic_query_is_visible_after_accessibility_set_value :: proc(t: ^testing.T) {
+	app := Reference_Test_App{items=REFERENCE_TEST_ITEMS}
+	if !init(&app.state) {
+		testing.expect(t, false, "palette state should initialize")
+		return
+	}
+	defer destroy(&app.state)
+	handle, status := testui.open(&app, reference_test_render,
+		width=1280, height=800, render_overlays=reference_test_overlays)
+	if !testing.expect(t, status == .Ok, testui.last_turn_diagnostic(&handle)) { return }
+	defer if handle.runtime != nil { testui.close(&handle) }
+
+	opener := testui.find(&handle, testui.Query{
+		role=.Button, name="Open command palette", match_role=true, match_name=true,
+	})
+	if !testing.expect(t, opener.match == .Unique && testui.click(&handle, &opener.element) == .Ok,
+		"the opener should present the palette before its query is addressed") {
+		testui.destroy_find_result(&opener)
+		return
+	}
+	testui.destroy_find_result(&opener)
+	_ = testui.describe_once(&handle)
+
+	query := testui.find(&handle, testui.Query{
+		role=.Text_Field, name="Search actions", match_role=true, match_name=true,
+	})
+	if !testing.expect(t, query.match == .Unique,
+		"the modal query field should have a unique semantic identity") {
+		testui.destroy_find_result(&query)
+		return
+	}
+	query_id := alicorn.semantic_visual_id(query.element.visual_node)
+	testui.destroy_find_result(&query)
+	if !testing.expect(t, alicorn.semantic_action_request(handle.runtime, query_id,
+		.Set_Value, text_value="Build"),
+		"assistive technology should be able to set the query value") { return }
+	request, found := alicorn.semantic_request_pop(handle.runtime)
+	if !testing.expect(t, found && request.kind == .Perform,
+		"the semantic value change should be queued for application policy") {
+		if found { alicorn.semantic_request_event_destroy(handle.runtime, &request) }
+		return
+	}
+	handled := handle_semantic_set_value_request(&app.state, handle.runtime, request)
+	alicorn.semantic_request_event_destroy(handle.runtime, &request)
+	if !testing.expect(t, handled, "the palette should adopt its query-field request") { return }
+	_ = testui.describe_once(&handle)
+
+	query = testui.find(&handle, testui.Query{
+		role=.Text_Field, name="Search actions", match_role=true, match_name=true,
+	})
+	query_visible := testui.expect_visible_text(&handle, &query.element, "Build")
+	row := testui.find(&handle, testui.Query{
+		role=.List_Box_Option, name="Build project", match_role=true, match_name=true,
+	})
+	row_visible := testui.expect_visible_text(&handle, &row.element, "Build project")
+	testing.expect(t, query.match == .Unique && query_visible.ok && app.match_count == 1 &&
+		row.match == .Unique && row_visible.ok,
+		"an accessible Set_Value should update visible query text and its filtered result")
+	testui.destroy_find_result(&row)
+	testui.destroy_find_result(&query)
+}
+
+@(test)
 test_reference_palette_keeps_query_rows_and_focus_correct_across_resize :: proc(t: ^testing.T) {
 	app := Reference_Test_App{items=REFERENCE_TEST_ITEMS}
 	if !init(&app.state) {

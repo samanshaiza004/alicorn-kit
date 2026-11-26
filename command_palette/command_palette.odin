@@ -287,6 +287,29 @@ text_change :: proc(state: ^State, rt: ^alicorn.Runtime, change: alicorn.Text_Ch
 	return true
 }
 
+// handle_semantic_set_value_request adopts an assistive-technology value for
+// the component-owned query. The application still drains and destroys the
+// runtime's shared semantic request events, then offers each .Set_Value event
+// to its command palette instance.
+handle_semantic_set_value_request :: proc(
+	state: ^State,
+	rt: ^alicorn.Runtime,
+	request: alicorn.Semantic_Request_Event,
+) -> bool {
+	if state == nil || rt == nil || !state.initialized || !state.open || state.query_node == 0 ||
+	   request.kind != .Perform || request.action != .Set_Value ||
+	   request.id != alicorn.semantic_visual_id(state.query_node) {
+		return false
+	}
+	if !ui.text_buffer_set(&state.query, request.text_value) {
+		state.last_status = .Query_Update_Failed
+		return false
+	}
+	state.last_status = .Ready
+	alicorn.invalidate_root(rt, "AliKit command palette semantic query changed")
+	return true
+}
+
 // handle_key is intended to be called from Application.on_key. It receives a
 // fresh item slice because applications may rebuild or reorder actions between
 // input turns. It consumes only palette navigation, activation, and dismissal.

@@ -88,6 +88,30 @@ focus/reveal requests, the last appearance, and one activation proposal. The
 application owns `selected_key`; the component never mutates it. An
 `Event{kind=.Activated, key=...}` is a proposal.
 
+The search buffer belongs to the picker. Route native accessibility
+`.Set_Value` requests from `ui.run`'s `on_wake` callback so the query and
+filtered choices update together:
+
+```odin
+import alicorn "alicorn:runtime"
+import ui "alicorn:ui"
+import picker "alikit:icon_picker"
+
+on_wake :: proc(app: ^App, ctx: ui.Application_Context) {
+	rt := cast(^alicorn.Runtime)ctx
+	for {
+		request, found := alicorn.semantic_request_pop(rt)
+		if !found { break }
+		_ = picker.handle_semantic_set_value_request(&app.icon, rt, request)
+		alicorn.semantic_request_event_destroy(rt, &request)
+	}
+}
+```
+
+The application owns the shared queue. In a larger app, route each event to
+its owner before destroying it. The modal reference app demonstrates this
+integration; the inline Quick Start omits the optional host callback.
+
 The default wrapper draws this shape:
 
 ```text

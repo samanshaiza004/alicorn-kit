@@ -63,6 +63,12 @@ description or input. Geometry checks use logical pixels. Native screenshots rem
 score visual match, GPU text and icon visibility, fractional-DPI edges, and clipping. If a native
 capture cannot be made, report visual match as **unverified**, not as a pass.
 
+For components that own editable buffers, also route a semantic `.Set_Value`
+request through the application's shared request queue to the owning
+component. Verify that the query is visibly drawn and that its dependent
+results update; checking only the buffer or semantic tree can miss a retained
+text-rendering failure.
+
 ## Controlled authoring comparison
 
 The reference attempt counts below are correction-pass counts for the current
