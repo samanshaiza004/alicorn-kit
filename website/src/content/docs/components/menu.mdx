@@ -3,6 +3,8 @@ title: Menu
 description: An anchored dropdown built from trigger, popup, row, separator, and optional group parts with custom row rendering.
 ---
 
+import ReferencePreview from '../../../components/ReferencePreview.astro';
+
 <div class="lede">
 <code>alikit:menu</code> is an anchored, component-level dropdown built from public parts: a
 trigger, a transparent modal popup, <code>Menu_Item</code> row owners, separators, optional ad-hoc
@@ -14,6 +16,14 @@ owns items, command identity, checked state, custom rows, and dispatch.
 ## Runnable example
 
 The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/menu/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
+
+<ReferencePreview
+  title="Menu reference target"
+  target="menu"
+  alt="Anchored actions menu over an inventory list, with a checked item, shortcuts, separator, and disabled action."
+  description="Authored Menu use case; it is an illustration, not a capture of the runnable example."
+  href="https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/menu/main.odin"
+/>
 
 ## Responsibility split
 

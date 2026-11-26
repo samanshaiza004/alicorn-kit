@@ -19,7 +19,16 @@ const referenceNames = [
   'data-grid',
   'dialog',
   'icon-picker',
+  'menu',
+  'notices',
+  'palette-parts',
+  'progress',
+  'radio-group',
   'scroll-area',
+  'segmented',
+  'sidebar',
+  'table',
+  'tree-view',
 ];
 const referenceSource = join(
   here,

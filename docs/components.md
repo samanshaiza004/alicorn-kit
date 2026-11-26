@@ -108,8 +108,10 @@ contract coverage, and core-requirement list live in
 
 The static catalog in [`website/`](../website/) renders every component page
 with a runnable example link, copyable source, ownership and input contracts,
-theme roles, API reference, and test coverage. Desktop application screenshots
-are not included in the documentation. Rebuild it with
+theme roles, API reference, test coverage, and an authored SVG reference target.
+The targets describe intended composition; they are not desktop captures or
+proof of native pixel output. Desktop application screenshots are not included
+in the documentation. Rebuild it with
 `cd website && npm ci && npm run build`. The machine-readable registry seed is
 [`components.json`](../components.json).
 

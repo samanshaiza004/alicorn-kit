@@ -3,6 +3,8 @@ title: Palette Parts
 description: A copyable parts-based result list for applications that own the palette shell, query, and ranking.
 ---
 
+import ReferencePreview from '../../../components/ReferencePreview.astro';
+
 <div class="lede">
 <code>alikit:palette_parts</code> is a copyable, parts-based variant of the command palette's
 result list. It owns the retained virtual list, published <code>List_Box</code> collection,
@@ -14,6 +16,14 @@ dismissal, and focus restoration.
 ## Runnable example
 
 The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/palette_parts/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
+
+<ReferencePreview
+  title="Palette Parts reference target"
+  target="palette-parts"
+  alt="A repository command overlay with app-owned query and a custom selected result list built from Palette Parts."
+  description="Authored target for the parts-based result list in an application-owned shell; not a capture of the runnable example."
+  href="https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/palette_parts/main.odin"
+/>
 
 ## Responsibility split
 

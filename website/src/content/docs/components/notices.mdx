@@ -3,6 +3,8 @@ title: Notices
 description: Runtime toast helpers plus copyable card and stack parts for inline banners and application-hosted snackbars.
 ---
 
+import ReferencePreview from '../../../components/ReferencePreview.astro';
+
 <div class="lede">
 <code>alikit:notices</code> is a presentation layer over Alicorn's notice runtime. It adds
 notice construction, action/deadline helpers, and copyable card/stack parts for inline banners.
@@ -13,6 +15,14 @@ capacity, live-region announcements, and one-shot expiry.
 ## Runnable example
 
 The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/notices/main.odin) is a runnable consumer of this package. It shows the component in an application-owned interface.
+
+<ReferencePreview
+  title="Notices reference target"
+  target="notices"
+  alt="Audio render queue with an inline peak warning, a saved confirmation, and an upload notice with retry and dismiss actions."
+  description="Authored target for inline cards and runtime toasts; it is not a capture of Alicorn output."
+  href="https://github.com/samanshaiza004/alicorn-kit/blob/main/examples/notices/main.odin"
+/>
 
 ## Responsibility split
 

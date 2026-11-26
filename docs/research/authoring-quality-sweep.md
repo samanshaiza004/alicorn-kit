@@ -135,6 +135,19 @@ identity regression, the Data Grid full-reference layout check, and all Dialog
 interaction tests. It remains headless evidence; native pixel/DPI capture and
 OS-level accessibility checks are still unverified.
 
+### Catalog reference previews (2026-11-26)
+
+The catalog now has one authored SVG target on each of its 14 component pages.
+Nine missing targets were added for Menu, Notices, Palette Parts, Progress,
+Radio Group, Segmented Control, Sidebar, Table, and Tree View. The existing
+five targets remain for Command Palette, Data Grid, Dialog, Icon Picker, and
+Scroll Area. `website/scripts/sync-manifest.mjs` stages all 14 source SVGs
+from this research directory into the site's ignored `public` output before
+development or build. The illustrations use distinct real application
+contexts, and the site labels each as an authored target rather than a capture.
+They help authors reason about intended composition; they are not evidence of
+native output fidelity or physical-DPI rendering.
+
 ## Limits and known constraints
 
 Headless tests establish layout bounds, shaped text/resources where tested,
