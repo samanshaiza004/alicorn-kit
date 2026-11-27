@@ -256,6 +256,18 @@ contexts, and the site labels each as an authored target rather than a capture.
 They help authors reason about intended composition; they are not evidence of
 native output fidelity or physical-DPI rendering.
 
+### Website build verification (2026-11-27)
+
+The earlier local-build limitation is resolved by adding a dedicated Ubuntu
+CI job that runs `npm ci` and `npm run build` with Node 24. The first CI build
+exposed a missing opening Astro frontmatter delimiter in
+`ReferencePreview.astro`; after correction, both the website and Windows
+component-test jobs passed in [run 45946020475](https://github.com/samanshaiza004/alicorn-kit/actions/runs/45946020475).
+The catalog sync now derives preview filenames from the component registry,
+and the successful build staged all 14 authored SVG targets. The local host
+still has no `website/node_modules`, so this is hosted CI build evidence rather
+than a local build result.
+
 ## Limits and known constraints
 
 Headless tests establish layout bounds, shaped text/resources where tested,
