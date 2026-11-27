@@ -20,18 +20,16 @@ The complete runnable consumer is `examples/segmented/main.odin`.
 
 ## Installation
 
-Copy these files into an application or import the package with the AliKit
-collection:
-
-- `segmented/segmented.odin`
-- `segmented/segmented_test.odin` (conformance)
-- `examples/segmented/main.odin`
-- `examples/segmented/theme.json`
+For normal use, import the package through the AliKit collection:
 
 ```odin
 import ui "alicorn:ui"
 import segmented "alikit:segmented"
 ```
+
+To copy and edit the source, use the complete source closure and import
+rewrites in [`components.json`](../components.json). It includes the shared
+`selection` and `theme_contract` packages.
 
 No init or destroy is required. The component allocates nothing.
 

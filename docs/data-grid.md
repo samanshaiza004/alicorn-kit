@@ -52,11 +52,13 @@ the same usable width. `data_grid` requests that gutter only when the row count
 exceeds `max_visible_rows`; short datasets do not leave a blank scrollbar
 strip. Both components use the same header slot in `table_core`.
 
-## Copyable implementation
+## Package example and source-copy recipe
 
-Files: `data_grid/data_grid.odin`, `data_grid/data_grid_test.odin`,
-`examples/data_grid_quick_start/main.odin`, `examples/data_grid/main.odin`,
-`examples/data_grid/theme.json`.
+Production source closure: `data_grid/data_grid.odin`, `table_core/table_core.odin`,
+`theme_contract/contract.odin`. The complete recipe is in
+[`components.json`](../components.json); place copied files in sibling packages and apply
+its `importRewrites`. Only the Alicorn collection is required; tests and examples remain
+in AliKit. The import snippet below shows ordinary collection-based package use.
 
 ```odin
 import ui "alicorn:ui"

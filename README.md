@@ -132,8 +132,8 @@ on AliKit's package topology.
 
 The phase-6 external-consumer check generates a standalone project outside the
 repository, builds one application that imports packages through the `alikit`
-collection and one that uses copied Radio Group and Menu packages plus their
-declared source dependencies, then runs both native smokes:
+collection and one that compiles copied source closures for all 14 catalog
+components using only Alicorn, then runs both native smokes:
 
 ```powershell
 ./tools/validate_external_consumer.ps1 -Odin odin

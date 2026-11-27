@@ -19,10 +19,13 @@ runtime; `take_action`, `next_deadline`, and `advance` are pass-throughs. The
 card/stack parts are ordinary presentation of application-owned `Item` values;
 they do not schedule expiry or store runtime actions.
 
-## Copyable implementation
+## Package example and source-copy recipe
 
-Files: `notices/notices.odin`, `notices/notices_test.odin`,
-`examples/notices/main.odin`, `examples/notices/theme.json`.
+Production source closure: `notices/notices.odin`, `theme_contract/contract.odin`. The
+complete recipe is in [`components.json`](../components.json); place copied files in
+sibling packages and apply its `importRewrites`. Only the Alicorn collection is required;
+tests and examples remain in AliKit. The import snippet below shows ordinary
+collection-based package use.
 
 ```odin
 import ui "alicorn:ui"

@@ -37,10 +37,14 @@ This package deliberately does not wrap `alikit:command_palette`. It exists to s
 of the stock palette are ordinary public Alicorn facilities and which policy remains
 application-owned. The stock palette remains the complete choice.
 
-## Copyable implementation
+## Package example and source-copy recipe
 
-Files: `palette_parts/parts.odin`, `palette_parts/parts_test.odin`,
-`palette_parts/pilot_test.odin`, `examples/palette_parts/main.odin`.
+Production source closure: `palette_parts/parts.odin`, `palette_model/model.odin`. The
+complete recipe is in
+[`components.json`](https://github.com/samanshaiza004/alicorn-kit/blob/main/components.json);
+place copied files in sibling packages and apply its `importRewrites`. Only the Alicorn
+collection is required; tests and examples remain in AliKit. The import snippet below
+shows ordinary collection-based package use.
 
 ```odin
 import ui "alicorn:ui"

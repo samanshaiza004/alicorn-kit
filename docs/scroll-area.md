@@ -21,10 +21,13 @@ them. This component does not virtualize; use `virtual_list_begin` or
 
 `State` is caller-owned; no init/destroy is required.
 
-## Copyable implementation
+## Package example and source-copy recipe
 
-Files: `scroll_area/scroll_area.odin`, `scroll_area/scroll_area_test.odin`,
-`examples/scroll_area/main.odin`, `examples/scroll_area/theme.json`.
+Production source closure: `scroll_area/scroll_area.odin`, `theme_contract/contract.odin`.
+The complete recipe is in [`components.json`](../components.json); place copied files in
+sibling packages and apply its `importRewrites`. Only the Alicorn collection is required;
+tests and examples remain in AliKit. The import snippet below shows ordinary
+collection-based package use.
 
 ```odin
 import ui "alicorn:ui"

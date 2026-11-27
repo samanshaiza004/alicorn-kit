@@ -68,19 +68,17 @@ desktop application screenshots.
 
 ## Installation
 
-Copy these files into an application or import the package with the AliKit
-collection:
+For normal use, import the package through the AliKit collection:
 
-- `command_palette/command_palette.odin`
-- `command_palette/command_palette_test.odin` (modal/default behavior)
-- `command_palette/command_palette_parts_test.odin` (public part behavior)
-- `command_palette/visual_output_test.odin` (reference geometry, visible text, filtering, and focus)
-- `command_palette/pilot_test.odin` (stock-vs-parts measurement)
-- `examples/command_palette_quick_start/main.odin` (minimal stock consumer)
-- `examples/command_palette/main.odin` (workspace scene and reference shell; use `--reference` to open it)
-- `examples/command_palette_parts/main.odin` (application-owned shell)
-- `examples/command_palette_composition/main.odin` (palette + segmented scope)
-- `docs/research/authoring-reliability/results/command-palette.md` (attempt log and verification limits)
+```odin
+import ui "alicorn:ui"
+import palette "alikit:command_palette"
+```
+
+To copy and edit the source, use the complete source closure and import rewrites
+in [`components.json`](../components.json). It includes Command Palette,
+Palette Parts, and Palette Model; copying `command_palette.odin` alone does not
+compile. Tests and examples remain in the AliKit repository.
 
 `init` allocates the query and match buffer; `destroy` releases them:
 

@@ -42,19 +42,16 @@ the component you want to own:
    package's `*_begin` / part / `*_end` procedures. The complete wrappers are
    built from those same parts.
 3. **Import behaviors or copy source.** `alikit:selection` is a pure behavior
-   package. A component whose source you copy becomes application code; copy its
-   declared `source` files and, when it imports another AliKit package, the
-   dependency files listed in `components.json` under `copy`. Rewrite those
-   intra-AliKit imports to local relative packages so the copy needs only the
-   Alicorn collection. Radio Group and Menu copies, for example, need
-   `selection/` and `theme_contract/` beside them; copying either component
-   file alone does not compile.
+   package. A copied component becomes application code; use that component's
+   `copy` recipe in `components.json` for its complete source closure and
+   `importRewrites`. The copied packages build with only the Alicorn
+   collection. Copying a single component file may omit dependencies.
 
-`components.json` records the copy recipe for audited copyable components and
-the exact package dependencies for every entry.
+`components.json` records a copy recipe for all 14 current catalog components
+and the exact package dependencies for every entry.
 [`tools/validate_external_consumer.ps1`](../tools/validate_external_consumer.ps1)
 generates a standalone project outside the repository, builds both the
-collection-import path and the Radio Group/Menu copy path, and runs native
+collection-import path and all 14 copied source closures, and runs native
 smokes.
 
 The [Command Palette Quick Start](../examples/command_palette_quick_start/main.odin)

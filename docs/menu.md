@@ -66,8 +66,8 @@ There are three supported authoring paths:
 2. Import the parts and compose the popup, groups, and rows: `popup_begin`,
    `group_begin`, `item_begin`, optional visual parts, `item_end`, `group_end`,
    `popup_end`.
-3. Import the parts, copy the source, and write any visual subtree between
-   `item_begin` and `item_end`.
+3. Import the parts and write any visual subtree between `item_begin` and
+   `item_end`.
 
 | Layer | Responsibility |
 | --- | --- |

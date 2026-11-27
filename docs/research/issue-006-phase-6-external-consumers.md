@@ -146,16 +146,16 @@ catalog pages link runnable examples rather than embedding desktop captures.
 
 ## Friction list
 
-1. **Copy instructions omitted source dependencies.** Several guides listed only
-   the main component file as copyable. The radio-group guide and catalog page
-   are corrected; the manifest copy recipes are the machine-readable source of
-   truth. Components that promise source copying should keep this recipe audit
-   current; collection-import packages do not need copy recipes.
+1. **Copy instructions omitted source dependencies — resolved (2026-11-26).**
+   Every current catalog component now has a full production source closure in
+   `components.json`. Component guides distinguish the collection-import path
+   from source copying and no longer list tests or demos as production
+   dependencies. The external copy fixture compiles all 14 closures.
 2. **Copying requires import rewriting or an extra collection.** A raw directory
-   copy keeps `alikit:` imports. The supported options are (a) rewrite the two
-   imports to relative packages and use only `alicorn`, or (b) add
-   `-collection:alikit=<copied root>`. The fixture proves (a); the manifest
-   records the rewrites for (a).
+   copy keeps `alikit:` imports. The manifest-driven fixture applies the
+   declared rewrites to sibling packages and compiles the copies with only the
+   `alicorn` collection; consumers who prefer collection imports can instead
+   add `-collection:alikit=<checkout>`.
 3. **Native external consumers need the AccessKit SDK arguments.** A plain
    `-collection:alicorn` build does not link without the pinned static SDK
    collection and linker flags. The harness bootstraps them from the pinned
@@ -206,11 +206,28 @@ output were not verified in this follow-up.
 - The registry entries and catalog pages for `dialog` and `scroll_area` were
   added after this initial phase. Desktop captures are no longer a catalog
   requirement.
-- Continue the `copy` recipe audit for components that document source copying;
-  Menu's recipe is now declared and exercised with Radio Group in the external
-  fixture. Update each guide to make its supported package/copy path explicit.
+- Keep the all-component `copy` recipe audit and generated consumer fixture in
+  sync when a package source or dependency changes. All 14 current catalog
+  components have recipes and are included in the fixture.
 - Consider a short "Consuming AliKit in your application" guide that includes
   the collection arguments, AccessKit bootstrap, and the copy-rewrite rule.
 - Wire `tools/validate_external_consumer.ps1` into CI after a few green local
   runs; the generated consumer is disposable and the run is bounded by two
   native smokes.
+
+### All-component source-copy follow-up (2026-11-26)
+
+The copy recipes now cover all 14 current catalog components and 19 unique
+production source files. The generated Path 2 consumer imports every component
+package and references its public state/data type, so a successful build checks
+the complete copied package set without an `alikit` collection. Both the Path 1
+collection-import consumer and the expanded Path 2 source-copy consumer built
+successfully on macOS arm64 with Odin `dev-2026-11:9a6991685`, Alicorn
+`4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`, and AccessKit binding
+`e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b`.
+
+The source-copy fixture was generated and compiled manually because `pwsh` is
+not installed on the host. Native `--smoke` and pixel validation were not run;
+an earlier native launch in this environment failed because SDL's video
+driver added no displays. Physical-DPI behavior and website build remain
+unverified.

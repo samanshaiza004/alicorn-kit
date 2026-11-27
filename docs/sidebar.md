@@ -19,20 +19,16 @@ hosts the rail beside a Segmented control in a settings shell.
 
 ## Installation
 
-Copy these files into an application or import the package with the AliKit
-collection:
-
-- `sidebar/sidebar.odin`
-- `sidebar/sidebar_test.odin` (default conformance)
-- `sidebar/sidebar_parts_test.odin` (parts conformance)
-- `examples/sidebar/main.odin` (default appearance)
-- `examples/sidebar_parts/main.odin` (custom rows)
-- `examples/sidebar_composition/main.odin` (rail + segmented settings shell)
+For normal use, import the package through the AliKit collection:
 
 ```odin
 import ui "alicorn:ui"
 import sidebar "alikit:sidebar"
 ```
+
+To copy and edit the source, use the complete source closure and import
+rewrites in [`components.json`](../components.json). It includes the shared
+`selection` and `theme_contract` packages. Tests and examples remain in AliKit.
 
 No init or destroy is required. The component allocates nothing.
 
@@ -43,8 +39,8 @@ There are three supported authoring paths:
 1. Import the complete component and call `sidebar.rail`.
 2. Import the parts and compose the rail and rows: `rail_begin`, `item_begin`,
    optional visual parts, `item_end`, `rail_end`.
-3. Import the parts, copy the source, and write any visual subtree between
-   `item_begin` and `item_end`.
+3. Import the parts and write any visual subtree between `item_begin` and
+   `item_end`. A source fork can use the recipe in `components.json`.
 
 | Layer | Responsibility |
 | --- | --- |

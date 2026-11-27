@@ -32,11 +32,14 @@ The [complete Odin example](https://github.com/samanshaiza004/alicorn-kit/blob/m
 | **`tree_view` / `tree_model`** | Visible-window validation, stable row focus/selection, indentation, keyboard traversal, reveal, and context-menu targeting. |
 | **Application** | Hierarchy, visible preorder projection, expansion/loading policy, mutation, selection policy, activation, and context-menu commands. |
 
-## Copyable implementation
+## Package example and source-copy recipe
 
-Files: `tree_view/tree_view.odin`, `tree_model/model.odin`,
-`tree_view/tree_view_test.odin`, `tree_model/model_test.odin`,
-`examples/tree_view/main.odin`.
+Production source closure: `tree_view/tree_view.odin`, `tree_model/model.odin`. The
+complete recipe is in
+[`components.json`](https://github.com/samanshaiza004/alicorn-kit/blob/main/components.json);
+place copied files in sibling packages and apply its `importRewrites`. Only the Alicorn
+collection is required; tests and examples remain in AliKit. The import snippet below
+shows ordinary collection-based package use.
 
 ```odin
 import ui "alicorn:ui"

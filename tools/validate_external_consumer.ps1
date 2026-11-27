@@ -86,6 +86,7 @@ function Assert-Manifest {
     }
 
     $entries = @($manifest.components) + @($manifest.supportingPackages)
+    $componentIds = @($manifest.components | ForEach-Object { $_.id })
     $coveredPackages = @()
     foreach ($entry in $entries) {
         $files = @()
@@ -128,8 +129,7 @@ function Assert-Manifest {
             }
         }
 
-        $needsCopy = ($entry.kind -in @('copyable-composite', 'copyable-parts')) -or
-            ($entry.id -in @('radio-group', 'menu'))
+        $needsCopy = $entry.id -in $componentIds
         if ($entry.PSObject.Properties.Name -contains 'copy') {
             foreach ($relative in @($entry.copy.sources)) {
                 if (-not (Test-Path -LiteralPath (Join-Path $RepoRoot $relative) -PathType Leaf)) {
@@ -157,7 +157,7 @@ function Assert-Manifest {
         }
     }
 
-    # The copy fixture audits the Radio Group and Menu source-copy recipes.
+    # The copy fixture audits every current component source-copy recipe.
     return [pscustomobject]@{ Errors = $errors; Warnings = $warnings; Manifest = $manifest }
 }
 
@@ -172,10 +172,13 @@ function New-Consumer([object]$Manifest) {
     Copy-Item -LiteralPath (Join-Path $FixtureRoot 'path1_packages') -Destination $Path1 -Recurse
     Copy-Item -LiteralPath (Join-Path $FixtureRoot 'path2_copy') -Destination $Path2 -Recurse
 
-    # The copied-source fixture exercises both declared recipes. They share
-    # selection and theme_contract, so copy the union once and apply the
-    # declared import rewrites to each copied package.
-    $copyEntries = @($Manifest.components | Where-Object { $_.id -in @('radio-group', 'menu') })
+    # The copied-source fixture exercises every declared component recipe.
+    # Shared dependencies are copied once and each package's rewrites are
+    # applied to the full source closure.
+    $copyEntries = @($Manifest.components | Where-Object { $_.copy })
+    if ($copyEntries.Count -ne $Manifest.components.Count) {
+        throw 'Every catalog component must declare a source-copy recipe.'
+    }
     $copySources = @{}
     $rewriteMap = @{}
     foreach ($entry in $copyEntries) {
@@ -252,10 +255,11 @@ arguments are added by the harness exactly as `tools/test.ps1` does.
     odin build path2_copy -collection:alicorn=$AlicornRoot -out:bin/external_consumer_path2.exe
     bin/external_consumer_path2.exe --smoke
 
-`vendor/` contains `radio_group/radio_group.odin`, `menu/menu.odin`,
-`selection/selection.odin`, and `theme_contract/contract.odin`. Both copied
-components import `../selection` and `../theme_contract`; copying either
-component file alone does not compile. Keep the vendor directory together.
+`vendor/` contains the declared source closures for all 14 catalog components,
+including shared dependencies such as `selection`, `theme_contract`,
+`palette_model`, `palette_parts`, `tree_model`, and `table_core`. Every copied
+component imports its local sibling packages; no AliKit collection is present.
+Keep the vendor directory together.
 
 ## Gotchas recorded by this run
 

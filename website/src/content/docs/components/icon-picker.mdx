@@ -38,10 +38,13 @@ The [authored List appearance target](https://github.com/samanshaiza004/alicorn-
 | **`icon_picker`** | Query and matches, search part, grid/list appearances, cell/row drawing, active key, reveal, and one activation proposal. |
 | **Application** | Choices, accepted selection, commands, surrounding dialog, and focus restoration. |
 
-## Copyable implementation
+## Package example and source-copy recipe
 
-Files: `icon_picker/icon_picker.odin`, `icon_picker/icon_picker_test.odin`,
-`examples/icon_picker/main.odin`. The example imports the package by relative path, so the pair
+Production source closure: `icon_picker/icon_picker.odin`. The complete recipe is in
+[`components.json`](https://github.com/samanshaiza004/alicorn-kit/blob/main/components.json);
+place copied files in sibling packages and apply its `importRewrites`. Only the Alicorn
+collection is required; tests and examples remain in AliKit. The import snippet below
+shows ordinary collection-based package use.
 builds with only the Alicorn collection; the test suite also proves the copied-source path.
 
 ```odin

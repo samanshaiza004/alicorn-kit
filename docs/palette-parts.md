@@ -20,10 +20,12 @@ column, keyword chip, and check inside an application-owned inline shell.
 
 ## Installation
 
-Copy `palette_parts/parts.odin` (and, for the regression suite,
-`palette_parts/parts_test.odin`) into an application, or import
-`alikit:palette_parts` with the AliKit collection. The pilot measurement lives
-with `alikit:command_palette` because it compares both paths.
+Import `alikit:palette_parts` with the AliKit collection for normal use. To
+copy and edit the source, use its complete recipe in
+[`components.json`](../components.json): copy `palette_parts/parts.odin` and
+`palette_model/model.odin` into sibling packages, then rewrite
+`alikit:palette_model` to `../palette_model`. Copying `parts.odin` alone does
+not compile. Tests and examples remain in the AliKit repository.
 
 ```odin
 import parts "alikit:palette_parts"
@@ -47,7 +49,8 @@ There are three supported authoring paths:
 1. Import `palette_parts` and call `results` for the default list.
 2. Compose `list_begin`, `item_begin`, optional visual parts, `item_end`, and
    `list_end`; add `group_begin`/`group_end` and `empty` where needed.
-3. Copy `parts.odin` and replace the row visual parts or navigation helpers.
+3. Copy the declared source closure and replace the row visual parts or
+   navigation helpers.
 
 | Layer | Responsibility |
 | --- | --- |

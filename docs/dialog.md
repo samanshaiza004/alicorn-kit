@@ -33,10 +33,13 @@ input and focus.
   destructive-confirmation focus, and Alert_Dialog behavior used by the
   authoring-reliability benchmark.
 
-## Copyable implementation
+## Package example and source-copy recipe
 
-Files: `dialog/dialog.odin`, `dialog/dialog_test.odin`,
-`examples/dialog_quick_start/main.odin`, `examples/dialog/main.odin`.
+Production source closure: `dialog/dialog.odin`, `theme_contract/contract.odin`. The
+complete recipe is in [`components.json`](../components.json); place copied files in
+sibling packages and apply its `importRewrites`. Only the Alicorn collection is required;
+tests and examples remain in AliKit. The import snippet below shows ordinary
+collection-based package use.
 
 The authoring-reliability reference is [a vector design target](research/authoring-reliability/references/dialog.svg),
 not a desktop capture. The example uses a 516 px width to match that target and
@@ -55,6 +58,7 @@ by this repository: `4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`.
 
 ```odin
 import ui "alicorn:ui"
+import dialog "alikit:dialog"
 // In the ordinary root:
 if ui.button(ctx, "Delete", key=ui.key_string("delete")) {
 	_ = dialog.open(&app.dialog, ctx.runtime)

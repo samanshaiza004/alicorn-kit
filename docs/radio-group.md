@@ -56,8 +56,8 @@ There are three supported authoring paths:
 
 1. Import the complete component and call `radio.radio_group`.
 2. Import the parts and compose the group, items, indicator, and label.
-3. Import the parts, copy the source, and write any visual subtree between
-   `item_begin` and `item_end`.
+3. Import the parts and write any visual subtree between `item_begin` and
+   `item_end`.
 
 `radio_group` itself is a convenience wrapper built from the exact public
 parts, so the two paths share one interaction and semantic contract.

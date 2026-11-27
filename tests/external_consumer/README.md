@@ -38,31 +38,20 @@ Add the pinned AccessKit compiler arguments from
 
 ## Path 2: `path2_copy`
 
-Consumes copied Radio Group and Menu packages. The harness copies:
-
-- `radio_group/radio_group.odin`
-- `menu/menu.odin`
-- `selection/selection.odin`
-- `theme_contract/contract.odin`
-
-into `path2_copy/vendor/` as sibling packages and rewrites both component
-packages' imports:
-
-```odin
-import sel "../selection"
-import tc "../theme_contract"
-```
-
-`main.odin` composes the copied radio parts with an author-owned two-line row
-and uses the copied Menu package for an anchored action popup. The build needs
-only the Alicorn collection:
+Consumes the source closures for all 14 catalog components. The harness copies
+the `sources` listed by each component's `copy` recipe in `components.json`
+into sibling packages under `path2_copy/vendor/`, then applies the declared
+`importRewrites`. `Copy_Package_Proof` references public component types so
+Odin compiles every copied package. The app also composes copied Radio Group
+parts and a copied Menu popup. The build needs only the Alicorn collection:
 
 ```powershell
 odin build path2_copy -collection:alicorn=<alicorn> -out:bin/external_consumer_path2.exe
 ```
 
-Copying either component file alone does not compile. `components.json` records
-the source and rewrite recipe under `components[].copy` for audited components.
+The manifest recipe includes every AliKit dependency needed by the copied
+source. Copying a component file alone may not compile; keep its full declared
+source closure together.
 
 ## Smoke assertions
 

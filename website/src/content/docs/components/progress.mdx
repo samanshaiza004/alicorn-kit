@@ -36,10 +36,14 @@ The component has no timer, animation lifecycle, or application value. `State` h
 values from the most recent description: resolved fraction, phase, reduced-motion decision, and
 segment geometry.
 
-## Copyable implementation
+## Package example and source-copy recipe
 
-Files: `progress/progress.odin`, `progress/progress_test.odin`,
-`examples/progress/main.odin`, `examples/progress/theme.json`.
+Production source closure: `progress/progress.odin`, `theme_contract/contract.odin`. The
+complete recipe is in
+[`components.json`](https://github.com/samanshaiza004/alicorn-kit/blob/main/components.json);
+place copied files in sibling packages and apply its `importRewrites`. Only the Alicorn
+collection is required; tests and examples remain in AliKit. The import snippet below
+shows ordinary collection-based package use.
 
 ```odin
 import ui "alicorn:ui"

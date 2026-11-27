@@ -58,15 +58,13 @@ AliKit is source-level Odin with three authoring paths:
 2. **Parts.** Use the same collections and compose the package's `*_begin` / part / `*_end`
    procedures. The complete wrappers use the same parts.
 3. **Behaviors or copied source.** `alikit:selection` is a pure behavior package. A copied
-   component becomes application code: copy its declared `source` files plus any dependency files
-   listed under `copy` in `components.json`, then rewrite the intra-AliKit imports to local
-   relative packages. For example, Radio Group and Menu copies need `selection/` and
-   `theme_contract/` beside them and compile with only `-collection:alicorn=<alicorn>`; copying
-   either component file alone does not compile.
+   component becomes application code: use its `copy` recipe in `components.json` for the full
+   source closure and import rewrites. Each current component's copied sources build with only
+   `-collection:alicorn=<alicorn>`; copying a single component file may omit dependencies.
 
 `tools/validate_external_consumer.ps1` generates a standalone consumer outside the repository,
-builds the collection-import and copied-source paths, and runs native smokes. `components.json`
-records the audited copy recipes and exact package dependencies.
+builds the collection-import path and copied sources for all 14 catalog components, and runs native
+smokes. `components.json` records every copy recipe and exact package dependencies.
 
 ## Choosing a result-list path
 

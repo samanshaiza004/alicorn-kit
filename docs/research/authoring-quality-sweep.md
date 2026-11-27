@@ -197,6 +197,22 @@ installed. A direct attempt to launch the Data Grid reference returned
 `SDL_Init failed: The video driver did not add any displays`; native pixels,
 interaction, and physical-DPI behavior therefore remain unverified here.
 
+### All-component source-copy recipes (2026-11-26)
+
+`components.json` now declares a complete source-copy recipe for each of the
+14 catalog components, covering 19 unique production Odin files. Component
+guides distinguish collection imports from copying and no longer present tests
+or demos as copy dependencies. The generated external-consumer Path 2 fixture
+copies those closures, applies the declared import rewrites, and references a
+public type from every package. Its manual macOS arm64 build passed with only
+the Alicorn collection and no remaining `alikit:` imports. The Path 1
+collection-import consumer also built successfully. Both builds used Odin
+`dev-2026-11:9a6991685`, Alicorn `4e0862f368cb`, and AccessKit binding
+`e290e5f55da9`.
+
+`pwsh` is unavailable, so the PowerShell orchestration itself was not executed;
+native smoke launches, website build, and pixel validation remain unverified.
+
 The remaining 11 catalog components now also have TestUI presentation-scale
 matrices at 1×, 1.25×, 1.5×, and 2×, with assertions for visible text and
 component/viewport containment. Those 11 package suites pass **85/85 tests** at

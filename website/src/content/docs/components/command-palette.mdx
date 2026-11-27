@@ -44,12 +44,14 @@ That custom shell imports `alicorn:runtime` for `modal_overlay_begin/end` and `s
 Use the palette for command access. Do not use it as a general dialog, a file picker, or a router:
 those are application or other-component concerns.
 
-## Copyable implementation
+## Package example and source-copy recipe
 
-Files: `command_palette/command_palette.odin`,
-`command_palette/command_palette_test.odin`,
-`examples/command_palette_quick_start/main.odin`,
-`examples/command_palette/main.odin`.
+Production source closure: `command_palette/command_palette.odin`,
+`palette_model/model.odin`, `palette_parts/parts.odin`. The complete recipe is in
+[`components.json`](https://github.com/samanshaiza004/alicorn-kit/blob/main/components.json);
+place copied files in sibling packages and apply its `importRewrites`. Only the Alicorn
+collection is required; tests and examples remain in AliKit. The import snippet below
+shows ordinary collection-based package use.
 
 ```odin
 import ui "alicorn:ui"

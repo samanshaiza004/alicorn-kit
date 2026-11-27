@@ -1,12 +1,10 @@
 package main
 
-// External consumer, authoring path 2: copy component source into the
-// application's own tree. tools/validate_external_consumer.ps1 copies
-// radio_group/radio_group.odin and menu/menu.odin plus their shared declared
-// source dependencies (selection/selection.odin and
-// theme_contract/contract.odin) into path2_copy/vendor/ and rewrites the
-// intra-AliKit imports to local packages. The build then needs only the
-// Alicorn collection; there is no `alikit` collection or AliKit topology.
+// External consumer, authoring path 2: copy component sources into the
+// application's own tree. tools/validate_external_consumer.ps1 copies every
+// declared component source closure into path2_copy/vendor/ and rewrites all
+// intra-AliKit imports to local packages. The build needs only the Alicorn
+// collection; there is no `alikit` collection or AliKit topology.
 //
 // Build (exact collection args recorded by the harness):
 //   odin build . -collection:alicorn=<alicorn>
@@ -17,8 +15,20 @@ import "core:fmt"
 import "core:os"
 import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
+import command_palette "./vendor/command_palette"
+import data_grid "./vendor/data_grid"
+import dialog "./vendor/dialog"
+import icon_picker "./vendor/icon_picker"
 import menu "./vendor/menu"
+import notices "./vendor/notices"
+import palette_parts "./vendor/palette_parts"
+import progress "./vendor/progress"
 import radio "./vendor/radio_group"
+import scroll_area "./vendor/scroll_area"
+import segmented "./vendor/segmented"
+import sidebar "./vendor/sidebar"
+import table "./vendor/table"
+import tree_view "./vendor/tree_view"
 
 PLANS := [3]radio.Option{
 	{value=201, label="Personal", description="One workspace and local history"},
@@ -32,7 +42,27 @@ COPY_ACTIONS := [3]menu.Item{
 	{key=303, label="Remove workspace", disabled=true},
 }
 
+// Referencing each component's public state/data type makes Odin compile the
+// complete copied package set rather than only the controls used in this app.
+Copy_Package_Proof :: struct {
+	command_palette: command_palette.State,
+	tree_view:       tree_view.State,
+	icon_picker:     icon_picker.State,
+	palette_parts:   palette_parts.State,
+	radio_group:     radio.State,
+	progress:        progress.State,
+	segmented:       segmented.State,
+	notices:         notices.State,
+	sidebar:          sidebar.State,
+	table_row:       table.Row,
+	menu:            menu.State,
+	data_grid:       data_grid.State,
+	dialog:           dialog.State,
+	scroll_area:      scroll_area.State,
+}
+
 App :: struct {
+	copy_proof: Copy_Package_Proof,
 	group:    radio.State,
 	actions:  menu.State,
 	selected: u64,

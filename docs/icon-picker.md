@@ -41,21 +41,15 @@ produce visible glyphs, including after resizing.
 
 ## Installation
 
-Copy these files into an application or import the package with the AliKit
-collection:
-
-- `icon_picker/icon_picker.odin`
-- `icon_picker/icon_picker_test.odin` (default composite)
-- `icon_picker/icon_picker_parts_test.odin` (public parts)
-- `examples/icon_picker_quick_start/main.odin` (minimal inline consumer)
-- `examples/icon_picker/main.odin` (default composite)
-- `examples/icon_picker_parts/main.odin` (custom cells/rows)
-- `examples/icon_picker_composition/main.odin` (dialog + segmented host)
+For normal use, import the package through the AliKit collection. To copy and
+edit the source, use its recipe in [`components.json`](../components.json); it
+contains the single package source and needs no intra-AliKit import rewrites.
+Tests and examples remain in the AliKit repository.
 
 ```odin
 import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
-import picker "alikit:icon_picker" // or a relative copy
+import picker "alikit:icon_picker" // or the local package from the copy recipe
 ```
 
 Initialize once and destroy once:
@@ -74,8 +68,8 @@ There are three supported authoring paths:
 2. Import the parts and compose search, grid, and items:
    `search`, `grid_begin`, `item_begin`, optional `cell`/`row`, `item_end`,
    `grid_end`, and `empty`.
-3. Import the parts, copy the source, and write any visual subtree between
-   `item_begin` and `item_end`.
+3. Import the parts and write any visual subtree between `item_begin` and
+   `item_end`.
 
 | Layer | Responsibility |
 | --- | --- |

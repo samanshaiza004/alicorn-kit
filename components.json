@@ -134,7 +134,20 @@
       "partExamples": [
         "examples/command_palette_parts/main.odin",
         "examples/command_palette_composition/main.odin"
-      ]
+      ],
+      "copy": {
+        "sources": [
+          "command_palette/command_palette.odin",
+          "palette_model/model.odin",
+          "palette_parts/parts.odin"
+        ],
+        "importRewrites": {
+          "alikit:palette_model": "../palette_model",
+          "alikit:palette_parts": "../palette_parts"
+        },
+        "collectionRequired": false,
+        "note": "Copy all listed files into sibling packages and apply the declared import rewrites. No AliKit collection is needed."
+      }
     },
     {
       "id": "tree-view",
@@ -226,7 +239,18 @@
         "Paged windows report Range_Requested",
         "Headless tests do not prove native screen-reader traversal",
         "No filesystem or expansion policy"
-      ]
+      ],
+      "copy": {
+        "sources": [
+          "tree_view/tree_view.odin",
+          "tree_model/model.odin"
+        ],
+        "importRewrites": {
+          "alikit:tree_model": "../tree_model"
+        },
+        "collectionRequired": false,
+        "note": "Copy all listed files into sibling packages and apply the declared import rewrites. No AliKit collection is needed."
+      }
     },
     {
       "id": "icon-picker",
@@ -253,7 +277,7 @@
         ],
         "importRewrites": {},
         "collectionRequired": false,
-        "note": "Copy the package directory beside the application; it has no intra-AliKit imports."
+        "note": "This is a single-file component with no intra-AliKit imports. No AliKit collection is needed."
       },
       "ownedState": "State (query buffer, filtered matches, active key)",
       "applicationOwns": [
@@ -377,7 +401,7 @@
           "alikit:palette_model": "../palette_model"
         },
         "collectionRequired": false,
-        "note": "Copy palette_parts beside palette_model and rewrite the palette_model import to the local package."
+        "note": "Copy all listed files into sibling packages and apply the declared import rewrites. No AliKit collection is needed."
       },
       "ownedState": "State (selection, list owner, reveal/focus request)",
       "applicationOwns": [
@@ -496,7 +520,7 @@
           "alikit:theme_contract": "../theme_contract"
         },
         "collectionRequired": false,
-        "note": "Copy radio_group beside selection and theme_contract and rewrite both intra-AliKit imports. Copying radio_group.odin alone does not compile."
+        "note": "Copy all listed files into sibling packages and apply the declared import rewrites. No AliKit collection is needed."
       },
       "ownedState": "State (active roving value, focus request, pending proposal)",
       "applicationOwns": [
@@ -657,7 +681,18 @@
         "Default value text is %.0f%% unless value_label is supplied",
         "A ring Arc requires a nonzero sweep",
         "Headless tests do not prove native announcements"
-      ]
+      ],
+      "copy": {
+        "sources": [
+          "progress/progress.odin",
+          "theme_contract/contract.odin"
+        ],
+        "importRewrites": {
+          "alikit:theme_contract": "../theme_contract"
+        },
+        "collectionRequired": false,
+        "note": "Copy all listed files into sibling packages and apply the declared import rewrites. No AliKit collection is needed."
+      }
     },
     {
       "id": "segmented",
@@ -741,7 +776,20 @@
         "The indicator animates only translation, not width",
         "No testui segmented pattern at the pinned revision",
         "Headless tests do not prove a physical screen-reader session"
-      ]
+      ],
+      "copy": {
+        "sources": [
+          "segmented/segmented.odin",
+          "selection/selection.odin",
+          "theme_contract/contract.odin"
+        ],
+        "importRewrites": {
+          "alikit:selection": "../selection",
+          "alikit:theme_contract": "../theme_contract"
+        },
+        "collectionRequired": false,
+        "note": "Copy all listed files into sibling packages and apply the declared import rewrites. No AliKit collection is needed."
+      }
     },
     {
       "id": "notices",
@@ -820,7 +868,18 @@
         "Inline cards do not publish live-region announcements",
         "Transient notices need a monotonic now_ns",
         "Custom cards inside the built-in toast overlay are a core gap"
-      ]
+      ],
+      "copy": {
+        "sources": [
+          "notices/notices.odin",
+          "theme_contract/contract.odin"
+        ],
+        "importRewrites": {
+          "alikit:theme_contract": "../theme_contract"
+        },
+        "collectionRequired": false,
+        "note": "Copy all listed files into sibling packages and apply the declared import rewrites. No AliKit collection is needed."
+      }
     },
     {
       "id": "sidebar",
@@ -918,7 +977,20 @@
       "partExamples": [
         "examples/sidebar_parts/main.odin",
         "examples/sidebar_composition/main.odin"
-      ]
+      ],
+      "copy": {
+        "sources": [
+          "sidebar/sidebar.odin",
+          "selection/selection.odin",
+          "theme_contract/contract.odin"
+        ],
+        "importRewrites": {
+          "alikit:selection": "../selection",
+          "alikit:theme_contract": "../theme_contract"
+        },
+        "collectionRequired": false,
+        "note": "Copy all listed files into sibling packages and apply the declared import rewrites. No AliKit collection is needed."
+      }
     },
     {
       "id": "table",
@@ -1007,7 +1079,20 @@
         "Built-in sorting/filtering/editing are not included",
         "Unrealized virtual rows do not export per-cell values",
         "No table testui pattern at the pinned revision"
-      ]
+      ],
+      "copy": {
+        "sources": [
+          "table/table.odin",
+          "table_core/table_core.odin",
+          "theme_contract/contract.odin"
+        ],
+        "importRewrites": {
+          "alikit:table_core": "../table_core",
+          "alikit:theme_contract": "../theme_contract"
+        },
+        "collectionRequired": false,
+        "note": "Copy all listed files into sibling packages and apply the declared import rewrites. No AliKit collection is needed."
+      }
     },
     {
       "id": "menu",
@@ -1046,7 +1131,7 @@
           "alikit:theme_contract": "../theme_contract"
         },
         "collectionRequired": false,
-        "note": "Copy menu beside selection and theme_contract and rewrite both intra-AliKit imports. Copying menu.odin alone does not compile."
+        "note": "Copy all listed files into sibling packages and apply the declared import rewrites. No AliKit collection is needed."
       },
       "ownedState": "State (open/anchor/panel/scroll nodes, active roving identity, focus restoration, pending chosen key)",
       "applicationOwns": [
@@ -1222,7 +1307,20 @@
         "Built-in sorting/filtering/editing are not included",
         "Unrealized virtual rows do not export per-cell values",
         "No data-grid testui pattern at the pinned revision"
-      ]
+      ],
+      "copy": {
+        "sources": [
+          "data_grid/data_grid.odin",
+          "table_core/table_core.odin",
+          "theme_contract/contract.odin"
+        ],
+        "importRewrites": {
+          "alikit:table_core": "../table_core",
+          "alikit:theme_contract": "../theme_contract"
+        },
+        "collectionRequired": false,
+        "note": "Copy all listed files into sibling packages and apply the declared import rewrites. No AliKit collection is needed."
+      }
     },
     {
       "id": "dialog",
@@ -1307,7 +1405,18 @@
         "The built-in action helper uses a fixed 32 px height",
         "Opening and closing are immediate; no motion contract is provided",
         "Headless tests do not prove native screen-reader announcements or platform modal behavior"
-      ]
+      ],
+      "copy": {
+        "sources": [
+          "dialog/dialog.odin",
+          "theme_contract/contract.odin"
+        ],
+        "importRewrites": {
+          "alikit:theme_contract": "../theme_contract"
+        },
+        "collectionRequired": false,
+        "note": "Copy all listed files into sibling packages and apply the declared import rewrites. No AliKit collection is needed."
+      }
     },
     {
       "id": "scroll-area",
@@ -1384,7 +1493,18 @@
         "Scroll_View semantic scroll actions are unavailable at the pinned revision",
         "Fit-content viewport sizing is component-computed because the pinned runtime does not resolve a Scroll_Region fit height inside a Column",
         "Scrollbar colors are theme-level rather than per-region overrides"
-      ]
+      ],
+      "copy": {
+        "sources": [
+          "scroll_area/scroll_area.odin",
+          "theme_contract/contract.odin"
+        ],
+        "importRewrites": {
+          "alikit:theme_contract": "../theme_contract"
+        },
+        "collectionRequired": false,
+        "note": "Copy all listed files into sibling packages and apply the declared import rewrites. No AliKit collection is needed."
+      }
     }
   ],
   "supportingPackages": [

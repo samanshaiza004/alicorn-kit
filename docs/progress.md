@@ -17,19 +17,16 @@ composition example hosts progress parts inside a modal export dialog.
 
 ## Installation
 
-Copy these files into an application or import the package with the AliKit
-collection:
-
-- `progress/progress.odin`
-- `progress/progress_test.odin` (conformance)
-- `examples/progress/main.odin` (default appearance)
-- `examples/progress_parts/main.odin` (linear and ring parts)
-- `examples/progress_composition/main.odin` (dialog composition)
+For normal use, import the package through the AliKit collection:
 
 ```odin
 import ui "alicorn:ui"
 import progress "alikit:progress"
 ```
+
+To copy and edit the source, use the complete source closure and import
+rewrites in [`components.json`](../components.json). It includes the shared
+`theme_contract` package. Tests and examples remain in the AliKit repository.
 
 No init or destroy is required. The component allocates nothing.
 
@@ -39,8 +36,9 @@ There are three supported authoring paths:
 
 1. Import the complete component and call `progress.progress`.
 2. Import the parts and compose the label, value, track, and indicator.
-3. Import the parts, copy the source, and draw an application-specific
-   presentation from the public fraction and geometry helpers.
+3. Import the parts and draw an application-specific presentation from the
+   public fraction and geometry helpers. A source fork can use the recipe in
+   `components.json`.
 
 `progress` itself is a convenience wrapper built from the exact public parts, so
 the default and custom paths share one semantic node and one numeric contract.

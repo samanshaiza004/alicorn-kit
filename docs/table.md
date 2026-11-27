@@ -26,10 +26,13 @@ The component keeps no state and allocates nothing. It borrows `columns` and
 used by [Data Grid](data-grid.md); it owns no focus, selection, or activation
 policy.
 
-## Copyable implementation
+## Package example and source-copy recipe
 
-Files: `table/table.odin`, `table/table_test.odin`, `examples/table/main.odin`,
-`examples/table/theme.json`.
+Production source closure: `table/table.odin`, `table_core/table_core.odin`,
+`theme_contract/contract.odin`. The complete recipe is in
+[`components.json`](../components.json); place copied files in sibling packages and apply
+its `importRewrites`. Only the Alicorn collection is required; tests and examples remain
+in AliKit. The import snippet below shows ordinary collection-based package use.
 
 ```odin
 import ui "alicorn:ui"

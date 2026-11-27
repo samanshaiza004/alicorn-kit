@@ -55,11 +55,14 @@ with only `-collection:alicorn=<alicorn>`. Copying `radio_group.odin` alone does
 exact copy path is compiled and smoked from a generated external consumer by
 `tools/validate_external_consumer.ps1`.
 
-## Copyable implementation
+## Package example and source-copy recipe
 
-Files: `radio_group/radio_group.odin`, `selection/selection.odin`,
-`theme_contract/contract.odin`, `radio_group/radio_group_test.odin`,
-`examples/radio_group/main.odin`, `examples/radio_group/theme.json`.
+Production source closure: `radio_group/radio_group.odin`, `selection/selection.odin`,
+`theme_contract/contract.odin`. The complete recipe is in
+[`components.json`](https://github.com/samanshaiza004/alicorn-kit/blob/main/components.json);
+place copied files in sibling packages and apply its `importRewrites`. Only the Alicorn
+collection is required; tests and examples remain in AliKit. The import snippet below
+shows ordinary collection-based package use.
 
 ```odin
 import ui "alicorn:ui"
