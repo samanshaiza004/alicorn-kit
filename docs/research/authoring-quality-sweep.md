@@ -154,6 +154,23 @@ checkout has no `website/node_modules`, and I did not install dependencies. The
 catalog output is therefore synchronized, but the website build remains
 unverified.
 
+### External-consumer rebuild on macOS (2026-11-27)
+
+The PowerShell orchestrator remains unavailable (`pwsh` is not installed), so
+I rebuilt both external fixtures manually after the latest AliKit changes. The
+package-import consumer compiled with `alicorn` and `alikit` collection paths.
+The source-copy consumer was generated under `/private/tmp` from the declared
+Radio Group, Selection, and Theme Contract sources; its two imports were
+rewritten to sibling packages, then it compiled with only the `alicorn`
+collection. Both Odin builds exited 0 on the pinned macOS arm64 toolchain. The
+compiler emitted the existing dependency stack-size warnings and duplicate
+`-lobjc` linker warning.
+
+This confirms both public consumption modes still compile. The full manifest
+audit, native `--smoke` launches, and website build remain unverified in this
+environment; `pwsh` and `website/node_modules` are absent. No dependencies were
+installed.
+
 The remaining 11 catalog components now also have TestUI presentation-scale
 matrices at 1×, 1.25×, 1.5×, and 2×, with assertions for visible text and
 component/viewport containment. Those 11 package suites pass **85/85 tests** at
