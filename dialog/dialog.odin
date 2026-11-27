@@ -84,6 +84,8 @@ DEFAULT_OPTIONS :: Options{
 	action_gap=8,
 }
 
+DEFAULT_ACTION_HEIGHT :: f32(32)
+
 Recipe :: struct {
 	panel_surface_role:   alicorn.Style_Extension_Color_Role_ID,
 	backdrop_surface_role: alicorn.Style_Extension_Color_Role_ID,
@@ -574,6 +576,7 @@ action :: proc(
 	kind: Action_Kind = .Custom,
 	key: ui.UI_Key,
 	width: f32 = 0,
+	height: f32 = DEFAULT_ACTION_HEIGHT,
 ) -> bool {
 	if ctx == nil || ctx.runtime == nil || state == nil { return false }
 	variant := alicorn.Button_Variant.Default
@@ -581,11 +584,15 @@ action :: proc(
 	case .Primary: variant = .Primary
 	case .Cancel: variant = .Quiet
 	}
+	resolved_height := height
+	if resolved_height <= 0 || math.is_nan(resolved_height) || math.is_inf(resolved_height) {
+		resolved_height = DEFAULT_ACTION_HEIGHT
+	}
 	owner, activated := alicorn.button_begin(
 		ctx,
 		label,
 		key=key,
-		style=ui.layout_style(.Row, width=(width if width > 0 else f32(-1)), height=32),
+		style=ui.layout_style(.Row, width=(width if width > 0 else f32(-1)), height=resolved_height),
 		variant=variant,
 	)
 	if owner == 0 { return false }

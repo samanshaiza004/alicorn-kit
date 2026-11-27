@@ -243,8 +243,9 @@ headless retained-output checks as pixel-match evidence.
   filter updates into application-owned state. Package and reference-app tests
   cover both behaviors. The Table reference remains a nonvirtualized intrinsic
   row-height example, so its app-level reveal path is not exercised there.
-- Dialog's public action helper fixes its button height at 32 px; reaching the
-  target's 40 px uses ordinary `ui.button` controls inside the public action row.
+- The Dialog benchmark exposed that its action helper fixed height at 32 px.
+  A follow-up added an optional height while retaining that default; the
+  reference now uses `dialog.action` for its 40 px actions.
 - The custom Command Palette shell needs runtime exports for modal overlay and
   semantic construction. A stock palette consumer still has the simpler
   `alicorn:ui` + `alikit:command_palette` import surface.

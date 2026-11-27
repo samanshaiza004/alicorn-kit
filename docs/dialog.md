@@ -44,12 +44,11 @@ leaves height at the component's intrinsic default; the modal stays inside the
 viewport at the tested 760 × 640 size. This target width is an example choice,
 not a requirement for application dialogs. The ordinary example imports only
 `alicorn:ui` and `alikit:dialog`; the test package imports the runtime for
-focused-node and retained-output assertions. The target uses 40 px actions,
-while `dialog.action` currently fixes its buttons at 32 px. To match the target,
-the example composes ordinary `ui.button` controls inside
-`dialog.action_row_begin` and uses `dialog.dismiss` for the state transition.
-That is a deliberate public-API composition and a dimension workaround worth
-recording in the reference benchmark.
+focused-node and retained-output assertions. The target uses 40 px actions;
+`dialog.action` defaults to 32 px and accepts explicit width and height values.
+The example uses 40 px component actions and calls `dialog.dismiss` to resolve
+the state transition. Ordinary `ui.button` controls remain available when an
+application needs a different button anatomy.
 
 Compatibility and fit-content notes here reflect the Alicorn revision pinned
 by this repository: `4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`.
@@ -102,7 +101,7 @@ if app.dialog.open {
 | Description | `description(ctx, ...)` | Supporting copy part. |
 | Content | `content_begin/content_end` | Caller-owned slot; may be omitted. |
 | Action row | `action_row_begin/action_row_end` | Right-aligned row; may be omitted. |
-| Actions | `action(ctx, state, label, kind, key)` | Primary/Cancel/Custom Button owners; returns activation. |
+| Actions | `action(ctx, state, label, kind, key, width, height)` | Primary/Cancel/Custom Button owners; 32 px default height; returns activation. |
 | Close affordance | `close_affordance(ctx, state, key)` | Optional corner control. |
 | Alert companion | `alert_semantic_id(instance_id)` | Live assertive `Alert` entity for Alert_Dialog. |
 
@@ -116,7 +115,8 @@ Rounded dialog frames are a recorded core gap.
 `Recipe` has optional `panel_surface_role` and `backdrop_surface_role`.
 `Style` has `corner_radius` (used by action parts), `focus_width`, and
 `backdrop_alpha`. `Options` carries width, height (0 = fit content), max height,
-padding, gaps, and action gap. Zero padding/gap values resolve to the documented
+padding, gaps, and action gap. `action` accepts optional button width and height;
+height defaults to 32 px. Zero padding/gap values resolve to the documented
 defaults; pass a positive small value for a tighter layout.
 
 There is no motion contract: opening and closing are immediate. The backdrop is

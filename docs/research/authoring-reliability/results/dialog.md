@@ -21,12 +21,12 @@ reference implementation and its Quick Start.
 | Imports in ordinary example | `alicorn:ui` and the Dialog package; no `alicorn:runtime` import |
 | Runtime-only import | Tests use `alicorn:runtime` to inspect focused nodes and retained semantic/output state |
 | Hardcoded dimensions | Reference width 516 px; max height 500 px; padding 24 px; gaps 12 px; detail row 58 px; actions 112/153 × 40 px; app viewport 1280 × 800 |
-| Layout workarounds | Uses ordinary `ui.button` inside the public Dialog action row to reach the target's 40 px button height; no spacers, overlaps, or positioned layout |
+| Layout workarounds at trial revision | Used ordinary `ui.button` inside the public Dialog action row to reach 40 px; the follow-up below adds an optional height to `dialog.action`, so the current example uses the component helper |
 | Viewport checks | 1280 × 800 initial scene, then 960 × 720 and 760 × 640 TestUI resizes; panel remains in bounds and its full copy stays drawable |
 | TestUI scales 1×, 1.25×, 1.5×, 2× | Passed for panel/action containment, action alignment, Cancel focus, and visible description. One native output was reviewed; SVG pixel match and physical-DPI output remain unverified. |
 | Settled idle | At each TestUI scale, after a 2 s settling advance, 32 × 16 ms probes produced zero descriptions, reconcile/measure/layout/paint/shaping/semantic work, GPU submits, invalidation, or frame demand. Headless scheduler check only. |
 | Visual match to vector reference | Logical containment/alignment and text checks pass; pixel match unverified |
-| Behavior and accessibility | Dialog suite 7/7 passed, including four-scale reference output, Cancel-first focus, Return safety, modal focus behavior, dismissal, restoration, and nested/Alert contracts |
+| Behavior and accessibility at trial revision | Dialog suite 7/7 passed, including four-scale reference output, Cancel-first focus, Return safety, modal focus behavior, dismissal, restoration, and nested/Alert contracts; current suite is 8/8 after the configurable-height regression |
 
 The matched baseline/candidate component-pipeline probe is documented in
 [Command Palette and Dialog performance results](reference-components-performance.md).
@@ -115,6 +115,18 @@ helper. At this run, the Alicorn checkout used by the tests and AliKit's lock
 both resolve to `4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`; the helper is part
 of the tested pin.
 
-The 32 px fixed height in `dialog.action` is a concrete customization limit.
-The public high-level `ui.button` makes the target achievable without runtime
-access, but the component action helper does not expose an action-height option.
+## Follow-up: configurable action height
+
+After this reference result was recorded, the repeated 32 px action-height
+limitation was removed. `dialog.action` now accepts an optional height while
+preserving its 32 px default; the current reference uses 40 px component actions
+instead of replacing them with raw `ui.button` controls. The attempt log and
+measurements above remain a record of the earlier implementation.
+
+The regression suite checks both the omitted-height 32 px default and the
+reference's explicit 40 px actions. `/opt/homebrew/bin/odin test dialog` passes
+**8/8** against the repository's pinned Alicorn and AccessKit collections, and
+`odin build examples/dialog` succeeds. The build retains the existing duplicate
+`-lobjc` linker warning. The native display smoke remains unavailable to the
+shell runner (`The video driver did not add any displays`); the API change has
+not yet received a new native pixel capture.

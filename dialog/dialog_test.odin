@@ -128,13 +128,13 @@ reference_overlay :: proc(app: ^Reference_App, ctx: ^ui.UI) {
 		content_end(ctx)
 	}
 	if action_row_begin(ctx, Options{action_gap=12}, ui.key_string("reference-actions")) {
-		if ui.button(ctx, "Cancel", key=ui.key_string("reference-cancel"),
-			width=112, height=40, variant=.Quiet) {
+		if action(ctx, &app.state, "Cancel", .Cancel,
+			key=ui.key_string("reference-cancel"), width=112, height=40) {
 			app.cancel_count += 1
 			dismiss(ctx, &app.state, .Action)
 		}
-		if ui.button(ctx, "Delete project", key=ui.key_string("reference-delete"),
-			width=153, height=40, variant=.Primary) {
+		if action(ctx, &app.state, "Delete project", .Primary,
+			key=ui.key_string("reference-delete"), width=153, height=40) {
 			app.delete_count += 1
 			dismiss(ctx, &app.state, .Action)
 		}
@@ -417,6 +417,30 @@ test_dialog_modal_pattern_conformance :: proc(t: ^testing.T) {
 		"a covered background control must not activate while the dialog is open")
 	testing.expect(t, app.activations >= 3,
 		"pointer, keyboard, and semantic primary activation should all reach the application")
+}
+
+@(test)
+test_dialog_action_height_defaults_to_32 :: proc(t: ^testing.T) {
+	app := Test_App{}
+	handle, ok := fixture_open(&app, t)
+	if !ok { return }
+	defer testui.close(&handle)
+
+	open_button := find_button(&handle, "Open dialog")
+	if !testing.expect(t, open_button.match == .Unique, "the dialog trigger should exist") {
+		testui.destroy_find_result(&open_button)
+		return
+	}
+	_ = testui.click(&handle, &open_button.element)
+	testui.destroy_find_result(&open_button)
+	_ = testui.describe_once(&handle)
+
+	confirm := find_button(&handle, "Confirm")
+	defer testui.destroy_find_result(&confirm)
+	if !testing.expect(t, confirm.match == .Unique, "the default action should be present") { return }
+	info, found := alicorn.node_info(handle.runtime, confirm.element.visual_node)
+	testing.expect(t, found && info.bounds.h == DEFAULT_ACTION_HEIGHT,
+		"dialog.action keeps its 32 px default when height is omitted")
 }
 
 @(test)

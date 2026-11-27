@@ -105,15 +105,13 @@ render_delete_dialog :: proc(app: ^App, ctx: ^ui.UI) {
 	}
 	if dialog.action_row_begin(ctx,
 		dialog.Options{action_gap=12}, ui.key_string("dialog-delete-actions")) {
-		// Compose regular public buttons here because the reference needs 40 px
-		// actions; dialog.action currently fixes its own button height at 32 px.
-		if ui.button(ctx, "Cancel", key=ui.key_string("dialog-delete-cancel"),
-			width=112, height=40, variant=.Quiet) {
+		if dialog.action(ctx, &app.delete_dialog, "Cancel", .Cancel,
+			key=ui.key_string("dialog-delete-cancel"), width=112, height=40) {
 			app.status = "Deletion cancelled."
 			dialog.dismiss(ctx, &app.delete_dialog, .Action)
 		}
-		if ui.button(ctx, "Delete project", key=ui.key_string("dialog-delete-confirm"),
-			width=153, height=40, variant=.Primary) {
+		if dialog.action(ctx, &app.delete_dialog, "Delete project", .Primary,
+			key=ui.key_string("dialog-delete-confirm"), width=153, height=40) {
 			app.status = "Project deleted."
 			dialog.dismiss(ctx, &app.delete_dialog, .Action)
 		}
