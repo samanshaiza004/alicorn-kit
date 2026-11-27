@@ -3,8 +3,9 @@ package main
 // External consumer, authoring path 2: copy component sources into the
 // application's own tree. tools/validate_external_consumer.ps1 copies every
 // declared component source closure into path2_copy/vendor/ and rewrites all
-// intra-AliKit imports to local packages. The build needs only the Alicorn
-// collection; there is no `alikit` collection or AliKit topology.
+// intra-AliKit imports to local packages. The native build uses Alicorn's
+// pinned AccessKit compiler arguments but no `alikit` collection or AliKit
+// package topology.
 //
 // Build (exact collection args recorded by the harness):
 //   odin build . -collection:alicorn=<alicorn>

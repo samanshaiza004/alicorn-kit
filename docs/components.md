@@ -44,8 +44,9 @@ the component you want to own:
 3. **Import behaviors or copy source.** `alikit:selection` is a pure behavior
    package. A copied component becomes application code; use that component's
    `copy` recipe in `components.json` for its complete source closure and
-   `importRewrites`. The copied packages build with only the Alicorn
-   collection. Copying a single component file may omit dependencies.
+   `importRewrites`. The copied packages need no AliKit collection; native
+   builds still use Alicorn's pinned AccessKit compiler arguments. Copying a
+   single component file may omit dependencies.
 
 `components.json` records a copy recipe for all 14 current catalog components
 and the exact package dependencies for every entry.

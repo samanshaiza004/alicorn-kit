@@ -47,8 +47,9 @@ and edit the component, copy the declared sources from `components.json`:
 
 Place these in sibling packages and rewrite `alikit:selection` to
 `../selection` and `alikit:theme_contract` to `../theme_contract`. The copy
-then builds with only the Alicorn collection; `menu/menu.odin` alone does not
-compile. The external-consumer fixture compiles both the collection-import and
+then builds without the AliKit collection; native builds still use the pinned
+AccessKit compiler arguments. `menu/menu.odin` alone does not compile. The
+external-consumer fixture compiles both the collection-import and
 source-copy paths. Tests and the runnable examples remain in the AliKit
 repository.
 

@@ -37,9 +37,10 @@ input and focus.
 
 Production source closure: `dialog/dialog.odin`, `theme_contract/contract.odin`. The
 complete recipe is in [`components.json`](../components.json); place copied files in
-sibling packages and apply its `importRewrites`. Only the Alicorn collection is required;
-tests and examples remain in AliKit. The import snippet below shows ordinary
-collection-based package use.
+sibling packages and apply its `importRewrites`. No AliKit collection is required; native
+SDL_GPU builds still use the pinned AccessKit compiler arguments. Tests and examples
+remain in AliKit. The import snippet below shows ordinary collection-based package use.
+
 
 The authoring-reliability reference is [a vector design target](research/authoring-reliability/references/dialog.svg),
 not a desktop capture. The example uses a 516 px width to match that target and

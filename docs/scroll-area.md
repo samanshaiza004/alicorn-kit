@@ -25,9 +25,10 @@ them. This component does not virtualize; use `virtual_list_begin` or
 
 Production source closure: `scroll_area/scroll_area.odin`, `theme_contract/contract.odin`.
 The complete recipe is in [`components.json`](../components.json); place copied files in
-sibling packages and apply its `importRewrites`. Only the Alicorn collection is required;
-tests and examples remain in AliKit. The import snippet below shows ordinary
-collection-based package use.
+sibling packages and apply its `importRewrites`. No AliKit collection is required; native
+SDL_GPU builds still use the pinned AccessKit compiler arguments. Tests and examples
+remain in AliKit. The import snippet below shows ordinary collection-based package use.
+
 
 ```odin
 import ui "alicorn:ui"

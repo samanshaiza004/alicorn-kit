@@ -46,7 +46,8 @@ smoke coverage.
 Run `./tools/validate_external_consumer.ps1 -Odin odin` to build that suite's
 fixture from outside the repository: one consumer imports packages through the
 `alikit` collection, and one consumes the declared source closures for all 14
-catalog components with only the Alicorn collection. The harness audits
+catalog components without the AliKit collection. Native builds still use the
+pinned AccessKit compiler arguments. The harness audits
 `components.json` dependencies, test/example paths, and copy recipes as part of
 the run.
 

@@ -127,13 +127,13 @@ and run:
 ```
 
 The script also copies `icon_picker/` beside a small consumer and compiles it
-with only the Alicorn collection, so copyable-source consumption does not depend
-on AliKit's package topology.
+without the AliKit collection, using Alicorn's pinned AccessKit compiler
+arguments for the native host.
 
 The phase-6 external-consumer check generates a standalone project outside the
 repository, builds one application that imports packages through the `alikit`
 collection and one that compiles copied source closures for all 14 catalog
-components using only Alicorn, then runs both native smokes:
+components without the AliKit collection, then runs both native smokes:
 
 ```powershell
 ./tools/validate_external_consumer.ps1 -Odin odin

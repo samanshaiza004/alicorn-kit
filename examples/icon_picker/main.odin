@@ -2,11 +2,9 @@ package main
 
 // Icon Picker is a complete copyable custom composite. This example is the
 // companion application: it imports the package by relative path, so the pair
-// builds outside AliKit's collection layout with only the Alicorn collection.
+// builds outside AliKit's collection layout without the AliKit collection.
 //
-// Run:
-//   odin build examples/icon_picker -collection:alicorn=/path/to/alicorn
-// or from AliKit:
+// For the pinned native compiler and AccessKit arguments, run from AliKit:
 //   ./tools/test.ps1 -Odin odin
 
 import "core:fmt"

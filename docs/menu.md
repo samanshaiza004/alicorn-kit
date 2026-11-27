@@ -24,7 +24,8 @@ example hosts a permission menu inside a share dialog.
 
 The [external-consumer fixture](../tests/external_consumer/README.md) imports
 `alikit:menu` through a collection from outside this repository and also
-builds a source copy with only the Alicorn collection.
+builds a source copy without the AliKit collection; native smoke builds still
+use the pinned AccessKit compiler arguments.
 
 ## Installation
 
@@ -53,9 +54,10 @@ import sel "../selection"
 import tc "../theme_contract"
 ```
 
-The copy builds with only the Alicorn collection. Copying `menu.odin` alone
-does not compile. The external-consumer fixture builds both the package-import
-and source-copy forms.
+The copy does not need the AliKit collection. Native smoke builds still use
+the pinned AccessKit compiler arguments. Copying `menu.odin` alone does not
+compile. The external-consumer fixture builds both the package-import and
+source-copy forms.
 
 ## Composition
 

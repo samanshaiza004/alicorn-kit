@@ -58,9 +58,11 @@ datasets do not leave a blank scrollbar strip. Both components use the shared he
 Production source closure: `data_grid/data_grid.odin`, `table_core/table_core.odin`,
 `theme_contract/contract.odin`. The complete recipe is in
 [`components.json`](https://github.com/samanshaiza004/alicorn-kit/blob/main/components.json);
-place copied files in sibling packages and apply its `importRewrites`. Only the Alicorn
-collection is required; tests and examples remain in AliKit. The import snippet below
-shows ordinary collection-based package use.
+place copied files in sibling packages and apply its `importRewrites`. No AliKit
+collection is required; native builds still use Alicorn’s pinned AccessKit compiler
+arguments. Tests and examples remain in AliKit. The import snippet below shows ordinary
+collection-based package use.
+
 
 ```odin
 import ui "alicorn:ui"

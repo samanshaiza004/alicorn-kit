@@ -42,10 +42,10 @@ The [authored List appearance target](https://github.com/samanshaiza004/alicorn-
 
 Production source closure: `icon_picker/icon_picker.odin`. The complete recipe is in
 [`components.json`](https://github.com/samanshaiza004/alicorn-kit/blob/main/components.json);
-place copied files in sibling packages and apply its `importRewrites`. Only the Alicorn
-collection is required; tests and examples remain in AliKit. The import snippet below
-shows ordinary collection-based package use.
-builds with only the Alicorn collection; the test suite also proves the copied-source path.
+place copied files in sibling packages. It has no intra-AliKit imports, so no AliKit
+collection is needed. Native builds still use the pinned AccessKit compiler arguments.
+Tests and examples remain in AliKit; the snippet below shows collection-based use.
+
 
 ```odin
 import alicorn "alicorn:runtime"

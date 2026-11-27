@@ -18,8 +18,9 @@ AccessKit binding: `e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b`
   `reconcile_active`, `move_wrapped`, `propose_focus`, and
   `propose_activation`; no AliKit presentation package is involved.
 - **GO: source copying.** Copied `radio_group.odin`, `selection.odin`, and
-  `contract.odin` compile with only the Alicorn collection after the two
-  intra-AliKit imports are rewritten to sibling relative packages. Copying
+  `contract.odin` compile without the AliKit collection after the two intra-AliKit imports are
+  rewritten to sibling relative packages. Native SDL_GPU builds still use the
+  pinned AccessKit compiler arguments. Copying
   `radio_group.odin` alone does **not** compile.
 - **GO: native smoke and idle.** Both generated consumers start SDL_GPU, submit
   a frame, reach the host's `SDL application PASS`, and report `idle true`.
@@ -116,7 +117,8 @@ There are no hidden package-internal dependencies. The copy is self-contained
 once those files are siblings and the import lines are rewritten. Keeping the
 `alikit:` imports and pointing an `alikit` collection at the copied root also
 works, but then the consumer still needs a collection; the fixture uses the
-stronger form that needs only `alicorn`.
+stronger form that needs no AliKit collection; the native harness still adds
+  the pinned AccessKit compiler arguments.
 
 ## Manifest audit and fixes
 
@@ -181,7 +183,7 @@ catalog pages link runnable examples rather than embedding desktop captures.
   manifest audit: pass (warnings: dialog/scroll_area entries missing)
   path 1 build: pass
   path 1 smoke: pass, idle true
-  path 2 build: pass (alicorn collection only)
+  path 2 build: pass (no AliKit collection; pinned AccessKit arguments added)
   path 2 smoke: pass, idle true
 ./tools/test.ps1 -Odin <odin>
   all model, component, example, and copied-icon-picker checks: pass

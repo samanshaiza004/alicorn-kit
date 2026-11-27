@@ -509,8 +509,8 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'AliKit native icon picker composition example failed to compile.' }
 
     # Prove the composite is copyable source: copy the package beside a tiny
-    # consumer and compile with only the Alicorn collection (no `alikit`
-    # collection or repository-relative package topology).
+    # consumer and compile it without the AliKit collection. Native host builds
+    # still receive the pinned AccessKit compiler arguments.
     $CopyableRoot = Join-Path $OutputRoot 'copyable'
     if (Test-Path -LiteralPath $CopyableRoot) { Remove-Item -LiteralPath $CopyableRoot -Recurse -Force }
     New-Item -ItemType Directory -Force -Path $CopyableRoot | Out-Null

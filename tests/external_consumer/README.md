@@ -43,7 +43,8 @@ the `sources` listed by each component's `copy` recipe in `components.json`
 into sibling packages under `path2_copy/vendor/`, then applies the declared
 `importRewrites`. `Copy_Package_Proof` references public component types so
 Odin compiles every copied package. The app also composes copied Radio Group
-parts and a copied Menu popup. The build needs only the Alicorn collection:
+parts and a copied Menu popup. No AliKit collection is needed. The native
+build still receives the pinned AccessKit compiler arguments described above:
 
 ```powershell
 odin build path2_copy -collection:alicorn=<alicorn> -out:bin/external_consumer_path2.exe

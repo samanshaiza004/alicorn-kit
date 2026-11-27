@@ -60,9 +60,11 @@ exact copy path is compiled and smoked from a generated external consumer by
 Production source closure: `radio_group/radio_group.odin`, `selection/selection.odin`,
 `theme_contract/contract.odin`. The complete recipe is in
 [`components.json`](https://github.com/samanshaiza004/alicorn-kit/blob/main/components.json);
-place copied files in sibling packages and apply its `importRewrites`. Only the Alicorn
-collection is required; tests and examples remain in AliKit. The import snippet below
-shows ordinary collection-based package use.
+place copied files in sibling packages and apply its `importRewrites`. No AliKit
+collection is required; native builds still use Alicorn’s pinned AccessKit compiler
+arguments. Tests and examples remain in AliKit. The import snippet below shows ordinary
+collection-based package use.
+
 
 ```odin
 import ui "alicorn:ui"

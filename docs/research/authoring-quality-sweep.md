@@ -204,9 +204,10 @@ interaction, and physical-DPI behavior therefore remain unverified here.
 guides distinguish collection imports from copying and no longer present tests
 or demos as copy dependencies. The generated external-consumer Path 2 fixture
 copies those closures, applies the declared import rewrites, and references a
-public type from every package. Its manual macOS arm64 build passed with only
-the Alicorn collection and no remaining `alikit:` imports. The Path 1
-collection-import consumer also built successfully. Both builds used Odin
+public type from every package. Its manual macOS arm64 build passed without an
+AliKit collection or remaining `alikit:` imports. The Path 1 collection-import
+consumer also built successfully. Both native builds used the Alicorn and
+pinned AccessKit collections. They used Odin
 `dev-2026-11:9a6991685`, Alicorn `4e0862f368cb`, and AccessKit binding
 `e290e5f55da9`.
 
