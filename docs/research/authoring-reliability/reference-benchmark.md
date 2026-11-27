@@ -251,6 +251,33 @@ least three independent trials per condition, matched prompts and budgets,
 and separate counts for compile/API, layout, interaction/accessibility,
 test-harness, and visual-review failures.
 
+## Condition D second replication batch (2026-11-27)
+
+A second isolated replication per reference used curated, read-only inputs with
+a shared 15-minute work budget. The staged production sources excluded prior
+examples, reports, screenshots, test tools, fixtures, and `*_test.odin` files;
+the public `alicorn:testui` API remained available. Final sources and notes are
+archived in [`trials/condition-d-2026-11-27/replication-2/`](trials/condition-d-2026-11-27/replication-2/).
+
+| Reference | Headless result | Authoring findings | Limitation |
+| --- | --- | --- | --- |
+| Command Palette | 2/2 tests passed at all 12 viewport/scale combinations; final app build passed. | Two implementation passes. One API mismatch (`Text_Style.color`) was corrected. Two test-only compile iterations fixed TestUI queries/callback usage. The custom modal imports `alicorn:runtime`; the stock component path does not. | Icon silhouettes and colors only approximate the SVG. No native pixels, physical DPI, IME-window, or OS accessibility review. |
+| Dialog | 4/4 tests passed at all 12 combinations; final app build passed. | Four implementation passes. Three compile/API failures and a content-height wiring failure were corrected. TestUI’s static-text value and focused-node ID required different assertions than initially assumed; these were harness observations, not Dialog defects. The app imports only `alicorn:ui` and `alikit:dialog`. | Target frame appearance and native pixels remain unverified; no native or OS accessibility review. |
+| Data Grid | 3/3 tests passed at all 12 combinations; final app build passed. | Four implementation passes. Initial checks found missing app invalidation after sort/selection, projection rebuild timing after text input, and semantic request draining before projection rebuild. All were corrected in the consumer. The app imports runtime for its semantic request queue and app-owned state adoption. | The target sort chevron and inline search icon are not exposed by the current public component parts. No native pixels, physical DPI, or OS accessibility review. |
+
+I independently reran all three archived TestUI suites and app builds against
+the same pinned collections; the suites passed 2/2, 4/4, and 3/3, and all app
+builds exited 0. The linker emitted only the existing duplicate `-lobjc`
+warning. Alicorn's staged native validation code used documented compile-only
+shims for unrelated dormant test dependencies; those paths were not invoked
+and no UI/TestUI API under test was changed.
+
+The two clean Condition D trials per component still fall short of the
+three-trial minimum. Conditions A/B/C do not yet have matched independent
+replications, so this is not evidence that the cookbook improves authoring
+success or that a typical author needs the same correction count. The trial
+source isolation correction is now documented and was exercised by this batch.
+
 These results do not establish that authors or AI agents make fewer initial
 mistakes than they did with earlier Alicorn/AliKit APIs. We did not run the same
 tasks against an earlier revision with matched instructions and task budgets.
@@ -274,13 +301,11 @@ and Dialog probe](results/reference-components-performance.md) and the [Data
 Grid current-head comparison](results/data-grid.md#current-head-component-call-comparison)
 for their dependency controls, results, and limits.
 
-Initial uncurated attempts to start a second Condition D replication batch on
-2026-11-27 were stopped before authoring: broad searches exposed paths and
-snippets from existing Alicorn or AliKit test files. No source was written and
-none of those attempts count. This exposed a weakness in the isolation method,
-not a component result. A curated, read-only, test-free second batch is now
-underway; count its results only after each trial completes the specified
-checks.
+Initial uncurated attempts to start the second Condition D replication batch
+were stopped before authoring after broad searches exposed paths and snippets
+from existing test files. No source was written and none of those attempts
+count. This exposed a weakness in the original isolation method, not a
+component result; the curated, read-only batch above replaced those attempts.
 
 The Data Grid's visual virtualization does not bound all work by the viewport.
 For assistive-technology navigation, `data_grid()` publishes a virtual
