@@ -262,6 +262,36 @@ needs a runtime-level way to retain or page collection semantics without
 re-describing and retaining one row entity per logical item. Native screen
 reader behavior and GPU presentation remain separate validation work.
 
+### Semantic virtualization boundary
+
+The current API cannot safely skip unchanged offscreen rows from the AliKit
+loop. In the locked Alicorn revision, `semantic_collection_begin` advances the
+collection generation; each `semantic_collection_virtual_item` publishes one
+row record into the retained semantic tree; and collection pruning removes
+members omitted from a rebuilt generation unless they are pinned as focused,
+selected, or current. [The implementation](https://github.com/Carnival-Science/Alicorn/blob/dbd862a62643553aa0fba818bd16d85f15eb85b4/runtime/semantics.odin#L1026-L1152)
+therefore makes a skipped row disappear from the current semantic working set.
+
+The SDL host then builds a projection by copying every node in the semantic
+snapshot into `Accessibility_Projection.nodes`. [Its projection builder](https://github.com/Carnival-Science/Alicorn/blob/dbd862a62643553aa0fba818bd16d85f15eb85b4/host/sdl3/accessibility/projection.odin#L201-L264)
+therefore also scales with the current semantic working set. This describes the
+SDL bridge's implementation; it does not establish identical behavior for every
+host or native accessibility adapter.
+
+The measured bottleneck therefore needs a runtime/host contract that can keep
+offscreen rows addressable by stable ID and answer item-description, coordinate,
+selection, focus, and reveal requests without re-emitting all row records on
+each grid description. It cannot be fixed by dropping offscreen semantics or
+by adding an AliKit-only skip flag. Alicorn #192 is adjacent but distinct: it
+investigates keyed application-state update frontiers, not lazy accessibility
+collection queries, so this finding does not duplicate that issue.
+
+The current benchmark measures TestUI semantic synchronization and the AliKit
+callback; it does not exercise the native AccessKit projection with 100,000
+rows or a physical assistive-technology client. A runtime prototype should
+measure initial build, one-row metadata change, scrolling/reveal, stable-ID
+lookup, retained memory, and physical screen-reader navigation separately.
+
 ### Current-head component-call comparison
 
 The earlier matched comparison did not isolate the public `data_grid()` call,
