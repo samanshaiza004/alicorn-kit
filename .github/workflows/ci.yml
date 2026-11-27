@@ -8,6 +8,25 @@ permissions:
   contents: read
 
 jobs:
+  website:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - name: Install website dependencies
+        working-directory: website
+        run: npm ci
+
+      - name: Build website and sync catalog previews
+        working-directory: website
+        run: npm run build
+
   windows:
     runs-on: windows-latest
     steps:
