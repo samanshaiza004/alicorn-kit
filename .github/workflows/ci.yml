@@ -42,3 +42,7 @@ jobs:
       - name: Test model, retained UI, and native consumer
         shell: pwsh
         run: ./tools/test.ps1 -Odin odin
+
+      - name: Validate external package and source-copy consumers
+        shell: pwsh
+        run: ./tools/validate_external_consumer.ps1 -Odin odin

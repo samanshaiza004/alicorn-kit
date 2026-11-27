@@ -117,8 +117,9 @@ command services.
 
 The Windows CI workflow checks the UI-independent models, retained-runtime
 interaction tests, the v0.3 component suites, every native example, the
-parts-based palette, the copyable icon picker, and a copied-source build against
-the exact Alicorn and AccessKit binding commits in `dependencies.lock.json`.
+parts-based palette, the copyable icon picker, and all 14 external source-copy
+recipes against the exact Alicorn and AccessKit binding commits in
+`dependencies.lock.json`.
 To run the same checks locally, place the pinned Alicorn checkout at `./alicorn`
 and run:
 
@@ -140,7 +141,8 @@ components without the AliKit collection, then runs both native smokes:
 ```
 
 The harness also audits `components.json` source dependencies, test/example
-paths, and copy recipes before building.
+paths, and copy recipes before building. Windows CI runs this harness after the
+component suite so every declared source-copy recipe stays buildable.
 
 ## Component catalog
 
