@@ -6,7 +6,7 @@
   "alicorn": {
     "repository": "https://github.com/Carnival-Science/Alicorn.git",
     "ref": "master",
-    "revision": "4e0862f368cb638b7aece0bad9dd82cae0c3d8c4"
+    "revision": "dbd862a62643553aa0fba818bd16d85f15eb85b4"
   },
   "accesskit_binding": {
     "repository": "https://github.com/samanshaiza004/odin-accesskit.git",

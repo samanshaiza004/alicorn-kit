@@ -49,6 +49,22 @@ secondary-window and diagnostics stack-size warnings, and the linker reports a
 duplicate `-lobjc`. This is compile evidence for the short public-API path, not
 native interaction, rendering, or pixel/DPI evidence.
 
+### Alicorn styling revision compatibility check (2026-11-27)
+
+AliKit's pin now targets Alicorn `dbd862a62643553aa0fba818bd16d85f15eb85b4`,
+the current `master` tip. Against that exact checkout, 19 runtime-dependent
+AliKit test targets completed 127 tests successfully, including the reference
+layout suites for Data Grid, Table, and selection styles. The Command Palette,
+Dialog, and Data Grid reference applications and all three Quick Starts also
+built successfully. This was a macOS Odin `dev-2026-11:9a6991685` check using
+the locked AccessKit binding `e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b`.
+
+The run verifies source and headless behavior compatibility with the updated
+pin; it does not verify GPU pixels, native accessibility clients, or physical
+DPI; no native pixel or accessibility capture was run. Compiler stack-size
+warnings from Alicorn test fixtures and the duplicate `-lobjc` linker warning
+remain in the build output.
+
 The 14 source SVGs were rendered and reviewed together on 2026-11-26. Their
 contexts range from project workspaces and inventory to audio production,
 writing, build tooling, and archives. Their visual vocabulary is less varied:

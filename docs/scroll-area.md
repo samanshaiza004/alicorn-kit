@@ -134,7 +134,7 @@ of mistake is now component-owned:
   retained bars with the supplied theme recipe. `bar_geometry` exposes the part
   rects for inspection and app overlays.
 - The implementation and focused tests in this checkout use Alicorn
-  `4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`, recorded in
+  `dbd862a62643553aa0fba818bd16d85f15eb85b4`, recorded in
   [`dependencies.lock.json`](../dependencies.lock.json).
 
 ## Source map

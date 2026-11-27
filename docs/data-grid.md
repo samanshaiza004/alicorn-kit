@@ -238,8 +238,8 @@ used until the `.Data_Grid` pattern addition lands.
 
 ## Compatibility
 
-This reference was built against Alicorn
-`4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`, the revision recorded in
+This reference has been built and tested against Alicorn
+`dbd862a62643553aa0fba818bd16d85f15eb85b4`, the revision recorded in
 [`dependencies.lock.json`](../dependencies.lock.json).
 
 ## Source map

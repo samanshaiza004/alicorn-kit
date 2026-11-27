@@ -55,7 +55,7 @@ the state transition. Ordinary `ui.button` controls remain available when an
 application needs a different button anatomy.
 
 Compatibility and fit-content notes here reflect the Alicorn revision pinned
-by this repository: `4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`.
+by this repository: `dbd862a62643553aa0fba818bd16d85f15eb85b4`.
 
 ```odin
 import ui "alicorn:ui"

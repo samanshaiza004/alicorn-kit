@@ -12,7 +12,7 @@ repository records the exact upstream revisions in
 
 | Dependency | Repository | Revision |
 | --- | --- | --- |
-| Alicorn | `https://github.com/Carnival-Science/Alicorn.git` | `4e0862f368cb638b7aece0bad9dd82cae0c3d8c4` (`master`) |
+| Alicorn | `https://github.com/Carnival-Science/Alicorn.git` | `dbd862a62643553aa0fba818bd16d85f15eb85b4` (`master`) |
 | AccessKit binding | `https://github.com/samanshaiza004/odin-accesskit.git` | `e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b` |
 
 The examples and tests are validated against that Alicorn revision. The documentation does not
