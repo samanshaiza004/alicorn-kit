@@ -43,6 +43,31 @@ layout and behavior. It does not establish creative freedom across unrelated
 design languages, nor justify adding a styling abstraction. A separate study
 would need alternative visual targets with the same behavior contract.
 
+### Creative-freedom follow-up
+
+Keep this separate from the current cookbook comparison. The current test asks
+whether an author can reproduce a known layout; it does not ask whether Alicorn
+can express unrelated visual systems without replacing component behavior.
+For that follow-up, hold data, keyboard and pointer behavior, semantics, and
+accessibility requirements constant, but use independently authored visual
+targets from four families:
+
+| Visual family | Distinguishing pressure |
+| --- | --- |
+| Minimal productivity UI | Sparse surfaces, compact hierarchy, restrained emphasis |
+| Audio hardware-inspired UI | High information density, meter-like marks, strong state contrast |
+| Editorial document UI | Typography-led hierarchy, long-form copy, low-chrome controls |
+| Dense professional tooling | Compact controls, persistent selection, layered panels and tables |
+
+Use the same public component behavior with at least two presentations per
+selected component. Require each version to preserve stable identity, keyboard
+and focus behavior, semantics, resize bounds, and scale-safe text and marks.
+Record the Alicorn primitives and AliKit parts used, any `alicorn:runtime`
+imports, layout workarounds, authoring attempts, and native output checks. Do
+not judge the variants by resemblance to one preferred design system, or infer
+that a shared styling language is needed from visual diversity alone. This is
+a later expressive-capability study; no result is claimed yet.
+
 ## Method
 
 Give each implementation agent only its component's vector target, this method,
