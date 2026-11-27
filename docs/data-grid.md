@@ -231,9 +231,11 @@ used until the `.Data_Grid` pattern addition lands.
   count. Pagination can bound the grid's logical page when that page is the
   collection presented to the user, but applications must expose the broader
   result context and navigation themselves. For a single accessible grid with
-  very large logical row counts, benchmark the full semantic workload and
-  track Alicorn's collection-level accessibility-provider work; the current
-  public API materializes one virtual semantic row per logical row.
+  very large logical row counts, include semantic-row work in the benchmark.
+  Preserving offscreen row access without materializing one virtual semantic
+  row per logical row would require an Alicorn-side collection-level provider
+  or equivalent lazy query API; AliKit must not hide that cost by dropping
+  offscreen semantics.
 - Sorting and filtering are application callbacks over the projection.
 
 ## Compatibility
