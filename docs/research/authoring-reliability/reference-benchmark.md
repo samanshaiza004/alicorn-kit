@@ -193,6 +193,31 @@ recorded specific fixed dimensions or public-API constraints; none used hidden
 runtime workarounds for layout. The reports preserve those details rather than
 claiming that the cookbook removed all authoring friction.
 
+## Condition D first replication batch (2026-11-27)
+
+One isolated Condition D trial has now been completed for each reference. This
+is a first replication batch, not the controlled A/B/C/D comparison: there is
+only one trial per component, no matched historical baseline with the same
+instructions and budgets, and no native visual review of these new trial
+implementations. The clean trial source and contemporaneous notes are archived
+under [`trials/condition-d-2026-11-27/`](trials/condition-d-2026-11-27/).
+
+| Reference | Headless result | First-use/import evidence | Limitation |
+| --- | --- | --- | --- |
+| Command Palette | TestUI passed all 12 viewport/scale combinations; query and result glyphs were visible, filtering and activation passed. | Four implementation passes recorded. The custom overlay example uses `alicorn:runtime`; the stock component does not. | TestUI Down did not invoke the host `on_key` callback, so the trial manually called the documented palette handler. Native key routing and pixels remain unverified. |
+| Dialog | Three TestUI tests passed across 12 viewport/scale combinations, including geometry, wrapped visible text, focus, dismissal, and Alert behavior. | The example uses `alicorn:ui` and `alikit:dialog`, without a runtime import. The trial found the missing `.Danger` option in `dialog.action`; current main adds it as `Action_Kind.Danger`. | The fit target uses a 516 × 382 reference-specific panel. No native visual review. Correction-pass count was not captured consistently. |
+| Data Grid | One TestUI test passed 535 assertions across all 12 viewport/scale combinations; a headless application frame build and run also exited 0. | The full reference app uses `alicorn:runtime` for host callbacks, focus, and semantic request dispatch; 200 data rows are tested with a bounded visual window and virtual semantic rows. | The `.Reveal` request is routed through the public component handler in the fixture; native input, GPU pixels, physical DPI, and large-dataset performance were not measured by this trial. |
+
+All three trials assert visible retained text as well as geometry and behavior.
+These results show that the cookbook, TestUI, and public APIs can support a
+clean first replication for each target, while still exposing concrete
+authoring friction. They do not show that the cookbook reduced failure rates,
+that a typical developer would need the same number of corrections, or that
+the SVG output matches native pixels. The full protocol still requires at
+least three independent trials per condition, matched prompts and budgets,
+and separate counts for compile/API, layout, interaction/accessibility,
+test-harness, and visual-review failures.
+
 These results do not establish that authors or AI agents make fewer initial
 mistakes than they did with earlier Alicorn/AliKit APIs. We did not run the same
 tasks against an earlier revision with matched instructions and task budgets.
