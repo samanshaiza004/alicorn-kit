@@ -93,6 +93,21 @@ test_menu_popup_item_is_visible_and_contained_at_fractional_scales :: proc(t: ^t
 				testing.expectf(t, visible.ok && inside.ok,
 					"the menu item should remain visible and inside its popup at %.2f: %s %s",
 					scale, testui.visible_text_diagnostic(visible), testui.layout_check_diagnostic(inside))
+				highlight, highlight_found := alicorn.node_by_key(handle.runtime,
+					ui.key_pair(9401, POPUP_HIGHLIGHT_KEY), .Container)
+				highlight_info, highlight_info_ok := alicorn.node_info(handle.runtime, highlight)
+				panel := app.state.panel_bounds
+				testing.expectf(t, highlight_found && highlight_info_ok &&
+					highlight_info.bounds.x >= panel.x &&
+					highlight_info.bounds.x+highlight_info.bounds.w <= panel.x+panel.w &&
+					highlight_info.bounds.y < panel.y+DEFAULT_OPTIONS.padding &&
+					highlight_info.bounds.h == 2,
+					"the decorative accent should stay in the popup's top padding at %.2f", scale)
+				_ = testui.describe_once(&handle)
+				highlight_after, highlight_after_found := alicorn.node_by_key(handle.runtime,
+					ui.key_pair(9401, POPUP_HIGHLIGHT_KEY), .Container)
+				testing.expect(t, highlight_after_found && highlight_after == highlight,
+					"re-describing the menu must preserve decorative identity")
 			}
 			testui.destroy_find_result(&menu_part)
 			testui.destroy_find_result(&item_part)

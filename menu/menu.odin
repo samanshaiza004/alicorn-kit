@@ -49,6 +49,7 @@ MAX_INSTANCE_ID :: u64(0x3FFFFFFFFFFFFFFF)
 MAX_ITEMS :: 128
 ITEM_KEY :: u64(0xA11C_6D01)
 GROUP_KEY :: u64(0xA11C_6D30)
+POPUP_HIGHLIGHT_KEY :: u64(0x4D454E48)
 
 Item_Kind :: enum { Item, Separator }
 
@@ -611,6 +612,25 @@ popup_begin :: proc(
 			label="menu-popup",
 		)
 		if panel != 0 {
+			// Keep the popup's visual treatment attached to its existing panel
+			// owner. This fine accent rule sits in the panel's top padding, so it
+			// adds no layout space and stays clear of the first actionable row.
+			highlight_color := alicorn.style_color(ctx, .Accent)
+			highlight_color.a *= 0.28
+			highlight := alicorn.surface_begin(
+				ctx,
+				alicorn.surface_core_color_role(.Accent),
+				key=ui.key_pair(instance_id, POPUP_HIGHLIGHT_KEY),
+				style=ui.layout_style(.Row, width=-1, height=2),
+				shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=1},
+				fill=highlight_color,
+				label="menu-popup-highlight",
+			)
+			alicorn.surface_end(ctx)
+			if highlight != 0 {
+				_ = alicorn.position_child(ctx, highlight,
+					alicorn.positioned(0, -resolved.padding+1, clip=true))
+			}
 			rows := alicorn.container_begin(
 				ctx,
 				.Container,
