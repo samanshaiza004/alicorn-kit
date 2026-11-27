@@ -21,11 +21,11 @@ viewport, three warmups, a 2 s virtual settling advance, 101 idle probes, and
 1,001 forced descriptions. Five fresh processes per revision and component
 run in alternating revision order. The [paired runner](../../../../benchmarks/reference_components/run_paired.py)
 records each process's TestUI turn timings, Alicorn stage timings, process CPU
-time, and peak RSS. This current-main capture uses five launches per revision
-and component. The full samples are in the
-[current raw capture](reference-components-performance-current-raw.json). The
-earlier five-launch capture against intermediate candidate `95fc8af` remains
-available in [its original raw file](reference-components-performance-comparison-raw.json).
+time, and peak RSS. This historical five-launch capture uses the dependency
+stack and AliKit candidate shown above. The full samples are in the
+[historical raw capture](reference-components-performance-current-raw.json).
+The earlier five-launch capture against intermediate candidate `95fc8af`
+remains available in [its original raw file](reference-components-performance-comparison-raw.json).
 
 The table reports the median of five process-level percentiles. Description
 percentiles are from the 1,001 timed TestUI turns within each process. RSS is
@@ -60,7 +60,49 @@ description path rather than the new handler specifically. This probe includes
 the palette row-width correction and does not isolate the cost of any one
 change.
 
-## Reproduction
+## Revalidation with the current locked Alicorn
+
+The historical capture above used Alicorn `4e0862f`. This follow-up rebuilt
+both AliKit snapshots against the current lock, Alicorn
+`dbd862a62643553aa0fba818bd16d85f15eb85b4`, and repeated three fresh processes
+per revision and component. The baseline is AliKit `fded57a94e6a`; the
+candidate is `f9b9d6d36160`. AccessKit binding, Odin, optimization, workload,
+viewport, and launch order were held constant. Raw per-process samples and
+dependency metadata are in the [current-lock capture](reference-components-performance-dbd862a-raw.json).
+
+| Component | Description p50 (µs), baseline → candidate | p95 (µs) | p99 (µs) | Process CPU (ms) | Peak RSS (MB) |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Command Palette | 27 → 27 | 27 → 29 | 37 → 40 | 46.26 → 47.94 | 12.255 → 12.255 |
+| Dialog | 10 → 10 | 10 → 11 | 10 → 11 | 27.85 → 28.29 | 11.944 → 11.911 |
+
+All 12 processes passed the 101-probe settled-idle gate. These three-launch
+medians do not show a material cost change, but the sample count is small and
+the turn times are short enough for host scheduling noise to affect the tails.
+This remains a headless component-pipeline check; it does not validate native
+pixels, display latency, or physical DPI.
+
+Both benchmark runners read the dependency revisions from
+`dependencies.lock.json`, so future lock updates are reflected in captured
+metadata instead of silently recording a stale hardcoded Alicorn SHA.
+
+### Current-lock capture reproduction
+
+Build the baseline and candidate from their listed AliKit revisions, copy the
+same `benchmarks/reference_components/main.odin` source into the baseline
+snapshot, and compile both with Alicorn `dbd862a62643553aa0fba818bd16d85f15eb85b4`
+and the AccessKit binding listed in the capture. Then run:
+
+```sh
+python3 benchmarks/reference_components/run_paired.py \
+  --baseline /path/to/alikit-reference-baseline \
+  --candidate /path/to/alikit-reference-candidate \
+  --baseline-revision fded57a94e6a2c5bf44d8b980befe5a260ff5ed5 \
+  --candidate-revision f9b9d6d36160c1969353a829950685d68ff42969 \
+  --runs 3 \
+  --output docs/research/authoring-reliability/results/reference-components-performance-dbd862a-raw.json
+```
+
+## Historical capture reproduction
 
 With the exact dependencies listed above checked out locally, copy the current
 benchmark source into a clean `fded57a` snapshot, then build both revisions

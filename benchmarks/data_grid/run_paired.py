@@ -127,6 +127,10 @@ def run_one(executable, row_count):
     return result
 
 
+def read_dependency_lock():
+    return json.loads(Path("dependencies.lock.json").read_text(encoding="utf-8"))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--baseline", required=True, help="baseline Data Grid benchmark executable")
@@ -138,6 +142,7 @@ def main():
     args = parser.parse_args()
     if args.runs < 1:
         parser.error("--runs must be at least 1")
+    dependencies = read_dependency_lock()
 
     executables = {"baseline": args.baseline, "candidate": args.candidate}
     runs = []
@@ -162,8 +167,8 @@ def main():
             "description": "Current AliKit source state",
         },
         "controlled_dependencies": {
-            "alicorn_revision": "4e0862f368cb638b7aece0bad9dd82cae0c3d8c4",
-            "odin_accesskit_revision": "e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b",
+            "alicorn_revision": dependencies["alicorn"]["revision"],
+            "odin_accesskit_revision": dependencies["accesskit_binding"]["revision"],
             "odin": "dev-2026-11:9a6991685",
             "build": "release (-o:speed)",
         },

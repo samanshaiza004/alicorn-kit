@@ -393,3 +393,59 @@ matrix completed successfully. Odin emitted unrelated
 large-stack test warnings from Alicorn and the macOS linker warned about
 duplicate `-lobjc` libraries. SDL cannot initialize a display in this shell
 session, so native pixels and physical DPI remain unverified.
+
+## Revalidation with the current locked Alicorn
+
+The earlier scaling captures used Alicorn `4e0862f`. This follow-up rebuilt
+the same benchmark source at baseline AliKit `fded57a94e6a` and candidate
+`f9b9d6d36160`, both against the current lock's Alicorn
+`dbd862a62643553aa0fba818bd16d85f15eb85b4` and AccessKit binding
+`e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b`. It used Odin
+`dev-2026-11:9a6991685`, release optimization, 1280 × 800, 12 visible rows,
+and three fresh processes per revision and data size. The [raw capture](data-grid-dbd862a-raw.json)
+contains all process samples, stage distributions, semantic counts, and idle
+assertions.
+
+Each cell is the median of the three process-level percentiles. The callback
+timer wraps `data_grid()`; Description includes the whole TestUI/runtime turn.
+Reconcile and Semantic Sync are runtime stage timings. RSS is process peak
+memory, including the input model and TestUI.
+
+| Logical rows | Description p50 / p95 / p99, baseline → candidate (ms) | `data_grid()` p50 (ms) | Reconcile / Semantic Sync p50 (ms) | Peak RSS (MB) |
+| ---: | ---: | ---: | ---: | ---: |
+| 200 | 0.184 / 0.192 / 0.201 → 0.194 / 0.205 / 0.218 | 0.080 → 0.090 | 0.102 / 0.031 → 0.103 / 0.031 | 13.70 → 13.88 |
+| 10,000 | 2.026 / 2.353 / 2.691 → 2.025 / 2.532 / 2.657 | 1.718 → 1.718 | 0.321 / 0.249 → 0.309 / 0.236 | 28.70 → 28.88 |
+| 100,000 | 36.931 / 41.679 / 42.510 → 38.159 / 44.167 / 45.426 | 31.950 → 32.344 | 4.927 / 4.826 → 5.262 / 5.160 | 267.47 → 272.88 |
+
+The current runtime produces the same logical and offscreen semantic counts in
+both AliKit revisions: at 100,000 rows, 99,987 rows are offscreen and the
+median frame publishes 100,044 semantic descriptions. All 18 processes passed
+the 101-probe settled-idle gate. Three launches are not enough to interpret
+small tail or RSS differences as a regression; this run shows no meaningful
+change in the large-grid call's median, while confirming that its work still
+scales with total logical rows.
+
+At 100,000 rows, the measured `data_grid()` call is about 32 ms p50 and
+Semantic Sync is about 5.2 ms p50. That is evidence of a real large-data
+scaling limit, but it does not establish that semantic publication alone
+accounts for all callback time: formatting, app-owned data access, allocations,
+and other runtime stages are inside the measured workload. Preserve offscreen
+accessibility semantics; a scalable remedy requires an Alicorn collection
+provider or equivalent lazy semantic query contract. This headless run does
+not validate native GPU presentation, physical DPI, or assistive-technology
+behavior.
+
+To reproduce this capture, build the baseline AliKit snapshot and current
+candidate against the same Alicorn and AccessKit checkouts recorded above,
+copy the current `benchmarks/data_grid/main.odin` into the baseline snapshot,
+then run the paired runner from the candidate repository root:
+
+```sh
+python3 benchmarks/data_grid/run_paired.py \
+  --baseline /path/to/alikit-data-grid-baseline \
+  --candidate /path/to/alikit-data-grid-candidate \
+  --baseline-revision fded57a94e6a2c5bf44d8b980befe5a260ff5ed5 \
+  --candidate-revision f9b9d6d36160c1969353a829950685d68ff42969 \
+  --runs 3 \
+  --output docs/research/authoring-reliability/results/data-grid-dbd862a-raw.json
+```

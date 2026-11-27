@@ -92,6 +92,10 @@ def run_one(executable, component):
     return result
 
 
+def read_dependency_lock():
+    return json.loads(Path("dependencies.lock.json").read_text(encoding="utf-8"))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--baseline", required=True, help="fded57a benchmark executable")
@@ -103,6 +107,7 @@ def main():
     args = parser.parse_args()
     if args.runs < 1:
         parser.error("--runs must be at least 1")
+    dependencies = read_dependency_lock()
 
     revisions = {"baseline": args.baseline, "candidate": args.candidate}
     runs = []
@@ -121,8 +126,8 @@ def main():
         "baseline": {"revision": args.baseline_revision, "description": "AliKit before authoring-quality reference work"},
         "candidate": {"revision": args.candidate_revision, "description": "AliKit after authoring-quality reference work"},
         "controlled_dependencies": {
-            "alicorn": "4e0862f368cb638b7aece0bad9dd82cae0c3d8c4",
-            "accesskit_binding": "e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b",
+            "alicorn": dependencies["alicorn"]["revision"],
+            "accesskit_binding": dependencies["accesskit_binding"]["revision"],
             "odin": "dev-2026-11:9a6991685",
             "optimization": "-o:speed",
         },
