@@ -81,8 +81,9 @@ documentation.
 - A live macOS capture of the pre-fix reference was inspected and showed the
   host clear color around its 24 px root. The screenshot was not archived in
   the repository.
-- The current Dialog suite passes **7/7**, including the four-scale reference
-  layout, root-to-viewport bounds, focus, and visible-description check.
+- The Dialog suite was **7/7** at this earlier validation point. The current
+  suite is **8/8** after adding a regression for the configurable action height
+  and its preserved 32 px default; see the follow-up below.
 - The updated SDL_GPU reference binary builds successfully with
   `-minimum-os-version:27.0`; linking reports the existing duplicate `-lobjc`
   warning and that the installed SDL3 dylib targets macOS 27.2. A live

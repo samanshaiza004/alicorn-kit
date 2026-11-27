@@ -164,9 +164,9 @@ a color alpha, not an animated scrim.
   at TestUI presentation scales 1×, 1.25×, 1.5×, and 2×;
 - nested dialogs: topmost Escape only, parent survival, child focus restoration.
 
-The Dialog suite passes 7/7 tests, including the reference scene's four TestUI
-presentation scales. These are headless scale checks, not physical-DPI
-captures.
+The Dialog suite passes 8/8 tests, including the reference scene's four TestUI
+presentation scales and the `dialog.action` 32 px default-height regression.
+These are headless scale checks, not physical-DPI captures.
 
 ## Limits
 
