@@ -102,6 +102,20 @@ documentation.
   fractional-DPI rendering, or platform screen-reader announcements. No
   desktop screenshots were added to documentation.
 
+### Current-lock native interaction check (2026-11-27)
+
+The current Dialog reference was built against locked Alicorn
+`dbd862a62643553aa0fba818bd16d85f15eb85b4` and run on macOS 27.2.1 arm64 with
+Odin `dev-2026-11:9a6991685`. The destructive confirmation displayed its title,
+warning, detail summary, and both actions. Cancel had the visible focus
+outline. Pressing Escape dismissed the confirmation without activating Delete.
+The app's accessibility tree exposed the dialog content and actions in that
+run.
+
+This is a qualitative check at one window size. It does not establish SVG pixel
+equivalence, physical-DPI behavior, platform accessibility announcements, or
+screen-reader behavior. No desktop screenshot was added to the documentation.
+
 ## Evidence boundary
 
 The headless assertions establish retained bounds, button alignment, dialog

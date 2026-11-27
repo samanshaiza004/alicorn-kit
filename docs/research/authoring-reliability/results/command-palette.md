@@ -15,9 +15,9 @@ desktop application screenshot.
 | Hardcoded dimensions | Reference window 1280 × 800; top bar 54; sidebar 232; project cards 94 high; modal 660 × 576; modal outer inset 32; panel gap 12; query row 52; uniform result rows 72; leading icon tile 38; shortcut tile 72 × 26. Text sizes are 22/13 for the modal heading/subtitle and 13/11 for row title/description. |
 | Layout workarounds | The item model has no icon or shortcut properties and `build` has no custom-row callback, so the app maps stable item IDs to visual icons/shortcut labels and composes the public input/list/item parts. `alicorn:ui` does not re-export `modal_overlay_begin/end` or `semantic_describe_as`, so the custom shell imports runtime. The current icon enum has no plus mark; the workspace logo uses a text `+`. The target has nonuniform row heights; the example keeps a uniform 72px virtual-list track. |
 | 1280 × 800, 960 × 720, 760 × 640 | TestUI asserts a centered 660 × 576 modal at each viewport and checks query/result containment. All three passed. |
-| TestUI scales 1×, 1.25×, 1.5×, 2× | Passed for centered modal geometry and visible query/result text. Native pixels and physical-DPI output remain unverified. |
+| TestUI scales 1×, 1.25×, 1.5×, 2× | Passed for centered modal geometry and visible query/result text. A separate current-lock native Mac run showed typed query text and matching results; physical-DPI output remains unverified. |
 | Settled idle | At each TestUI scale, after a 2 s settling advance, 32 × 16 ms probes produced zero descriptions, reconcile/measure/layout/paint/shaping/semantic work, GPU submits, invalidation, or frame demand. Headless scheduler check only. |
-| Visual match to SVG target | Unverified. The modal bounds and retained visible text are checked headlessly; no native pixel comparison was captured. |
+| Visual match to SVG target | No pixel comparison. The modal bounds and retained visible text are checked headlessly, and the current-lock native scene was visually inspected. |
 | Existing behavior and accessibility | Passed in the reference test: query focus and visible typed text, three matching results, selected/current semantics, title/description/shortcut drawable text, one-result filtering, Return activation, close, and focus restoration. The component suite also covers keyboard navigation, disabled items, Escape, IME composition, modal containment, semantic activation, semantic query-value adoption, and idle return. The accessibility `.Set_Value` regression verifies visible query glyphs and the filtered result after the application routes the queued request to the palette. |
 
 The matched baseline/candidate component-pipeline probe is documented in
@@ -78,6 +78,21 @@ odin build examples/command_palette \
 # Passed; linker reported a duplicate -lobjc warning.
 ```
 
-The four TestUI scale cases do not render to a native GPU surface. No native
-screenshot, pixel comparison, or physical-DPI capture was produced; those
-checks remain necessary before claiming a visual match.
+The four TestUI scale cases do not render to a native GPU surface. The separate
+native check below was reviewed live but no screenshot was archived and no
+pixel comparison or physical-DPI capture was produced; those checks remain
+necessary before claiming a visual match.
+
+## Current-lock native interaction check (2026-11-27)
+
+The current AliKit reference was built against the locked Alicorn
+`dbd862a62643553aa0fba818bd16d85f15eb85b4` and run on macOS 27.2.1 arm64 with
+Odin `dev-2026-11:9a6991685`. The window showed the 1280 × 800 logical
+workspace. Opening the palette with the host shortcut displayed the modal and
+focused its query field. Typing `export` produced visible glyphs in the field
+and reduced the result count from four to three. This directly verifies native
+input-to-visible-text and filtering for that run.
+
+This is a qualitative, single-size visual check. It is not a pixel comparison
+against the authored SVG, a physical-DPI matrix, an input-latency measurement,
+or a screen-reader test. No desktop screenshot was added to the documentation.

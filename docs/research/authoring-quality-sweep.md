@@ -271,12 +271,14 @@ than a local build result.
 ## Limits and known constraints
 
 Headless tests establish layout bounds, shaped text/resources where tested,
-paint commands, semantic state, identity, and interaction behavior. Live
-macOS reviews have also inspected the Command Palette, Data Grid, and corrected
-Dialog reference app; the Dialog alert was opened and dismissed, and its
-accessible title, description, and action were exposed. These are qualitative
-single-environment checks, not archived screenshot comparisons or a physical
-scale matrix. Native pixel equivalence, fractional-DPI rendering, GPU clipping,
+paint commands, semantic state, identity, and interaction behavior. Current-
+lock live macOS checks visibly verified Command Palette typing/filtering and
+Dialog confirmation dismissal with Cancel focused. A current Data Grid visual
+capture remains unverified: the app was listed as running, but the computer-use
+bridge could not bind to it after an earlier accessibility-tree capture
+stalled. The successful native checks are qualitative single-environment
+observations, not archived screenshot comparisons or a physical-scale matrix.
+Native pixel equivalence, fractional-DPI rendering, GPU clipping,
 screen-reader behavior, and Windows interaction checks remain outstanding.
 
 The guides retain known constraints rather than hiding them: Palette Parts
