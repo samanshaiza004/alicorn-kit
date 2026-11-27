@@ -119,6 +119,24 @@ compiler, and validation order fixed. Do not expose existing examples,
 benchmark results, or other trial outputs. Run at least three independent
 trials per condition before making a comparative claim.
 
+### Trial source isolation
+
+The authoring directory alone is not an adequate isolation boundary when the
+agent can search the full repository. Before a blind trial, stage a curated
+input bundle containing only the task contract, target SVG, relevant component
+guide, layout cookbook, the component's public source and transitive package
+sources, and production Alicorn sources needed by the compiler. Remove existing
+examples, benchmark reports, prior trial output, and every `*_test.odin` file
+from the staged tree, along with test tools and unrelated test fixtures. The
+public `alicorn:testui` package is allowed because it is the measured layout
+assertion API. If production code has a dormant dependency on a test fixture,
+replace only that unrelated dependency with a documented compile-only shim;
+never stage the original fixture. Give the trial an explicit source manifest
+and build command; do not ask it to discover APIs with recursive searches of
+the full checkout. If tool output exposes a disallowed example, report, or test
+snippet, stop and exclude that attempt from the blind-trial count, even if the
+file was not opened directly.
+
 Record separate counts for compile/API errors, geometry/layout errors,
 interaction/accessibility errors, test-authoring or harness errors, and visual
 review failures. Count a new implementation attempt only when a code change
@@ -240,6 +258,14 @@ before/after authoring comparison remain outstanding. See the [Command Palette
 and Dialog probe](results/reference-components-performance.md) and the [Data
 Grid current-head comparison](results/data-grid.md#current-head-component-call-comparison)
 for their dependency controls, results, and limits.
+
+Initial uncurated attempts to start a second Condition D replication batch on
+2026-11-27 were stopped before authoring: broad searches exposed paths and
+snippets from existing Alicorn or AliKit test files. No source was written and
+none of those attempts count. This exposed a weakness in the isolation method,
+not a component result. A curated, read-only, test-free second batch is now
+underway; count its results only after each trial completes the specified
+checks.
 
 The Data Grid's visual virtualization does not bound all work by the viewport.
 For assistive-technology navigation, `data_grid()` publishes a virtual
