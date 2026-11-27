@@ -53,13 +53,33 @@ test_style_switch_preserves_owners_and_selection :: proc(t: ^testing.T) {
 	if !testing.expect(t, first_radio.match == .Unique && first_tab.match == .Unique) { return }
 	focused := alicorn.focused_node(handle.runtime)
 	testing.expect(t, focused != 0)
-	check_treatment_paint(t, handle.runtime, style_for(.Minimal, app.relief))
+	testing.expect_value(t, app.style_resolutions, u64(2))
+	check_treatment_paint(t, handle.runtime, app.radio_style.value)
+	radio_height_origin := style_explain(app.radio_style, .Height)
+	radio_font_origin := style_explain(app.radio_style, .Font_Size)
+	segment_height_origin := style_explain(app.segment_style, .Height)
+	testing.expect(t, radio_height_origin.kind == .Context && radio_height_origin.context_scope == .Dialog &&
+		radio_height_origin.recipe == .Minimal,
+		"the radio group's explicit dialog context should explain its height")
+	testing.expect(t, radio_font_origin.kind == .Fragment && radio_font_origin.fragment == .Standard_Type,
+		"the recipe should explain typography through its named fragment")
+	testing.expect(t, segment_height_origin.kind == .Context && segment_height_origin.context_scope == .Toolbar,
+		"the segmented control should resolve the same recipe in its toolbar context")
+
+	instance_override := style_resolve(.Minimal, .Toolbar, app.relief, {height=31, set_height=true})
+	instance_height_origin := style_explain(instance_override, .Height)
+	testing.expect(t, instance_override.value.height == 31 && instance_height_origin.kind == .Instance,
+		"a typed instance override should win and remain explainable")
 
 	treatments := [2]Treatment{.Hardware, .Paper}
+	expected_style_resolutions: u64 = 2
 	for treatment in treatments {
 		app.treatment = treatment
+		refresh_styles(&app)
+		expected_style_resolutions += 2
 		alicorn.invalidate_root(handle.runtime, "test switched treatment")
 		testing.expect_value(t, testui.advance_time(&handle, 0), testui.Status.Ok)
+		testing.expect_value(t, app.style_resolutions, expected_style_resolutions)
 		testing.expect_value(t, alicorn.focused_node(handle.runtime), focused)
 		current_radio := find_option(&handle, .Radio_Button, "Draft")
 		current_tab := find_option(&handle, .Tab, "Overview")
@@ -74,7 +94,7 @@ test_style_switch_preserves_owners_and_selection :: proc(t: ^testing.T) {
 		testing.expect(t, current_radio.element.collection_selected && current_tab.element.collection_selected)
 		testing.expect(t, current_radio.element.bounds.h > first_radio.element.bounds.h)
 		testing.expect(t, current_tab.element.bounds.h > first_tab.element.bounds.h)
-		check_treatment_paint(t, handle.runtime, style_for(treatment, app.relief))
+		check_treatment_paint(t, handle.runtime, app.radio_style.value)
 	}
 
 	_ = testui.step(&handle, {kind=.Key, key=.Right})
@@ -97,4 +117,5 @@ test_style_switch_preserves_owners_and_selection :: proc(t: ^testing.T) {
 	testing.expect_value(t, app.view_value, u64(1))
 	_ = testui.advance_time(&handle, 100_000_000)
 	testing.expect_value(t, handle.last_turn.descriptions, 0)
+	testing.expect_value(t, app.style_resolutions, u64(6))
 }

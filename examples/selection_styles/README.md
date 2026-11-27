@@ -11,11 +11,18 @@ shorter rows, flat surfaces, and a compact bar. The selected mark occupies
 a reserved slot, so changing selection does not move the label.
 
 The example translates style values into ordinary Alicorn layout, text and
-surface parameters. Radio uses its public group and item parts. Segmented
-uses the optional item drawing procedure on its complete wrapper. Both
-keep their existing focus, hit owners, semantic roles, controlled values,
-and shared selection policy. Target bounds follow the treatment's logical
-dimensions. The example owns the treatment presets.
+surface parameters. The caller-owned `style_resolve` function composes named
+typed procedures for metrics, surface, typography and indicator, then applies
+an explicit `Toolbar` or `Dialog` context and an optional per-instance value.
+`style_explain` reports the typed source for each resolved field. The example
+uses no registry, selector, runtime style API, or per-frame string lookup.
+It resolves the two styles at initialization and again only when the treatment
+changes.
+
+Radio uses its public group and item parts. Segmented uses the optional item
+drawing procedure on its complete wrapper. Both keep their existing focus,
+hit owners, semantic roles, controlled values, and shared selection policy.
+Target bounds follow the treatment's logical dimensions.
 
 From the AliKit root, use the AccessKit compiler arguments from the pinned
 Alicorn setup described in [the build instructions](../../README.md):
@@ -26,7 +33,10 @@ odin build examples/selection_styles -collection:alikit=. -collection:alicorn=/p
 
 Pass `--hardware` or `--paper` to start with that treatment. The example
 also accepts `--smoke`. The headless test checks owner identity, focus,
-semantic actions, selection, disabled behavior, paint, and idle descriptions.
+semantic actions, selection, disabled behavior, paint, context/fragment
+provenance, instance precedence, cached style resolution, and idle descriptions.
+Run `--bench` for a style-resolution microbenchmark at 100, 1,000, and 3,000
+style applications. It measures only the pure Odin resolver, not UI frame cost.
 
 Part of [Alicorn #244](https://github.com/Carnival-Science/Alicorn/issues/244)
 and [#246](https://github.com/Carnival-Science/Alicorn/issues/246).
