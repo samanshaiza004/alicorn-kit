@@ -154,7 +154,7 @@ checkout has no `website/node_modules`, and I did not install dependencies. The
 catalog output is therefore synchronized, but the website build remains
 unverified.
 
-### External-consumer rebuild on macOS (2026-11-27)
+### External-consumer rebuild on macOS (2026-11-26)
 
 The PowerShell orchestrator remains unavailable (`pwsh` is not installed), so
 I rebuilt both external fixtures manually after the latest AliKit changes. The
@@ -170,6 +170,15 @@ This confirms both public consumption modes still compile. The full manifest
 audit, native `--smoke` launches, and website build remain unverified in this
 environment; `pwsh` and `website/node_modules` are absent. No dependencies were
 installed.
+
+### Menu external-consumer follow-up (2026-11-26)
+
+Menu now has a declared source-copy recipe for its package plus the shared
+`selection` and `theme_contract` dependencies. The external collection fixture
+imports Menu inside a Dialog composition, while the copy fixture builds both
+Menu and Radio Group without an AliKit collection. Both external builds passed
+against the locked macOS dependencies. The PowerShell orchestration and native
+`--smoke` runs were unavailable in this environment.
 
 The remaining 11 catalog components now also have TestUI presentation-scale
 matrices at 1×, 1.25×, 1.5×, and 2×, with assertions for visible text and

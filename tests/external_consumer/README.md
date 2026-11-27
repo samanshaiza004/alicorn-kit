@@ -14,14 +14,15 @@ public Odin packages.
 Imports complete packages through the AliKit collection:
 
 - `alikit:dialog`
+- `alikit:menu`
 - `alikit:radio_group`
 - `alikit:progress`
 - `alikit:notices`
 - `alikit:selection`
 
-`main.odin` composes a dialog containing a parts-composed radio group, a
-progress part, a runtime toast, and an author-owned selection strip built
-directly on `alikit:selection`.
+`main.odin` composes a dialog containing a parts-composed radio group and an
+anchored Menu popup, plus a progress part, a runtime toast, and an author-owned
+selection strip built directly on `alikit:selection`.
 
 Build:
 
@@ -37,29 +38,31 @@ Add the pinned AccessKit compiler arguments from
 
 ## Path 2: `path2_copy`
 
-Consumes a copied radio group. The harness copies:
+Consumes copied Radio Group and Menu packages. The harness copies:
 
 - `radio_group/radio_group.odin`
+- `menu/menu.odin`
 - `selection/selection.odin`
 - `theme_contract/contract.odin`
 
-into `path2_copy/vendor/` as sibling packages and rewrites these imports in the
-copied radio package:
+into `path2_copy/vendor/` as sibling packages and rewrites both component
+packages' imports:
 
 ```odin
 import sel "../selection"
 import tc "../theme_contract"
 ```
 
-`main.odin` then composes the copied parts with an author-owned two-line row.
-The build needs only the Alicorn collection:
+`main.odin` composes the copied radio parts with an author-owned two-line row
+and uses the copied Menu package for an anchored action popup. The build needs
+only the Alicorn collection:
 
 ```powershell
 odin build path2_copy -collection:alicorn=<alicorn> -out:bin/external_consumer_path2.exe
 ```
 
-Copying `radio_group.odin` alone does not compile. `components.json` records
-the copy recipe under `components[].copy` for audited components.
+Copying either component file alone does not compile. `components.json` records
+the source and rewrite recipe under `components[].copy` for audited components.
 
 ## Smoke assertions
 

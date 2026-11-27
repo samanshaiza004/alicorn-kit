@@ -22,17 +22,13 @@ slot, separators, and an active fill. The parts example replaces each row with
 an icon, two text lines, a custom checkmark, and a danger group. The composition
 example hosts a permission menu inside a share dialog.
 
+The [external-consumer fixture](../tests/external_consumer/README.md) imports
+`alikit:menu` through a collection from outside this repository and also
+builds a source copy with only the Alicorn collection.
+
 ## Installation
 
-Copy these files into an application or import the package with the AliKit
-collection:
-
-- `menu/menu.odin`
-- `menu/menu_test.odin` (default conformance)
-- `menu/menu_parts_test.odin` (parts conformance)
-- `examples/menu/main.odin` (default appearance)
-- `examples/menu_parts/main.odin` (custom rows and groups)
-- `examples/menu_composition/main.odin` (menu inside a dialog)
+For normal use, import the package through the AliKit collection:
 
 ```odin
 import ui "alicorn:ui"
@@ -40,6 +36,26 @@ import menu "alikit:menu"
 ```
 
 No init or destroy is required. The component allocates nothing.
+
+To copy and edit the component source, copy the declared dependency recipe from
+[`components.json`](../components.json):
+
+- `menu/menu.odin`
+- `selection/selection.odin`
+- `theme_contract/contract.odin`
+
+Place these in sibling packages, such as `vendor/menu`, `vendor/selection`, and
+`vendor/theme_contract`, then rewrite the two intra-AliKit imports in the
+copied `menu.odin`:
+
+```odin
+import sel "../selection"
+import tc "../theme_contract"
+```
+
+The copy builds with only the Alicorn collection. Copying `menu.odin` alone
+does not compile. The external-consumer fixture builds both the package-import
+and source-copy forms.
 
 ## Composition
 

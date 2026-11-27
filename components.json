@@ -1035,6 +1035,19 @@
         "alicorn:ui",
         "alikit:theme_contract"
       ],
+      "copy": {
+        "sources": [
+          "menu/menu.odin",
+          "selection/selection.odin",
+          "theme_contract/contract.odin"
+        ],
+        "importRewrites": {
+          "alikit:selection": "../selection",
+          "alikit:theme_contract": "../theme_contract"
+        },
+        "collectionRequired": false,
+        "note": "Copy menu beside selection and theme_contract and rewrite both intra-AliKit imports. Copying menu.odin alone does not compile."
+      },
       "ownedState": "State (open/anchor/panel/scroll nodes, active roving identity, focus restoration, pending chosen key)",
       "applicationOwns": [
         "items",

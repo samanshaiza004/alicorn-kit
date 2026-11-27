@@ -5,7 +5,7 @@ package main
 // AliKit repository by tools/validate_external_consumer.ps1.
 //
 // It exercises three authoring paths at once:
-//   1. complete packages: alikit:dialog, alikit:progress, alikit:notices;
+//   1. complete packages: alikit:dialog, alikit:menu, alikit:progress, alikit:notices;
 //   2. parts: a radio group composed from group_begin/item_begin/indicator/
 //      label/item_end/group_end inside the dialog content slot;
 //   3. behavior-only: a small author-owned selection strip built directly on
@@ -21,6 +21,7 @@ import "core:os"
 import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
 import dialog "alikit:dialog"
+import menu "alikit:menu"
 import notices "alikit:notices"
 import progress "alikit:progress"
 import radio "alikit:radio_group"
@@ -30,6 +31,12 @@ PLANS := [3]radio.Option{
 	{value=101, label="Personal", description="One workspace and local history"},
 	{value=102, label="Team", description="Shared review, comments, and exports"},
 	{value=103, label="Enterprise", description="Audit policy and private mirrors", disabled=true},
+}
+
+PLAN_ACTIONS := [3]menu.Item{
+	{key=201, label="Copy invitation link", shortcut="Ctrl+C"},
+	{key=202, label="Resend invitation"},
+	{key=203, label="Remove invite", disabled=true},
 }
 
 // Lane is application-owned data for the behavior-only strip. The keys are
@@ -50,6 +57,7 @@ App :: struct {
 	// Complete package + parts composition.
 	view:     dialog.State,
 	group:    radio.State,
+	actions:  menu.State,
 	selected: u64,
 
 	// Progress part.
@@ -235,6 +243,9 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 				app.selected = radio_event.value
 			}
 		}
+		_ = menu.trigger(ctx, &app.actions, "Invitation actions",
+			menu.Options{accessible_label="Invitation actions"},
+			key=alicorn.key_string("consumer-invitation-actions"))
 		dialog.content_end(ctx)
 	}
 	if dialog.action_row_begin(ctx, key=alicorn.key_string("consumer-actions")) {
@@ -252,6 +263,22 @@ render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
 		dialog.action_row_end(ctx)
 	}
 	dialog.end(ctx, &app.view)
+
+	// The external package consumer composes Menu as an anchored popup inside
+	// Dialog content. Describe it after the Dialog so it owns the top overlay.
+	menu_visible, chosen := menu.popup_begin(ctx, &app.actions, PLAN_ACTIONS[:],
+		menu.Options{accessible_label="Invitation actions"},
+		key=alicorn.key_string("consumer-invitation-actions-popup"), instance_id=9004)
+	if menu_visible {
+		for item, index in PLAN_ACTIONS {
+			if menu.item(ctx, &app.actions, item, index) {
+				app.status = fmt.tprintf("Invitation action %d selected.", item.key)
+			}
+		}
+		menu.popup_end(ctx, &app.actions)
+	} else if chosen != 0 {
+		app.status = fmt.tprintf("Invitation action %d selected.", chosen)
+	}
 }
 
 initialize :: proc(app: ^App, rt: ^alicorn.Runtime) {

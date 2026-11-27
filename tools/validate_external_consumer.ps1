@@ -128,7 +128,8 @@ function Assert-Manifest {
             }
         }
 
-        $needsCopy = ($entry.kind -in @('copyable-composite', 'copyable-parts')) -or ($entry.id -eq 'radio-group')
+        $needsCopy = ($entry.kind -in @('copyable-composite', 'copyable-parts')) -or
+            ($entry.id -in @('radio-group', 'menu'))
         if ($entry.PSObject.Properties.Name -contains 'copy') {
             foreach ($relative in @($entry.copy.sources)) {
                 if (-not (Test-Path -LiteralPath (Join-Path $RepoRoot $relative) -PathType Leaf)) {
@@ -156,7 +157,7 @@ function Assert-Manifest {
         }
     }
 
-    # The copy fixture is the audit for radio_group's copyable-source promise.
+    # The copy fixture audits the Radio Group and Menu source-copy recipes.
     return [pscustomobject]@{ Errors = $errors; Warnings = $warnings; Manifest = $manifest }
 }
 
@@ -171,13 +172,25 @@ function New-Consumer([object]$Manifest) {
     Copy-Item -LiteralPath (Join-Path $FixtureRoot 'path1_packages') -Destination $Path1 -Recurse
     Copy-Item -LiteralPath (Join-Path $FixtureRoot 'path2_copy') -Destination $Path2 -Recurse
 
-    # The copy is driven by components.json, so the fixture audits the recipe
-    # rather than a second hand-maintained file list.
-    $recipe = ($Manifest.components | Where-Object { $_.id -eq 'radio-group' }).copy
-    if (-not $recipe) { throw 'radio-group has no copy recipe in components.json.' }
+    # The copied-source fixture exercises both declared recipes. They share
+    # selection and theme_contract, so copy the union once and apply the
+    # declared import rewrites to each copied package.
+    $copyEntries = @($Manifest.components | Where-Object { $_.id -in @('radio-group', 'menu') })
+    $copySources = @{}
+    $rewriteMap = @{}
+    foreach ($entry in $copyEntries) {
+        if (-not $entry.copy) { throw "$($entry.id) has no copy recipe in components.json." }
+        foreach ($relative in @($entry.copy.sources)) { $copySources[$relative] = $true }
+        foreach ($rewrite in $entry.copy.importRewrites.PSObject.Properties) {
+            if ($rewriteMap.ContainsKey($rewrite.Name) -and $rewriteMap[$rewrite.Name] -cne $rewrite.Value) {
+                throw "Conflicting copy rewrites for '$($rewrite.Name)'."
+            }
+            $rewriteMap[$rewrite.Name] = $rewrite.Value
+        }
+    }
     $Vendor = Join-Path $Path2 'vendor'
     $copiedFiles = @()
-    foreach ($relative in @($recipe.sources)) {
+    foreach ($relative in $copySources.Keys) {
         $package = Split-Path -Leaf (Split-Path -Parent $relative)
         $fileName = Split-Path -Leaf $relative
         $destinationDirectory = Join-Path $Vendor $package
@@ -190,17 +203,17 @@ function New-Consumer([object]$Manifest) {
     # A copy is application code: the intra-AliKit imports become local package
     # imports, so no `alikit` collection is needed.
     $applied = @{}
-    foreach ($rewrite in $recipe.importRewrites.PSObject.Properties) {
-        $applied[$rewrite.Name] = $false
+    foreach ($name in $rewriteMap.Keys) {
+        $applied[$name] = $false
     }
     foreach ($file in $copiedFiles) {
         $text = Read-Text $file
-        foreach ($rewrite in $recipe.importRewrites.PSObject.Properties) {
-            $from = "`"$($rewrite.Name)`""
-            $to = "`"$($rewrite.Value)`""
+        foreach ($name in $rewriteMap.Keys) {
+            $from = "`"$name`""
+            $to = "`"$($rewriteMap[$name])`""
             if ($text.Contains($from)) {
                 $text = $text.Replace($from, $to)
-                $applied[$rewrite.Name] = $true
+                $applied[$name] = $true
             }
         }
         Write-Text $file $text
@@ -229,20 +242,20 @@ This directory is outside the AliKit repository build; it is recreated on every 
     odin build path1_packages -collection:alicorn=$AlicornRoot -collection:alikit=$RepoRoot -out:bin/external_consumer_path1.exe
     bin/external_consumer_path1.exe --smoke
 
-Imports `alikit:dialog`, `alikit:radio_group`, `alikit:progress`, `alikit:notices`, and
-`alikit:selection`. Use both collections; the `alikit` collection points at the
-AliKit checkout. The pinned AccessKit compiler arguments are added by the
-harness exactly as `tools/test.ps1` does.
+Imports `alikit:dialog`, `alikit:menu`, `alikit:radio_group`, `alikit:progress`,
+`alikit:notices`, and `alikit:selection`. Use both collections; the `alikit`
+collection points at the AliKit checkout. The pinned AccessKit compiler
+arguments are added by the harness exactly as `tools/test.ps1` does.
 
 ## Path 2: copy source (no alikit collection)
 
     odin build path2_copy -collection:alicorn=$AlicornRoot -out:bin/external_consumer_path2.exe
     bin/external_consumer_path2.exe --smoke
 
-`vendor/` contains `radio_group/radio_group.odin`, `selection/selection.odin`, and
-`theme_contract/contract.odin`. The copied `radio_group` imports `../selection`
-and `../theme_contract`; a direct copy of only `radio_group.odin` does not
-compile. Keep the vendor directory together.
+`vendor/` contains `radio_group/radio_group.odin`, `menu/menu.odin`,
+`selection/selection.odin`, and `theme_contract/contract.odin`. Both copied
+components import `../selection` and `../theme_contract`; copying either
+component file alone does not compile. Keep the vendor directory together.
 
 ## Gotchas recorded by this run
 

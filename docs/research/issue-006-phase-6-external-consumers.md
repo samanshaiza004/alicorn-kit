@@ -139,19 +139,18 @@ validation scripts. Findings fixed in this phase:
 - Added `validation.externalConsumer` and documented the copy rule in
   `docs/components.md` and the catalog's component page.
 
-Remaining manifest gap (reported, not fixed): `dialog` and `scroll_area` ship
-sources, tests, docs, and examples but have no `components.json` entries or
-catalog pages. The harness emits this as a warning. Adding them is a catalog
-task, not a phase-6 copy blocker. Published catalog pages now link runnable
-examples rather than embedding desktop captures.
+Historical manifest gap: `dialog` and `scroll_area` initially shipped without
+registry entries. Both now have `components.json` entries and catalog pages;
+the current registry covers all 14 supported catalog components. Published
+catalog pages link runnable examples rather than embedding desktop captures.
 
 ## Friction list
 
 1. **Copy instructions omitted source dependencies.** Several guides listed only
    the main component file as copyable. The radio-group guide and catalog page
    are corrected; the manifest copy recipes are the machine-readable source of
-   truth. Other components with intra-AliKit imports should get the same audit
-   in a follow-up (the fix is mechanical).
+   truth. Components that promise source copying should keep this recipe audit
+   current; collection-import packages do not need copy recipes.
 2. **Copying requires import rewriting or an extra collection.** A raw directory
    copy keeps `alikit:` imports. The supported options are (a) rewrite the two
    imports to relative packages and use only `alicorn`, or (b) add
@@ -191,14 +190,25 @@ examples rather than embedding desktop captures.
 The catalog site was not rebuilt in this branch run; the changed pages are
 Markdown/MDX text only and the catalog build is a separate check.
 
+### Menu package-import and source-copy follow-up (2026-11-26)
+
+The external package fixture imports `alikit:menu` and composes its anchored
+popup inside the external Dialog consumer. The source-copy fixture now also
+copies Menu beside Radio Group with their shared `selection` and `theme_contract`
+dependencies. `components.json` declares Menu's source and import-rewrite
+recipe, and the harness checks that the copied package builds without the
+AliKit collection. The package-import and copy builds pass against the locked
+Alicorn and AccessKit revisions. Native `--smoke` and physical screen-reader
+output were not verified in this follow-up.
+
 ## Follow-ups
 
-- Add `dialog` and `scroll_area` registry entries and catalog pages if they
-  become part of the supported catalog. Desktop captures are no longer a
-  catalog requirement.
-- Apply the `copy` recipe audit to `menu`, `sidebar`, `segmented`, `progress`,
-  and `notices` guides, or point every Installation section at the manifest copy
-  recipe instead of duplicating file lists.
+- The registry entries and catalog pages for `dialog` and `scroll_area` were
+  added after this initial phase. Desktop captures are no longer a catalog
+  requirement.
+- Continue the `copy` recipe audit for components that document source copying;
+  Menu's recipe is now declared and exercised with Radio Group in the external
+  fixture. Update each guide to make its supported package/copy path explicit.
 - Consider a short "Consuming AliKit in your application" guide that includes
   the collection arguments, AccessKit bootstrap, and the copy-rewrite rule.
 - Wire `tools/validate_external_consumer.ps1` into CI after a few green local

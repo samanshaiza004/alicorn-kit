@@ -38,9 +38,19 @@ requests, and one chosen command key.
 
 ## Copyable implementation
 
-Files: `menu/menu.odin`, `menu/menu_test.odin`, `menu/menu_parts_test.odin`,
-`examples/menu/main.odin`, `examples/menu_parts/main.odin`,
-`examples/menu_composition/main.odin`.
+For normal package use, import `alikit:menu` with the AliKit collection. To copy
+and edit the component, copy the declared sources from `components.json`:
+
+- `menu/menu.odin`
+- `selection/selection.odin`
+- `theme_contract/contract.odin`
+
+Place these in sibling packages and rewrite `alikit:selection` to
+`../selection` and `alikit:theme_contract` to `../theme_contract`. The copy
+then builds with only the Alicorn collection; `menu/menu.odin` alone does not
+compile. The external-consumer fixture compiles both the collection-import and
+source-copy paths. Tests and the runnable examples remain in the AliKit
+repository.
 
 ```odin
 import ui "alicorn:ui"

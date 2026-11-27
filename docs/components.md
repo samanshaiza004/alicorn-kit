@@ -46,15 +46,16 @@ the component you want to own:
    declared `source` files and, when it imports another AliKit package, the
    dependency files listed in `components.json` under `copy`. Rewrite those
    intra-AliKit imports to local relative packages so the copy needs only the
-   Alicorn collection. A radio-group copy, for example, needs `selection/` and
-   `theme_contract/` beside it; copying `radio_group.odin` alone does not
-   compile.
+   Alicorn collection. Radio Group and Menu copies, for example, need
+   `selection/` and `theme_contract/` beside them; copying either component
+   file alone does not compile.
 
 `components.json` records the copy recipe for audited copyable components and
 the exact package dependencies for every entry.
 [`tools/validate_external_consumer.ps1`](../tools/validate_external_consumer.ps1)
 generates a standalone project outside the repository, builds both the
-collection-import path and the radio-group copy path, and runs native smokes.
+collection-import path and the Radio Group/Menu copy path, and runs native
+smokes.
 
 The [Command Palette Quick Start](../examples/command_palette_quick_start/main.odin)
 is the shortest complete example of an application using AliKit. The separate

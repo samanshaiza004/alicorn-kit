@@ -2,11 +2,11 @@ package main
 
 // External consumer, authoring path 2: copy component source into the
 // application's own tree. tools/validate_external_consumer.ps1 copies
-// radio_group/radio_group.odin plus its declared source dependencies
-// (selection/selection.odin and theme_contract/contract.odin) into
-// path2_copy/vendor/ and rewrites the two intra-AliKit imports to those local
-// packages. The build then needs only the Alicorn collection; there is no
-// `alikit` collection and no AliKit repository topology.
+// radio_group/radio_group.odin and menu/menu.odin plus their shared declared
+// source dependencies (selection/selection.odin and
+// theme_contract/contract.odin) into path2_copy/vendor/ and rewrites the
+// intra-AliKit imports to local packages. The build then needs only the
+// Alicorn collection; there is no `alikit` collection or AliKit topology.
 //
 // Build (exact collection args recorded by the harness):
 //   odin build . -collection:alicorn=<alicorn>
@@ -17,6 +17,7 @@ import "core:fmt"
 import "core:os"
 import alicorn "alicorn:runtime"
 import ui "alicorn:ui"
+import menu "./vendor/menu"
 import radio "./vendor/radio_group"
 
 PLANS := [3]radio.Option{
@@ -25,8 +26,15 @@ PLANS := [3]radio.Option{
 	{value=203, label="Enterprise", description="Audit policy and private mirrors", disabled=true},
 }
 
+COPY_ACTIONS := [3]menu.Item{
+	{key=301, label="Copy plan link", shortcut="Ctrl+C"},
+	{key=302, label="Change billing contact"},
+	{key=303, label="Remove workspace", disabled=true},
+}
+
 App :: struct {
 	group:    radio.State,
+	actions:  menu.State,
 	selected: u64,
 	status:   string,
 	smoke:    bool,
@@ -36,8 +44,11 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 	if ui.column(ctx, key=alicorn.key_string("copied-root"), width=-1, height=-1,
 		padding=28, gap=14, align=.Center) {
 		_ = ui.text(ctx, "AliKit external consumer", size=26)
-		_ = ui.text(ctx, "Radio group copied into this application's source tree; only Alicorn is imported.",
+		_ = ui.text(ctx, "Copied Radio Group and Menu packages; no alikit collection is required.",
 			size=13, color=alicorn.style_color(ctx, .Muted_Text))
+		_ = menu.trigger(ctx, &app.actions, "Workspace actions",
+			menu.Options{accessible_label="Workspace actions"},
+			key=alicorn.key_string("copied-menu-trigger"))
 
 		if ui.panel(ctx, key=alicorn.key_string("copied-panel"), width=480,
 			height=alicorn.LAYOUT_SIZE_FIT_CONTENT, padding=18, gap=12,
@@ -85,6 +96,22 @@ render :: proc(app: ^App, ctx: ^ui.UI) {
 	}
 }
 
+render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
+	visible, chosen := menu.popup_begin(ctx, &app.actions, COPY_ACTIONS[:],
+		menu.Options{accessible_label="Workspace actions"},
+		key=alicorn.key_string("copied-menu-popup"), instance_id=5002)
+	if visible {
+		for item, index in COPY_ACTIONS {
+			if menu.item(ctx, &app.actions, item, index) {
+				app.status = fmt.tprintf("Menu action %d selected.", item.key)
+			}
+		}
+		menu.popup_end(ctx, &app.actions)
+	} else if chosen != 0 {
+		app.status = fmt.tprintf("Menu action %d selected.", chosen)
+	}
+}
+
 stop :: proc(app: ^App) {
 	if app.smoke {
 		fmt.println("external_consumer_path2_smoke", "plan", app.selected, "idle", true)
@@ -98,7 +125,7 @@ main :: proc() {
 	}
 	app := App{
 		selected=201,
-		status="The copied radio parts keep the component's interaction contract.",
+		status="The copied Radio Group and Menu keep their interaction contracts.",
 		smoke=smoke,
 	}
 	ui.run(
@@ -107,6 +134,7 @@ main :: proc() {
 		title="Alicorn - AliKit external consumer (copied source)",
 		width=680,
 		height=520,
+		render_overlays=render_overlays,
 		on_stop=stop,
 		smoke=smoke,
 	)
