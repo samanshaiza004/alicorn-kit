@@ -35,8 +35,12 @@ Pass `--hardware` or `--paper` to start with that treatment. The example
 also accepts `--smoke`. The headless test checks owner identity, focus,
 semantic actions, selection, disabled behavior, paint, context/fragment
 provenance, instance precedence, cached style resolution, and idle descriptions.
-Run `--bench` for a style-resolution microbenchmark at 100, 1,000, and 3,000
-style applications. It measures only the pure Odin resolver, not UI frame cost.
+Run `--bench` for two measurements at 100, 1,000, and 3,000 styles/nodes: a
+pure Odin style-resolution microbenchmark, and a retained TestUI workload using
+fresh runtimes with initial-description timings, layout/shaping/paint visit
+counts, and a settled zero-work check. The latter has no GPU and is not a native
+frame-latency measurement; neither benchmark has a matched direct-style
+baseline.
 
 Part of [Alicorn #244](https://github.com/Carnival-Science/Alicorn/issues/244)
 and [#246](https://github.com/Carnival-Science/Alicorn/issues/246).
