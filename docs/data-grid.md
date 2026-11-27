@@ -216,6 +216,24 @@ used until the `.Data_Grid` pattern addition lands.
   semantic entities for the logical dataset. Visual work is viewport-bounded;
   total semantic work and storage are not. The current 200-row checks do not
   establish CPU or memory behavior for much larger datasets.
+- Treat `max_visible_rows` as a visual realization limit, not a bound on total
+  dataset cost. In the 2026-11 retained-description probe, a fixed 1280 × 800
+  view with 12 realized rows took 1.259 ms p50 to describe 10,000 logical rows
+  and 30.277 ms p50 for 100,000 rows; the 100,000-row child process peaked at
+  273.0 MB RSS. These CPU-only measurements include the application callback,
+  retained reconciliation, and semantic synchronization, and RSS includes the
+  application-owned data and TestUI. They are not renderer or GPU timings. See
+  the [Data Grid scaling report](research/authoring-reliability/results/data-grid.md#follow-up-retained-description-scaling)
+  for the method, per-stage samples, idle checks, and comparison limits.
+- Pass the actual collection represented by this grid. Filtering or sorting
+  should produce that collection's current projection before calling
+  `data_grid`; avoid including unrelated rows merely to imply a larger result
+  count. Pagination can bound the grid's logical page when that page is the
+  collection presented to the user, but applications must expose the broader
+  result context and navigation themselves. For a single accessible grid with
+  very large logical row counts, benchmark the full semantic workload and
+  track Alicorn's collection-level accessibility-provider work; the current
+  public API materializes one virtual semantic row per logical row.
 - Sorting and filtering are application callbacks over the projection.
 
 ## Compatibility

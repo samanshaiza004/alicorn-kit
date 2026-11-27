@@ -136,12 +136,13 @@ function Assert-Manifest {
                     $errors.Add("$($entry.id): copy source is missing: $relative")
                 }
             }
-            foreach ($source in @($entry.source)) {
-                $sourceText = Read-Text (Join-Path $RepoRoot $source)
-                foreach ($rewrite in $entry.copy.importRewrites.PSObject.Properties) {
-                    if ($sourceText -notmatch [regex]::Escape("`"$($rewrite.Name)`"")) {
-                        $errors.Add("$($entry.id): copy rewrite names an import $source no longer uses: $($rewrite.Name)")
-                    }
+            $copySourceTexts = @($entry.copy.sources | ForEach-Object {
+                Read-Text (Join-Path $RepoRoot $_)
+            })
+            $copySourceText = $copySourceTexts -join "`n"
+            foreach ($rewrite in $entry.copy.importRewrites.PSObject.Properties) {
+                if ($copySourceText -notmatch [regex]::Escape("`"$($rewrite.Name)`"")) {
+                    $errors.Add("$($entry.id): copy sources do not use the declared import rewrite '$($rewrite.Name)'")
                 }
             }
         } elseif ($needsCopy) {
