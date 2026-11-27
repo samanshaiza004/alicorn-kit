@@ -34,6 +34,21 @@ output. The reference viewport is
 760 × 640. Check native presentation at 1×, 1.25×, 1.5×, and 2× display scale where a native
 capture environment is available.
 
+### Quick Start compile check (2026-11-27)
+
+The three minimal first-use examples were built from the AliKit root with Odin
+`dev-2026-11:9a6991685`, Alicorn `4e0862f368cb638b7aece0bad9dd82cae0c3d8c4`,
+and AccessKit binding `e290e5f55da9cfb5e5622e4a9e5be3b691a7b82b`:
+
+- `odin build examples/command_palette_quick_start`
+- `odin build examples/dialog_quick_start`
+- `odin build examples/data_grid_quick_start`
+
+All three builds exited 0. The compiler still reports the pinned Alicorn
+secondary-window and diagnostics stack-size warnings, and the linker reports a
+duplicate `-lobjc`. This is compile evidence for the short public-API path, not
+native interaction, rendering, or pixel/DPI evidence.
+
 The 14 source SVGs were rendered and reviewed together on 2026-11-26. Their
 contexts range from project workspaces and inventory to audio production,
 writing, build tooling, and archives. Their visual vocabulary is less varied:
