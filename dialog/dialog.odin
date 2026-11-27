@@ -128,7 +128,7 @@ Event :: struct {
 	reason: Close_Reason,
 }
 
-Action_Kind :: enum { Primary, Cancel, Custom }
+Action_Kind :: enum { Primary, Cancel, Custom, Danger }
 
 recipe_default :: proc() -> Recipe { return {} }
 style_default :: proc() -> Style { return DEFAULT_STYLE }
@@ -583,6 +583,7 @@ action :: proc(
 	#partial switch kind {
 	case .Primary: variant = .Primary
 	case .Cancel: variant = .Quiet
+	case .Danger: variant = .Danger
 	}
 	resolved_height := height
 	if resolved_height <= 0 || math.is_nan(resolved_height) || math.is_inf(resolved_height) {

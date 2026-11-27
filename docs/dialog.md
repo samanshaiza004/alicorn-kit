@@ -77,7 +77,7 @@ if app.dialog.open {
 		dialog.content_end(ctx)
 	}
 	if dialog.action_row_begin(ctx, key=ui.key_string("dialog-actions")) {
-		if dialog.action(ctx, &app.dialog, "Delete", .Primary, key=ui.key_string("confirm")) {
+		if dialog.action(ctx, &app.dialog, "Delete", .Danger, key=ui.key_string("confirm")) {
 			dialog.dismiss(ctx, &app.dialog, .Action)
 		}
 		if dialog.action(ctx, &app.dialog, "Cancel", .Cancel, key=ui.key_string("cancel")) {
@@ -101,7 +101,7 @@ if app.dialog.open {
 | Description | `description(ctx, ...)` | Supporting copy part. |
 | Content | `content_begin/content_end` | Caller-owned slot; may be omitted. |
 | Action row | `action_row_begin/action_row_end` | Right-aligned row; may be omitted. |
-| Actions | `action(ctx, state, label, kind, key, width, height)` | Primary/Cancel/Custom Button owners; 32 px default height; returns activation. |
+| Actions | `action(ctx, state, label, kind, key, width, height)` | Primary/Danger/Cancel/Custom Button owners; 32 px default height; returns activation. |
 | Close affordance | `close_affordance(ctx, state, key)` | Optional corner control. |
 | Alert companion | `alert_semantic_id(instance_id)` | Live assertive `Alert` entity for Alert_Dialog. |
 
@@ -116,8 +116,9 @@ Rounded dialog frames are a recorded core gap.
 `Style` has `corner_radius` (used by action parts), `focus_width`, and
 `backdrop_alpha`. `Options` carries width, height (0 = fit content), max height,
 padding, gaps, and action gap. `action` accepts optional button width and height;
-height defaults to 32 px. Zero padding/gap values resolve to the documented
-defaults; pass a positive small value for a tighter layout.
+height defaults to 32 px. Use `.Danger` for destructive actions; it applies
+Alicorn's theme Danger button treatment. Zero padding/gap values resolve to the
+documented defaults; pass a positive small value for a tighter layout.
 
 There is no motion contract: opening and closing are immediate. The backdrop is
 a color alpha, not an animated scrim.

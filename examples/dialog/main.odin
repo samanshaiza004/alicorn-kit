@@ -110,7 +110,7 @@ render_delete_dialog :: proc(app: ^App, ctx: ^ui.UI) {
 			app.status = "Deletion cancelled."
 			dialog.dismiss(ctx, &app.delete_dialog, .Action)
 		}
-		if dialog.action(ctx, &app.delete_dialog, "Delete project", .Primary,
+		if dialog.action(ctx, &app.delete_dialog, "Delete project", .Danger,
 			key=ui.key_string("dialog-delete-confirm"), width=153, height=40) {
 			app.status = "Project deleted."
 			dialog.dismiss(ctx, &app.delete_dialog, .Action)

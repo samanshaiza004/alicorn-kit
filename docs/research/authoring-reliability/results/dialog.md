@@ -131,3 +131,15 @@ reference's explicit 40 px actions. `/opt/homebrew/bin/odin test dialog` passes
 `-lobjc` linker warning. The native display smoke remains unavailable to the
 shell runner (`The video driver did not add any displays`); the API change has
 not yet received a new native pixel capture.
+
+## Follow-up: destructive action styling
+
+A clean Condition D authoring trial reproduced the reference with public Dialog
+parts and TestUI checks, but had to use `ui.button(..., variant=.Danger)` for
+the destructive action because `dialog.action` did not expose that Alicorn
+variant. `Action_Kind.Danger` now maps through the component helper, and the
+reference and example use it directly. The reference test inspects the retained
+text paint color against the theme's Danger role at all four TestUI scales;
+`odin test dialog` remains **8/8**, and `odin build examples/dialog` passes.
+This is headless retained-paint evidence; native color and pixel output remain
+unverified.

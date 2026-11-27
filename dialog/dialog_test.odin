@@ -133,7 +133,7 @@ reference_overlay :: proc(app: ^Reference_App, ctx: ^ui.UI) {
 			app.cancel_count += 1
 			dismiss(ctx, &app.state, .Action)
 		}
-		if action(ctx, &app.state, "Delete project", .Primary,
+		if action(ctx, &app.state, "Delete project", .Danger,
 			key=ui.key_string("reference-delete"), width=153, height=40) {
 			app.delete_count += 1
 			dismiss(ctx, &app.state, .Action)
@@ -153,6 +153,27 @@ reference_open :: proc(app: ^Reference_App, t: ^testing.T, scale: f32 = 1) -> (t
 		return {}, false
 	}
 	return handle, true
+}
+
+@(private)
+dialog_reference_danger_action_is_styled :: proc(
+	t: ^testing.T,
+	rt: ^alicorn.Runtime,
+	button_id: alicorn.Node_ID,
+) -> bool {
+	display, ok := alicorn.paint_display_list(rt)
+	if !testing.expect(t, ok, "the completed dialog frame should expose its paint list") { return false }
+	danger_ink := alicorn.style_color(&alicorn.UI{runtime=rt}, .Danger)
+	label_uses_danger := false
+	for command in display.commands {
+		if command.owner != button_id { continue }
+		if text, found := command.payload.(alicorn.Text_Paint); found && text.color == danger_ink {
+			label_uses_danger = true
+			break
+		}
+	}
+	return testing.expect(t, label_uses_danger,
+		"the destructive action label should use the theme's Danger color")
 }
 
 @(private)
@@ -241,6 +262,8 @@ test_dialog_reference_geometry_focus_and_resizing :: proc(t: ^testing.T) {
 		"reference lookups: panel=%v/%q cancel=%v/%q delete=%v/%q",
 		panel.match, panel.element.name, cancel.match, cancel.element.name,
 		delete_action.match, delete_action.element.name) { return }
+	if !dialog_reference_danger_action_is_styled(t, handle.runtime,
+		delete_action.element.visual_node) { return }
 
 	testing.expect(t, alicorn.focused_node(handle.runtime) == cancel.element.visual_node,
 		"the destructive reference must focus Cancel instead of the destructive action")
@@ -341,6 +364,8 @@ dialog_reference_scale_case :: proc(t: ^testing.T, scale: f32) -> bool {
 	if !testing.expectf(t, panel.match == .Unique && cancel.match == .Unique &&
 		delete_action.match == .Unique,
 		"the dialog actions should remain available at scale %.2f", scale) { return false }
+	if !dialog_reference_danger_action_is_styled(t, handle.runtime,
+		delete_action.element.visual_node) { return false }
 	if !testing.expect(t, alicorn.focused_node(handle.runtime) == cancel.element.visual_node,
 		"Cancel should retain initial focus at every scale") { return false }
 
