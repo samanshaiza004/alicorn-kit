@@ -180,6 +180,23 @@ Menu and Radio Group without an AliKit collection. Both external builds passed
 against the locked macOS dependencies. The PowerShell orchestration and native
 `--smoke` runs were unavailable in this environment.
 
+### macOS main revalidation (2026-11-26)
+
+At AliKit `f8cb2b4`, Odin `dev-2026-11:9a6991685` passed all 21 test
+targets listed by `tools/test.ps1`, including every current component package
+and the reference-app TestUI suites. The Command Palette, Dialog, and Data Grid
+reference applications also built successfully against Alicorn
+`4e0862f368cb` and AccessKit `e290e5f55da9`. The builds emitted the existing
+pinned-dependency large-stack-local warnings and duplicate `-lobjc` warning.
+
+The external collection-import and copied-source fixture binaries had already
+built successfully against the same pinned macOS dependencies. The PowerShell
+wrapper could not run because `pwsh` is unavailable. `website/node_modules` is
+also absent, so the website build was not run and no dependencies were
+installed. A direct attempt to launch the Data Grid reference returned
+`SDL_Init failed: The video driver did not add any displays`; native pixels,
+interaction, and physical-DPI behavior therefore remain unverified here.
+
 The remaining 11 catalog components now also have TestUI presentation-scale
 matrices at 1×, 1.25×, 1.5×, and 2×, with assertions for visible text and
 component/viewport containment. Those 11 package suites pass **85/85 tests** at
