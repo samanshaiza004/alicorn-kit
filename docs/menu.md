@@ -21,6 +21,10 @@ The default appearance is a compact panel of label/shortcut rows with a check
 slot, separators, and an active fill. The parts example replaces each row with
 an icon, two text lines, a custom checkmark, and a danger group. The composition
 example hosts a permission menu inside a share dialog.
+The stock trigger sizes to its label, and the default check marker uses the
+theme's `Text` role for contrast against the popup surface. Start custom option
+sets from `menu.DEFAULT_OPTIONS` before overriding individual values so default
+popup padding and sizing remain intact.
 
 The [external-consumer fixture](../tests/external_consumer/README.md) imports
 `alikit:menu` through a collection from outside this repository and also
@@ -109,12 +113,16 @@ ITEMS: [3]menu.Item = {
 }
 
 // In the ordinary root:
-_ = menu.trigger(ctx, &app.menu, "Actions", menu.Options{accessible_label="Actions"},
+options := menu.DEFAULT_OPTIONS
+options.accessible_label = "Actions"
+_ = menu.trigger(ctx, &app.menu, "Actions", options,
 	key=ui.key_string("actions-trigger"))
 
 // In render_overlays, after the ordinary root closes:
+options := menu.DEFAULT_OPTIONS
+options.accessible_label = "Actions"
 visible, chosen := menu.popup_begin(ctx, &app.menu, ITEMS[:],
-	menu.Options{accessible_label="Actions"}, key=ui.key_string("actions-popup"),
+	options, key=ui.key_string("actions-popup"),
 	instance_id=1)
 if !visible {
 	if chosen != 0 { app.run(chosen) }
@@ -134,8 +142,10 @@ of the stock `trigger`.
 The default appearance uses `row_surface`, `check`, `label`, and `shortcut`:
 
 ```odin
+options := menu.DEFAULT_OPTIONS
+options.accessible_label = "Actions"
 visible, chosen := menu.popup_begin(ctx, &app.menu, ITEMS[:],
-	menu.Options{accessible_label="Actions"}, key=ui.key_string("popup"), instance_id=41)
+	options, key=ui.key_string("popup"), instance_id=41)
 if visible {
 	for item, index in ITEMS {
 		if item.kind == .Separator {

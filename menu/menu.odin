@@ -408,7 +408,7 @@ trigger :: proc(
 		ctx,
 		label,
 		key=key,
-		style=ui.layout_style(.Row, height=resolved.item_height+8),
+		style=ui.layout_style(.Row, width=alicorn.LAYOUT_SIZE_FIT_CONTENT, height=resolved.item_height+8),
 		state=alicorn.Button_State{selected=state.open},
 		variant=.Quiet,
 	)
@@ -616,20 +616,19 @@ popup_begin :: proc(
 			// owner. This fine accent rule sits in the panel's top padding, so it
 			// adds no layout space and stays clear of the first actionable row.
 			highlight_color := alicorn.style_color(ctx, .Accent)
-			highlight_color.a *= 0.28
 			highlight := alicorn.surface_begin(
 				ctx,
 				alicorn.surface_core_color_role(.Accent),
 				key=ui.key_pair(instance_id, POPUP_HIGHLIGHT_KEY),
 				style=ui.layout_style(.Row, width=-1, height=2),
-				shape=alicorn.Surface_Shape{kind=.Rounded_Rectangle, corner_radius=1},
+				shape=alicorn.Surface_Shape{kind=.Rectangle},
 				fill=highlight_color,
 				label="menu-popup-highlight",
 			)
 			alicorn.surface_end(ctx)
 			if highlight != 0 {
 				_ = alicorn.position_child(ctx, highlight,
-					alicorn.positioned(0, -resolved.padding+1, clip=true))
+					alicorn.positioned(0, 3-resolved.padding, width_mode=.Fill_Available, clip=true))
 			}
 			rows := alicorn.container_begin(
 				ctx,
@@ -692,7 +691,7 @@ separator :: proc(ctx: ^ui.UI, index: int, options: Options = {}) {
 			ctx,
 			alicorn.surface_core_color_role(.Border),
 			key=ui.key_u64(0xA11C_6D21+u64(index)),
-			style=ui.layout_style(.Row, width=-1, height=1),
+			style=ui.layout_style(.Row, width=-1, height=1, grow=1),
 			label="menu-separator",
 		)
 		alicorn.surface_end(ctx)
@@ -748,7 +747,9 @@ item_begin :: proc(
 	_ = alicorn.semantic_bind(ctx, item_semantic_id(state.instance_id, value.key))
 
 	check_color := recipe.check_color
-	if check_color == .Text { check_color = .Accent }
+	// The zero Recipe value is the default. Resolve its zero-valued role to
+	// body text so a checked mark stays legible on both light and dark surfaces.
+	if check_color == .Window_Background { check_color = .Text }
 	row = MenuItem{
 		state=state,
 		item=value,
@@ -773,7 +774,6 @@ check :: proc(ctx: ^ui.UI, row: MenuItem, style: Style = {}) -> alicorn.Node_ID 
 	if ctx == nil || ctx.runtime == nil || !row.visible { return 0 }
 	resolved_style := style_resolve(style)
 	check_color := row.check_color
-	if check_color == .Text { check_color = .Accent }
 	slot := row.check_slot
 	if slot <= 0 { slot = resolved_style.check_slot }
 	check := ui.text(ctx, "\u2713" if row.checked else "",

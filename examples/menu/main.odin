@@ -30,21 +30,25 @@ ITEMS :: [6]menu.Item{
 }
 
 render :: proc(app: ^App, ctx: ^ui.UI) {
-	if ui.column(ctx, key=ui.key_string("menu-example-root"), width=-1, height=-1,
-		padding=24, gap=12) {
+	if ui.panel(ctx, key=ui.key_string("menu-example-root"), width=-1, height=-1,
+		grow=1, padding=24, gap=12,
+		fill=ui.style_color(ctx, .Window_Background), label="menu-example-root") {
 		_ = ui.text(ctx, "Menu", size=26)
 		_ = ui.text(ctx, "Anchored, component-owned dropdown. Escape and outside clicks close it; focus returns to the trigger.",
 			size=13, color=ui.style_color(ctx, .Muted_Text))
-		_ = menu.trigger(ctx, &app.view, "Actions", menu.Options{accessible_label="Actions"},
-			key=ui.key_string("menu-example-trigger"))
+		if ui.row(ctx, key=ui.key_string("menu-example-trigger-row"), width=-1, height=40, align=.Center) {
+			_ = menu.trigger(ctx, &app.view, "Actions", menu.Options{accessible_label="Actions"},
+				key=ui.key_string("menu-example-trigger"))
+		}
 		_ = ui.text(ctx, app.status, size=13, color=ui.style_color(ctx, .Muted_Text))
 	}
 }
 
 render_overlays :: proc(app: ^App, ctx: ^ui.UI) {
+	options := menu.DEFAULT_OPTIONS
+	options.accessible_label = "Actions"
 	visible, chosen := menu.popup_begin(ctx, &app.view, app.items[:],
-		menu.Options{accessible_label="Actions"}, key=ui.key_string("menu-example-popup"),
-		instance_id=7301)
+		options, key=ui.key_string("menu-example-popup"), instance_id=7301, style=menu.DEFAULT_STYLE)
 	if !visible {
 		if chosen != 0 { apply(app, chosen) }
 		return

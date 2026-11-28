@@ -32,16 +32,20 @@ fixture_render :: proc(app: ^Test_App, ctx: ^ui.UI) {
 				label="menu-fixture-space") {}
 		}
 		chosen_before := app.chosen
-		_ = trigger(ctx, &app.state, "Actions", options=Options{accessible_label="Actions"},
-			key=alicorn.key_string("menu-fixture-trigger"))
+		if ui.row(ctx, key=alicorn.key_string("menu-fixture-trigger-row"), width=-1, height=40, align=.Center) {
+			_ = trigger(ctx, &app.state, "Actions", options=DEFAULT_OPTIONS,
+				key=alicorn.key_string("menu-fixture-trigger"))
+		}
 		if app.chosen != chosen_before { app.activations += 1 }
 		_ = ui.button(ctx, "Background", key=alicorn.key_string("menu-fixture-background"), width=120, height=30)
 	}
 }
 
 fixture_overlays :: proc(app: ^Test_App, ctx: ^ui.UI) {
+	options := DEFAULT_OPTIONS
+	options.accessible_label = "Actions"
 	visible, chosen := popup_begin(ctx, &app.state, app.items[:],
-		Options{accessible_label="Actions"}, key=alicorn.key_string("menu-fixture-popup"), instance_id=9401)
+		options, key=alicorn.key_string("menu-fixture-popup"), instance_id=9401, style=DEFAULT_STYLE)
 	if !visible {
 			if chosen != 0 { app.chosen = chosen; app.activations += 1 }
 		return
@@ -83,6 +87,10 @@ test_menu_popup_item_is_visible_and_contained_at_fractional_scales :: proc(t: ^t
 		trigger := testui.find(&handle, testui.Query{role=.Button, name="Actions", match_role=true, match_name=true})
 		if testing.expect(t, trigger.match == .Unique && testui.click(&handle, &trigger.element) == .Ok,
 			"the menu should open through its trigger at every scale") {
+			testing.expectf(t, trigger.element.has_bounds && trigger.element.bounds.w > 0 &&
+				trigger.element.bounds.w < handle.runtime.viewport.w*0.5,
+				"the stock trigger should fit its label instead of stretching across the window at %.2f: %v",
+				scale, trigger.element.bounds)
 			_ = testui.describe_once(&handle)
 			menu_part := testui.find(&handle, testui.Query{role=.Menu, name="Actions", match_role=true, match_name=true})
 			item_part := find_item(&handle, "Duplicate")
@@ -96,13 +104,81 @@ test_menu_popup_item_is_visible_and_contained_at_fractional_scales :: proc(t: ^t
 				highlight, highlight_found := alicorn.node_by_key(handle.runtime,
 					ui.key_pair(9401, POPUP_HIGHLIGHT_KEY), .Container)
 				highlight_info, highlight_info_ok := alicorn.node_info(handle.runtime, highlight)
-				panel := app.state.panel_bounds
+				panel_node, panel_found := alicorn.node_by_key(handle.runtime,
+					ui.key_pair(9401, 0x50414E454C), .Container)
+				panel_info, panel_info_ok := alicorn.node_info(handle.runtime, panel_node)
+				panel_record, panel_record_found := handle.runtime.nodes[panel_node]
+				panel_padding: f32
+				expected_content_width: f32
+				expected_accent := alicorn.style_theme_color(handle.runtime, alicorn.DEFAULT_STYLE_THEME_ID, .Accent)
+				if panel_record_found && panel_record != nil {
+					panel_padding = panel_record.style.padding
+					expected_content_width = panel_info.bounds.w-2*panel_padding
+				}
 				testing.expectf(t, highlight_found && highlight_info_ok &&
-					highlight_info.bounds.x >= panel.x &&
-					highlight_info.bounds.x+highlight_info.bounds.w <= panel.x+panel.w &&
-					highlight_info.bounds.y < panel.y+DEFAULT_OPTIONS.padding &&
-					highlight_info.bounds.h == 2,
-					"the decorative accent should stay in the popup's top padding at %.2f", scale)
+					panel_found && panel_info_ok && panel_record_found &&
+					highlight_info.bounds.x >= panel_info.bounds.x+panel_padding-0.51 &&
+					highlight_info.bounds.w >= expected_content_width-0.02 &&
+					highlight_info.bounds.x+highlight_info.bounds.w <= panel_info.bounds.x+panel_info.bounds.w-panel_padding+0.51 &&
+					highlight_info.bounds.y >= panel_info.bounds.y+2.5 &&
+					highlight_info.bounds.y+highlight_info.bounds.h <= panel_info.bounds.y+panel_padding+0.02 &&
+					highlight_info.bounds.h > 0 && highlight_info.bounds.h <= 2.5,
+					"the decorative accent should fill visible popup top padding at %.2f: panel=%v padding=%.2f accent=%v expected_width=%.2f",
+					scale, panel_info.bounds, panel_padding, highlight_info.bounds, expected_content_width)
+				highlight_paint_fills := false
+				highlight_display_fills := false
+				highlight_display_uses_accent := false
+				highlight_display_bounds := alicorn.Rect{}
+				highlight_display_clip := alicorn.Rect{}
+				if highlight_record, record_found := handle.runtime.nodes[highlight]; record_found && highlight_record != nil {
+					for command in highlight_record.paint {
+						if _, surface_ok := command.payload.(alicorn.Surface_Paint); surface_ok {
+							highlight_paint_fills = command.bounds.w >= expected_content_width-0.02
+							break
+						}
+					}
+				}
+				for command in handle.runtime.display_target {
+					if command.owner != highlight { continue }
+					if surface, surface_ok := command.payload.(alicorn.Surface_Paint); surface_ok {
+						highlight_display_bounds = command.bounds
+						highlight_display_clip = command.clip
+						highlight_display_uses_accent = surface.fill == expected_accent
+						highlight_display_fills = command.bounds.w >= expected_content_width-0.51 &&
+							command.bounds.x >= panel_info.bounds.x+panel_padding-0.51 &&
+							command.bounds.x+command.bounds.w <= panel_info.bounds.x+panel_info.bounds.w-panel_padding+0.51 &&
+							command.clip.x <= command.bounds.x+0.51 &&
+							command.clip.x+command.clip.w >= command.bounds.x+command.bounds.w-0.51
+						break
+					}
+				}
+				testing.expectf(t, highlight_paint_fills && highlight_display_fills && highlight_display_uses_accent,
+					"accent paint, theme fill, finalized bounds, and clip should cover visible popup content at %.2f: paint=%v fill_ok=%v bounds=%v clip=%v expected_width=%.2f",
+					scale, highlight_paint_fills, highlight_display_uses_accent, highlight_display_bounds, highlight_display_clip, expected_content_width)
+				for item, separator_index in app.items {
+					if item.kind != .Separator { continue }
+					separator, separator_found := alicorn.node_by_key(handle.runtime,
+						ui.key_u64(0xA11C_6D21+u64(separator_index)), .Container)
+					separator_info, separator_info_ok := alicorn.node_info(handle.runtime, separator)
+					testing.expectf(t, separator_found && separator_info_ok &&
+						separator_info.bounds.w >= expected_content_width-0.02,
+						"separator %d should fill the popup's padded width at %.2f", separator_index, scale)
+				}
+				check_glyph_visible := false
+				check_text_color := alicorn.style_theme_color(handle.runtime, alicorn.DEFAULT_STYLE_THEME_ID, .Text)
+				check_background := alicorn.style_theme_color(handle.runtime, alicorn.DEFAULT_STYLE_THEME_ID, .Surface)
+				for command in handle.runtime.display {
+					text_paint, text_ok := command.payload.(alicorn.Text_Paint)
+					if !text_ok { continue }
+					run, run_ok := alicorn.paint_text_run_resolve(handle.runtime, text_paint.run)
+					if run_ok && run.value == "✓" {
+						check_glyph_visible = text_paint.color == check_text_color &&
+							alicorn.style_color_contrast_ratio(text_paint.color, check_background) >= 4.5
+						break
+					}
+				}
+				testing.expect(t, check_glyph_visible,
+					"the checked marker should use legible text contrast on the default menu surface")
 				_ = testui.describe_once(&handle)
 				highlight_after, highlight_after_found := alicorn.node_by_key(handle.runtime,
 					ui.key_pair(9401, POPUP_HIGHLIGHT_KEY), .Container)
